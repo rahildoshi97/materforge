@@ -72,7 +72,7 @@ constant values, step functions, file-based data (Excel, CSV, txt), tabular data
 This versatility allows users to leverage data from diverse sources,
 with robust file processing handled using pandas [@pandas].
 
-![PyMatLib's property definition methods: (a) constant value, (b) step function, (c) file data, (d) tabular data, (e) piecewise equations, and (f) computed properties.\label{fig:input_methods}](figures/input_methods.png)
+![PyMatLib's property definition methods with corresponding examples and plots.\label{fig:input_methods}](figures/input_methods.png)
 
 - **Universal Material Support**: The framework is designed with an extensible architecture to support any material type. 
 It is currently implemented and thoroughly tested for pure metals and alloys through it's unified interface, 
@@ -132,42 +132,9 @@ The following examples demonstrate a pure metal and an alloy configuration, foll
 
 ## YAML Configuration Examples
 
-### Pure Metal (`Al.yaml`)
+### Alloy (`steel.yaml`)
 ```yaml
-name: Aluminum
-material_type: pure_metal
-
-# Composition must sum to 1.0 (for pure metals, single element = 1.0)
-composition:
-  Al: 1.0  # Aluminum
-
-# Required temperature properties for pure metals
-melting_temperature: 933.47  # Solid becomes liquid (K)
-boiling_temperature: 2743.0  # Liquid becomes gas (K)
-
-properties:
-  thermal_expansion_coefficient:
-    temperature: [373.15, 473.15, 573.15, 673.15, 773.15, 873.15]
-    value: [2.38e-05, 2.55e-05, 2.75e-05, 2.95e-05, 3.15e-05, 3.35e-05]
-    bounds: [constant, constant]
-    regression:
-      simplify: post
-      degree: 1
-      segments: 1
-
-  density:
-    temperature: (300, 3000, 541)
-    equation: 2700 / (1 + 3 * thermal_expansion_coefficient * (T - 293.15))
-    bounds: [constant, constant]
-    regression:
-      simplify: pre
-      degree: 1
-      segments: 1
-```
-
-### Alloy (`SS304L.yaml`)
-```yaml
-name: Stainless Steel 304L
+name: Steel
 material_type: alloy
 
 # Composition fractions must sum to 1.0
@@ -186,7 +153,7 @@ final_boiling_temperature: 3200.    # Material is completely vaporized (K)
 
 properties:
   density:
-    file_path: ./SS304L.xlsx
+    file_path: ./1.4301.xlsx
     temperature_header: Temperature (K)
     value_header: Density (kg/(m)^3)
     bounds: [constant, extrapolate]
@@ -195,7 +162,7 @@ properties:
       degree: 2      # Use quadratic regression for simplification
       segments: 3    # Fit with 3 segments for piecewise linear approximation
 ```
-Complete YAML configurations are provided in the PyMatLib [documentation](https://github.com/rahildoshi97/pymatlib/blob/master/docs/how-to/define_materials.md). 
+Complete YAML configurations for pure metals and alloys are provided in the PyMatLib [documentation](https://github.com/rahildoshi97/pymatlib/blob/master/docs/how-to/define_materials.md). 
 
 ### Python Integration
 The primary entry point is the create_material function, which parses the YAML file and returns a fully configured material object.
@@ -205,16 +172,16 @@ The primary entry point is the create_material function, which parses the YAML f
 
     # Create a material with a symbolic temperature variable
     T = sp.Symbol('T')
-    aluminum = create_material('Al.yaml', T, enable_plotting=True)
+    steel = create_material('steel.yaml', T, enable_plotting=True)
 
     # Access properties as symbolic expressions
-    print(f"Density: {aluminum.density}")
+    print(f"Density: {steel.density}")
     # Output: Piecewise((2678.43051234161, u_C < 300.0), 
     #                   (2744.36352618972 - 0.21977671282703*u_C, u_C < 3000.0), 
     #                   (2085.03338770863, True))
 
     # Evaluate properties at a specific temperature
-    density_at_500K = aluminum.density.subs(T, 500).evalf()
+    density_at_500K = steel.density.subs(T, 500).evalf()
     print(f"Density at 500 K: {density_at_500K:.2f} kg/m^3")
     # Output: Density at 500 K: 2634.48 kg/m^3
 ```
@@ -255,10 +222,18 @@ The source code, comprehensive documentation, and example configurations are ava
 
 # Acknowledgements
 
-The development of PyMatLib was supported by the Friedrich-Alexander-Universität Erlangen-Nürnberg. 
-We acknowledge the developers of SymPy [@sympy], NumPy [@numpy], pandas [@pandas], matplotlib [@matplotlib],
-and ruamel.yaml [@ruamel-yaml], whose libraries provide 
-the symbolic mathematics, numerical computing, data processing, visualization, and configuration parsing capabilities 
-that form the foundation of PyMatLib.
+The development of PyMatLib was supported by the Friedrich-Alexander-Universität Erlangen-Nürnberg.
+
+Funded by the European Union. 
+This work has received funding from the European High Performance Computing Joint Undertaking and 
+Poland, Germany, Spain, Hungary, France and Greece under grant agreement number: 101093457. 
+This publication expresses the opinions of the authors and not necessarily those of the EuroHPC JU and Associated Countries 
+which are not responsible for any use of the information contained in this publication.
+
+We acknowledge the support of the Deutsche Forschungsgemeinschaft (DFG) through the Collaborative Research Centre SFB/TRR 394 
+"Structural and Dynamic Patterns in Hot Bulk Forming" (FOR 5134).
+
+We thank Carola Forster for providing the material data for steel 1.4301 obtained using JMatPro, 
+which contributed to the validation and development of PyMatLib's material property processing capabilities.
 
 # References
