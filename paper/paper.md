@@ -25,18 +25,18 @@ affiliations:
     index: 2
   - name: Erlangen National High Performance Computing Center (NHR@FAU), Erlangen, Germany
     index: 3
-date: 25 July 2025
+date: 28 July 2025
 bibliography: paper.bib
 ---
 
 # Summary
 
-PyMatLib is an extensible, open-source Python library that streamlines the definition and use of 
+MaterForge is an extensible, open-source Python library that streamlines the definition and use of 
 material properties in numerical simulations.
 The library allows users to define complex material behaviors-ranging from simple constants to experimental data 
 -in human-readable YAML configuration files.
 These are automatically converted into symbolic mathematical expressions for direct use in scientific computing frameworks. 
-PyMatLib supports both pure metals and alloys, 
+MaterForge supports both pure metals and alloys, 
 offers six different property definition methods, 
 and intelligently manages dependencies between different material properties.
 It is designed for high-performance computing applications,
@@ -60,10 +60,10 @@ Similarly, specialized CALPHAD databases [@calphad] are powerful but often requi
 and do not easily integrate with general-purpose simulation codes.
 
 This gap forces the development of ad-hoc solutions, hindering workflow efficiency and the adoption of FAIR data principles [@wilkinson2016fair]. 
-PyMatLib was created to bridge this gap by providing a unified, open-source framework that leverages 
+MaterForge was created to bridge this gap by providing a unified, open-source framework that leverages 
 symbolic mathematics, automatic regression, and dependency resolution to handle these disparate data sources. 
 By combining a user-friendly YAML configuration with powerful backend processing, 
-PyMatLib standardizes and simplifies the integration of realistic material behavior into scientific simulations.
+MaterForge standardizes and simplifies the integration of realistic material behavior into scientific simulations.
 
 # Key Functionality
 
@@ -72,15 +72,15 @@ constant values, step functions, file-based data (Excel, CSV, txt), tabular data
 This versatility allows users to leverage data from diverse sources,
 with robust file processing handled using pandas [@pandas].
 
-![PyMatLib's property definition methods with corresponding examples and plots.\label{fig:input_methods}](figures/input_methods.png)
+![MaterForge's property definition methods with corresponding examples and plots.\label{fig:input_methods}](figures/input_methods.png)
 
 - **Universal Material Support**: The framework is designed with an extensible architecture to support any material type. 
 It is currently implemented and thoroughly tested for pure metals and alloys through it's unified interface, 
 with a modular design that allows for straightforward extension to other material classes such as 
-ceramics, polymers, composites, or other specialized materials as research evolves. 
+ceramics, polymers or composites. 
 
 - **Automatic Dependency Resolution**: For properties that depend on others (e.g., thermal diffusivity calculated from thermal conductivity, density, and heat capacity), 
-PyMatLib automatically determines the correct processing order and resolves mathematical dependencies without manual intervention. 
+MaterForge automatically determines the correct processing order and resolves mathematical dependencies without manual intervention. 
 The library detects circular dependencies and provides clear error messages for invalid configurations, 
 freeing users from complex dependency management.
 
@@ -93,9 +93,9 @@ choosing between constant-value or linear extrapolation to best match the physic
 The boundary behavior options work seamlessly with the regression capabilities to provide comprehensive data processing control
 (\autoref{fig:regression_options_with_boundary_behavior}).
 
-![PyMatLib's data processing capabilities: regression and data reduction showing raw experimental data (points) fitted with different polynomial degrees and segment configurations, and boundary behavior options demonstrating constant versus extrapolate settings for the same density property, illustrating how PyMatLib can reduce complexity while maintaining physical accuracy and providing flexible boundary control.\label{fig:regression_options_with_boundary_behavior}](figures/regression_options_with_boundary_behavior.png)
+![MaterForge's data processing capabilities: regression and data reduction showing raw experimental data (points) fitted with different polynomial degrees and segment configurations, and boundary behavior options demonstrating constant versus extrapolate settings for the same density property, illustrating how MaterForge can reduce complexity while maintaining physical accuracy and providing flexible boundary control.\label{fig:regression_options_with_boundary_behavior}](figures/regression_options_with_boundary_behavior.png)
 
-- **Intelligent Simplification Timing**: PyMatLib provides sophisticated control over when data simplification occurs
+- **Intelligent Simplification Timing**: MaterForge provides sophisticated control over when data simplification occurs
 in the dependency chain via the `simplify` parameter. 
 `simplify: pre` simplifies properties before they are used in dependent calculations, optimizing performance.
 With `simplify: post`, simplification is deferred until all dependent properties have been computed, maximizing numerical accuracy.
@@ -110,10 +110,11 @@ This timing control allows users to balance computational efficiency with numeri
 ```
 
 - **Bidirectional Property-Variable Inversion**: The library can automatically generate inverse piecewise functions, 
-enabling the determination of independent variables from known property values (e.g., `temperature = f(property)`).
-Currently focused on single-dependent variables like temperature, 
-the underlying architecture supports future extension to multiple independent variables such as pressure, or shear rate.
-Inverse function generation supports linear piecewise segments, 
+enabling the determination of independent variables from known property values (e.g., `temperature = f(property)`),
+a capability essential for energy-based numerical methods and iterative solvers[@voller1987fixed].
+While currently focused on single-dependent variables like temperature, 
+the underlying architecture is designed to support multiple independent variables (e.g., pressure, shear rate) in the future.
+The inversion supports linear piecewise segments, 
 either via default linear interpolation or explicit `degree=1` regression, 
 ensuring robust mathematical invertibility.
 
@@ -128,11 +129,9 @@ with the option to disable visualization for production workflows after validati
 # Usage
 
 A material is defined in a YAML file and loaded with a single function call.
-The following examples demonstrate a pure metal and an alloy configuration, followed by the Python code to load and use the material.
+The following example demonstrate an alloy configuration, followed by the Python code to load and use the material.
 
-## YAML Configuration Examples
-
-### Alloy (`steel.yaml`)
+## YAML Configuration Example: Alloy (`steel.yaml`)
 ```yaml
 name: Steel
 material_type: alloy
@@ -162,13 +161,13 @@ properties:
       degree: 2      # Use quadratic regression for simplification
       segments: 3    # Fit with 3 segments for piecewise linear approximation
 ```
-Complete YAML configurations for pure metals and alloys are provided in the PyMatLib [documentation](https://github.com/rahildoshi97/pymatlib/blob/master/docs/how-to/define_materials.md). 
+Complete YAML configurations for pure metals and alloys are provided in the MaterForge [documentation](https://github.com/rahildoshi97/pymatlib/blob/master/docs/how-to/define_materials.md). 
 
-### Python Integration
+## Python Integration
 The primary entry point is the create_material function, which parses the YAML file and returns a fully configured material object.
 ```python
     import sympy as sp
-    from pymatlib.parsing.api import create_material
+    from MaterForge.parsing.api import create_material
 
     # Create a material with a symbolic temperature variable
     T = sp.Symbol('T')
@@ -188,7 +187,7 @@ The primary entry point is the create_material function, which parses the YAML f
 
 # Comparison with Existing Tools
 
-| Feature                  | **PyMatLib**      | **CoolProp** | **NIST WebBook** | **CALPHAD** |
+| Feature                  | **MaterForge**      | **CoolProp** | **NIST WebBook** | **CALPHAD** |
 |:-------------------------|:------------------|:-------------|:-----------------|:------------|
 | **Core Capabilities**    |                   |              |                  |             |
 | Symbolic Integration     | Yes               | No           | No               | No          |
@@ -204,35 +203,31 @@ The primary entry point is the create_material function, which parses the YAML f
 | Open Source              | Yes               | Yes          | No               | No          |
 | Python Integration       | Native            | Yes          | API only         | No          |
 
-**Key Advantage**: PyMatLib's unique combination of native symbolic mathematics via SymPy [@sympy], 
+**Key Advantage**: MaterForge's unique combination of native symbolic mathematics via SymPy [@sympy], 
 automatic dependency resolution, and multiple input methods provides a level of flexibility and integration 
 not found in existing tools, enabling more reproducible and sophisticated scientific simulations.
 
 # Research Applications and Availability
 
-PyMatLib is applicable to a wide range of research areas, including alloy design and optimization [@callister2018materials], 
+MaterForge is applicable to a wide range of research areas, including alloy design and optimization [@callister2018materials], 
 finite element analysis [@hughes2012finite], multiscale modeling [@tadmor2011modeling], 
 computational fluid dynamics and heat transfer.
 Its architecture promotes reproducible science and is well-suited for high-performance computing environments, 
 with demonstrated integrations into frameworks like pystencils [@pystencils] and waLBerla [@walberla].
 
-PyMatLib is an open-source software distributed under the [BSD-3-Clause License](https://github.com/rahildoshi97/pymatlib/blob/master/LICENSE). 
+MaterForge is an open-source software distributed under the [BSD-3-Clause License](https://github.com/rahildoshi97/pymatlib/blob/master/LICENSE). 
 The source code, comprehensive documentation, and example configurations are available on
 [GitHub](https://github.com/rahildoshi97/pymatlib/tree/master).
 
 # Acknowledgements
 
-The development of PyMatLib was supported by the Friedrich-Alexander-Universität Erlangen-Nürnberg.
-
+The development of MaterForge was supported by the Friedrich-Alexander-Universität Erlangen-Nürnberg.
 Funded by the European Union. 
 This work has received funding from the European High Performance Computing Joint Undertaking and 
 Poland, Germany, Spain, Hungary, France and Greece under grant agreement number: 101093457. 
 This publication expresses the opinions of the authors and not necessarily those of the EuroHPC JU and Associated Countries 
 which are not responsible for any use of the information contained in this publication.
-
-We acknowledge the support of the Deutsche Forschungsgemeinschaft (DFG) via project 434946896 - FOR 5134 (TP-3)
-"Solidification Cracks during Laser Beam Welding: High Performance Computing for High Performance Processing".
-
-We thank Carola Forster for providing the material data for steel 1.4301 using JMatPro.
+We acknowledge the support of the Deutsche Forschungsgemeinschaft (DFG) via project 434946896 - FOR 5134.
+We also thank Carola Forster for providing the material data for steel 1.4301 using JMatPro.
 
 # References
