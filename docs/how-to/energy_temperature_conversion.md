@@ -33,7 +33,7 @@ from pymatlib.parsing.api import create_material
 T = sp.Symbol('T')
 
 # Load material with energy density property
-material = create_material("steel.yaml", T)
+material = create_material("1.4301.yaml", T)
 
 # Check if energy density is available
 if hasattr(material, 'energy_density'):

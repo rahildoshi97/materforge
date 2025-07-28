@@ -23,7 +23,7 @@ def aluminum_yaml_path():
 def steel_yaml_path():
     """Path to steel YAML file."""
     current_file = Path(__file__)
-    return current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "SS304L" / "SS304L.yaml"
+    return current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
 @pytest.fixture
 def sample_aluminum_element():

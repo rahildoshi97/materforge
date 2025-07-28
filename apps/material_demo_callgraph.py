@@ -58,7 +58,7 @@ def create_robust_inverse_visualization():
         current_file = Path(__file__)
         yaml_paths = [
             current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml",
-            current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "SS304L" / "SS304L.yaml"
+            current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
         ]
 
         for yaml_path in yaml_paths:
@@ -145,10 +145,10 @@ def create_heat_equation_workflow_visualization():
         u, u_tmp = ps.fields(f"u, u_tmp: {data_type}[2D]", layout='fzyx')
 
         # Load material
-        yaml_path = Path(__file__).parent / 'SS304L_HeatEquationKernelWithMaterial.yaml'
+        yaml_path = Path(__file__).parent / '1.4301_HeatEquationKernelWithMaterial.yaml'
         if not yaml_path.exists():
             yaml_path = Path(
-                __file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "SS304L" / "SS304L.yaml"
+                __file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
         if yaml_path.exists():
             try:

@@ -34,7 +34,7 @@ def test_basic_material_creation():
     current_file = Path(__file__)
     project_root = current_file.parent.parent.parent
     yaml_path_Al = project_root / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
-    yaml_path_SS304L = project_root / "src" / "pymatlib" / "data" / "materials" / "alloys" / "SS304L" / "SS304L.yaml"
+    yaml_path_SS304L = project_root / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
     # Test aluminum material creation if file exists
     if yaml_path_Al.exists():
         try:
@@ -51,7 +51,7 @@ def test_basic_material_creation():
         try:
             mat_SS304L = create_material(yaml_path=yaml_path_SS304L, T=T, enable_plotting=False)
             assert mat_SS304L is not None
-            assert "Steel" in mat_SS304L.name or "304L" in mat_SS304L.name
+            assert "Steel" in mat_SS304L.name or "1.4301" in mat_SS304L.name
             assert mat_SS304L.material_type == "alloy"
         except Exception as e:
             pytest.fail(f"Failed to create steel material: {e}")

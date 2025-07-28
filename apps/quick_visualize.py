@@ -63,7 +63,7 @@ def test_material_with_energy_density():
 
     # Test multiple materials to find ones with energy density
     yaml_paths = [
-        Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "SS304L" / "SS304L.yaml",
+        Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml",
         Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml",
     ]
 
@@ -133,9 +133,9 @@ def test_heat_equation_workflow():
     data_type = "float64"
     u, u_tmp = ps.fields(f"u, u_tmp: {data_type}[2D]", layout='fzyx')
 
-    # Test with SS304L (known to have energy density)
+    # Test with 1.4301 (known to have energy density)
     yaml_path = Path(
-        __file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "SS304L" / "SS304L.yaml"
+        __file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
     if yaml_path.exists():
         try:

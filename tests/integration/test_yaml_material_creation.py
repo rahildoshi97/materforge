@@ -22,7 +22,7 @@ class TestYAMLMaterialCreation:
     def steel_yaml_path(self):
         """Path to steel YAML file."""
         current_file = Path(__file__)
-        return current_file.parent.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "SS304L" / "SS304L.yaml"
+        return current_file.parent.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
     def test_aluminum_material_creation(self, aluminum_yaml_path, temp_symbol):
         """Test aluminum material creation from YAML."""
@@ -48,7 +48,7 @@ class TestYAMLMaterialCreation:
             pytest.skip(f"Steel YAML file not found: {steel_yaml_path}")
         mat_steel = create_material(yaml_path=steel_yaml_path, T=temp_symbol, enable_plotting=False)
         # Basic material verification
-        assert "Steel" in mat_steel.name or "304L" in mat_steel.name
+        assert "Steel" in mat_steel.name or "1.4301" in mat_steel.name
         assert mat_steel.material_type == "alloy"
         assert len(mat_steel.elements) >= 2
         # Temperature properties for alloys

@@ -63,7 +63,7 @@ from pymatlib.parsing.api import create_material
 T = sp.Symbol('T')
 
 # Load material from YAML
-material = create_material('steel.yaml', T)
+material = create_material('1.4301.yaml', T)
 
 # Access basic properties
 print(f"Material: {material.name}")
@@ -141,7 +141,7 @@ material = create_material('aluminum.yaml', 500.0)
 
 # Create material with symbolic temperature
 T = sp.Symbol('T')
-material = create_material('steel.yaml', T)
+material = create_material('1.4301.yaml', T)
 
 # Create material with custom temperature symbol
 u_C = sp.Symbol('u_C')

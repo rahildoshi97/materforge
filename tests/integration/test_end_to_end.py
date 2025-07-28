@@ -52,9 +52,9 @@ class TestEndToEnd:
         """Test material creation from existing steel YAML file."""
         # Try multiple possible paths for the steel YAML file
         possible_paths = [
-            Path("src/pymatlib/data/materials/alloys/SS304L/SS304L.yaml"),
-            Path("../src/pymatlib/data/materials/alloys/SS304L/SS304L.yaml"),
-            Path("pymatlib/data/materials/alloys/SS304L/SS304L.yaml"),
+            Path("src/pymatlib/data/materials/alloys/1.4301/1.4301.yaml"),
+            Path("../src/pymatlib/data/materials/alloys/1.4301/1.4301.yaml"),
+            Path("pymatlib/data/materials/alloys/1.4301/1.4301.yaml"),
         ]
         steel_yaml_path = None
         for path in possible_paths:
@@ -67,7 +67,7 @@ class TestEndToEnd:
         # Create material
         material = create_material(steel_yaml_path, temp_symbol, enable_plotting=False)
         # Verify material properties
-        assert "Steel" in material.name or "304L" in material.name
+        assert "Steel" in material.name or "1.4301" in material.name
         assert material.material_type == "alloy"
         assert len(material.elements) >= 2
         # Verify temperature properties

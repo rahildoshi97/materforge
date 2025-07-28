@@ -108,7 +108,7 @@ if hasattr(material, 'energy_density'):
 See [the YAML schema documentation](docs/reference/yaml_schema.md) for detailed configuration options.
 YAML configuration examples can be found here:
 - [Pure Metals](src/pymatlib/data/materials/pure_metals/Al/Al.yaml)
-- [Alloys](src/pymatlib/data/materials/alloys/SS304L/SS304L.yaml)
+- [Alloys](src/pymatlib/data/materials/alloys/1.4301/1.4301.yaml)
 
 ## 📚 Documentation
 Our documentation follows the _Diátaxis_ framework with four distinct types:

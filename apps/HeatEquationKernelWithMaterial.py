@@ -32,9 +32,9 @@ with SourceFileGenerator() as sfg:
     heat_pde_discretized = discretize(heat_pde)
     heat_pde_discretized = heat_pde_discretized.args[1] + heat_pde_discretized.args[0].simplify()
 
-    yaml_path = Path(__file__).parent / 'SS304L_HeatEquationKernelWithMaterial.yaml'
+    yaml_path = Path(__file__).parent / '1.4301_HeatEquationKernelWithMaterial.yaml'
     yaml_path_Al = Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
-    yaml_path_SS304L = Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "SS304L" / "SS304L.yaml"
+    yaml_path_SS304L = Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
     mat = create_material(yaml_path=yaml_path, T=u.center(), enable_plotting=True)
     mat_Al = create_material(yaml_path=yaml_path_Al, T=u.center(), enable_plotting=True)

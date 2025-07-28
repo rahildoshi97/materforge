@@ -84,7 +84,7 @@ PyMatLib's architecture is organized into distinct modules:
 ### Data Module (`pymatlib.data`)
 - **Elements**: Chemical element database with periodic table data
 - **Constants**: Physical and processing constants
-- **Materials**: Pre-defined material configurations (SS304L, aluminum, etc.)
+- **Materials**: Pre-defined material configurations (Steel 1.4301, aluminum, etc.)
 
 ## Why YAML?
 

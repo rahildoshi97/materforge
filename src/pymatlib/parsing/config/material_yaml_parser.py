@@ -215,8 +215,23 @@ class MaterialYAMLParser(YAMLFileParser):
                 suggestion = f" (did you mean '{matches[0]}'?)" if matches else ""
                 error_msg += f" - '{field}'{suggestion}\n"
             raise ValueError(error_msg)
+        self._validate_name()
         self._validate_composition()
         logger.debug("Required fields validation completed")
+
+    def _validate_name(self) -> None:
+        """Validate the material name."""
+        logger.debug("Validating material name")
+        name = self.config[NAME_KEY]
+        if name is None:
+            logger.error("Material name is None")
+            raise ValueError("Material name cannot be None")
+        if not isinstance(name, str):
+            logger.error("Material name is not a string: %s (type: %s)", name, type(name))
+            raise ValueError(f"Material name must be a string, got {type(name).__name__} (value: {name})")
+        if len(name) > 100:
+            logger.warning("Material name '%s' exceeds 100 characters", name)
+        logger.debug("Material name validation completed successfully")
 
     def _validate_composition(self) -> None:
         """Validate composition for both pure metals and alloys."""

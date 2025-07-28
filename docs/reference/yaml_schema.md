@@ -139,7 +139,7 @@ import sympy as sp
 from pymatlib.parsing.api import create_material
 
 T = sp.Symbol('T')
-material = create_material('steel.yaml', T, enable_plotting=True)
+material = create_material('1.4301.yaml', T, enable_plotting=True)
 # Plots automatically saved to 'pymatlib_plots/' directory
 ```
 
@@ -154,7 +154,7 @@ from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
 # Create inverse function T = f_inv(E)
 T = sp.Symbol('T')
 E = sp.Symbol('E')
-material = create_material('steel.yaml', T)
+material = create_material('1.4301.yaml', T)
 
 # Create inverse (only for linear piecewise functions)
 inverse_func = PiecewiseInverter.create_energy_density_inverse(material, 'E')

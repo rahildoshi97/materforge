@@ -34,7 +34,7 @@ For properties defined in spreadsheets:
 properties:
     # Excel file import
     density:
-        file_path: ./304L_data.xlsx
+        file_path: ./1.4301_data.xlsx
         temperature_column: T (K)
         property_column: Density (kg/(m)^3)
         bounds: [constant, constant]
@@ -321,19 +321,19 @@ properties:
 # ====================================================================================================
 ```
 
-Here's a complete example for stainless steel SS304L (Alloy):
+Here's a complete example for 1.4301 (Alloy):
 
 ```yaml
 # ====================================================================================================
 # PYMATLIB MATERIAL CONFIGURATION FILE
 # ====================================================================================================
-# This file defines material properties for Stainless Steel 304L using the new pymatlib format.
+# This file defines material properties for 1.4301 (Steel) using the new pymatlib format.
 # Pymatlib supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA, PIECEWISE_EQUATION, and COMPUTED_PROPERTY
 #
 # IMPORTANT: All property configurations must include 'bounds' parameter (except CONSTANT properties)
 # ====================================================================================================
 
-name: Stainless Steel 304L
+name: "1.4301"
 material_type: alloy  # Must be 'alloy' or 'pure_metal'
 
 # Composition fractions must sum to 1.0
@@ -399,7 +399,7 @@ properties:
   # ====================================================================================================
 
   heat_capacity:
-    file_path: ./SS304L.xlsx               # Relative path from YAML file location
+    file_path: ./1.4301.xlsx               # Relative path from YAML file location
     temperature_column: T (K)              # Column name for temperature data
     property_column: Specific heat (J/(Kg K)) # Column name for property data
     bounds: [constant, constant]           # Required boundary behavior
@@ -409,7 +409,7 @@ properties:
       segments: 4                          # Divide into 4 piecewise segments
 
   density:
-    file_path: ./SS304L.xlsx
+    file_path: ./1.4301.xlsx
     temperature_column: T (K)
     property_column: Density (kg/(m)^3)
     bounds: [constant, constant]

@@ -1,7 +1,7 @@
 """Material configuration files and data."""
 
 # This module contains material configuration files organized by type:
-# - alloys/: Alloy material configurations (e.g., SS304L.yaml)
+# - alloys/: Alloy material configurations (e.g., 1.4301.yaml)
 # - pure_metals/: Pure metal material configurations (e.g., Al/Al.yaml)
 
 # Material configurations are loaded dynamically via YAML files
@@ -10,5 +10,5 @@
 __all__ = []
 
 # Available material configurations:
-# Alloys: SS304L (Stainless Steel 304L)
+# Alloys: 1.4301 (Stainless Steel 304L)
 # Pure Metals: Al (Aluminum)
