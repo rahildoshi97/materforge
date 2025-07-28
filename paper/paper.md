@@ -1,5 +1,6 @@
 ---
-title: 'PyMatLib'
+title: 'MaterForge: A Python Engine for Materials Property Formulation'
+# MaterForge: Materials Formulation Engine with Python
 tags:
   - Python
   - materials science
@@ -11,12 +12,12 @@ authors:
   - name: Rahil Miten Doshi
     orcid: 0009-0008-3570-9841
     affiliation: 1, 2
+  - name: Harald Koestler
+    orcid: 0000-0002-6992-2690
+    affiliation: 1, 3
   - name: Matthias Markl
     orcid: 0000-0002-3000-7081
     affiliation: 2
-  - name: Harald Koestler
-    orcid: 0000-0002-6992-2690
-    affiliation: 2, 3
 affiliations: 
   - name: Chair for System Simulation, Friedrich-Alexander-Universität Erlangen-Nürnberg, Germany
     index: 1
@@ -45,7 +46,7 @@ making sophisticated material modeling accessible to a broader scientific commun
 # Statement of Need
 
 Accurate numerical simulation requires accounting for material properties—such as thermal conductivity, density, and heat capacity
-—that are not constant but depend on variables like temperature, pressure, or concentration [@lewis1996finite; @zienkiewicz2013finite]. 
+—that are not constant but depend on variables like temperature, pressure, or strain rate [@lewis1996finite; @zienkiewicz2013finite]. 
 This challenge is compounded by the wide variation in data availability, 
 from well-characterized models for established materials to sparse experimental points for novel alloys. 
 Consequently, property definitions can range from simple constants to complex tabular datasets or sophisticated equations, 
@@ -109,12 +110,11 @@ This timing control allows users to balance computational efficiency with numeri
 ```
 
 - **Bidirectional Property-Variable Inversion**: The library can automatically generate inverse piecewise functions, 
-enabling determination of independent variables from known property values (e.g., `temperature = f(property)`).
-This capability is essential for energy-based numerical methods [@voller1987fixed], phase-change simulations, and iterative solvers.
-Currently focused on temperature-dependent properties, 
-the underlying architecture supports future extension to additional variables such as concentration, pressure, or shear rate.
-Inverse function generation supports linear piecewise segments 
-(either through default linear interpolation or explicit `degree=1` regression), 
+enabling the determination of independent variables from known property values (e.g., `temperature = f(property)`).
+Currently focused on single-dependent variables like temperature, 
+the underlying architecture supports future extension to multiple independent variables such as pressure, or shear rate.
+Inverse function generation supports linear piecewise segments, 
+either via default linear interpolation or explicit `degree=1` regression, 
 ensuring robust mathematical invertibility.
 
 - **Built-in Validation Framework**: A comprehensive validation framework checks YAML configurations for correctness,
