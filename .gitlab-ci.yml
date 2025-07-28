@@ -197,7 +197,7 @@ test_material_files:
 
       # Test YAML validation
       try:
-          validate_yaml_file('SS304L_HeatEquationKernelWithMaterial.yaml')
+          validate_yaml_file('1.4301_HeatEquationKernelWithMaterial.yaml')
           print('✅ YAML validation passed')
       except Exception as e:
           print(f'❌ YAML validation failed: {e}')
@@ -206,7 +206,7 @@ test_material_files:
       # Test material creation
       try:
           T = sp.Symbol('T')
-          material = create_material('SS304L_HeatEquationKernelWithMaterial.yaml', T, enable_plotting=False)
+          material = create_material('1.4301_HeatEquationKernelWithMaterial.yaml', T, enable_plotting=False)
           print(f'✅ Material created: {material.name}')
       except Exception as e:
           print(f'❌ Material creation failed: {e}')
