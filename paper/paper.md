@@ -176,8 +176,8 @@ The primary entry point is the create_material function, which parses the YAML f
 
     # Access properties as symbolic expressions
     print(f"Density: {steel.density}")
-    # Output: Piecewise((2678.43051234161, u_C < 300.0), 
-    #                   (2744.36352618972 - 0.21977671282703*u_C, u_C < 3000.0), 
+    # Output: Piecewise((2678.43051234161, T < 300.0), 
+    #                   (2744.36352618972 - 0.21977671282703*T, T < 3000.0), 
     #                   (2085.03338770863, True))
 
     # Evaluate properties at a specific temperature
@@ -233,6 +233,6 @@ which are not responsible for any use of the information contained in this publi
 We acknowledge the support of the Deutsche Forschungsgemeinschaft (DFG) via project 434946896 - FOR 5134 (TP-3)
 "Solidification Cracks during Laser Beam Welding: High Performance Computing for High Performance Processing".
 
-We thank Carola Forster for providing the material data for steel 1.4301 obtained using JMatPro.
+We thank Carola Forster for providing the material data for steel 1.4301 using JMatPro.
 
 # References
