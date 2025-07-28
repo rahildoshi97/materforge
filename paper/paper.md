@@ -230,10 +230,9 @@ Poland, Germany, Spain, Hungary, France and Greece under grant agreement number:
 This publication expresses the opinions of the authors and not necessarily those of the EuroHPC JU and Associated Countries 
 which are not responsible for any use of the information contained in this publication.
 
-We acknowledge the support of the Deutsche Forschungsgemeinschaft (DFG) through the Collaborative Research Centre SFB/TRR 394 
-"Structural and Dynamic Patterns in Hot Bulk Forming" (FOR 5134).
+We acknowledge the support of the Deutsche Forschungsgemeinschaft (DFG) via project 434946896 - FOR 5134 (TP-3)
+"Solidification Cracks during Laser Beam Welding: High Performance Computing for High Performance Processing".
 
-We thank Carola Forster for providing the material data for steel 1.4301 obtained using JMatPro, 
-which contributed to the validation and development of PyMatLib's material property processing capabilities.
+We thank Carola Forster for providing the material data for steel 1.4301 obtained using JMatPro.
 
 # References
