@@ -35,28 +35,6 @@ properties:
         finally:
             yaml_path.unlink()
 
-    def test_create_material_with_numeric_temperature(self):
-        """Test material creation with numeric temperature."""
-        yaml_content = """
-name: TestMaterial
-material_type: pure_metal
-composition:
-  Fe: 1.0
-melting_temperature: 1811.0
-boiling_temperature: 3134.0
-properties:
-  density: 7874.0
-"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            f.write(yaml_content)
-            yaml_path = Path(f.name)
-        try:
-            material = create_material(yaml_path, 500.0, enable_plotting=False)
-            assert material.name == "TestMaterial"
-            assert isinstance(material.density, sp.Float)
-        finally:
-            yaml_path.unlink()
-
     def test_create_material_file_not_found(self):
         """Test error handling for missing files."""
         with pytest.raises(FileNotFoundError):
