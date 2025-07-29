@@ -88,7 +88,7 @@ class MaterialYAMLParser(YAMLFileParser):
                     len(self.categorized_properties))
 
     # --- Public API ---
-    def create_material(self, T: Union[float, sp.Symbol], enable_plotting: bool = True) -> Material:
+    def create_material(self, dependency: Union[float, sp.Symbol], enable_plotting: bool = True) -> Material:
         """Create a Material instance from the parsed configuration and temperature."""
         logger.info("Creating material from configuration: %s", self.config_path)
         try:
@@ -122,16 +122,16 @@ class MaterialYAMLParser(YAMLFileParser):
                 )
                 logger.debug("Created alloy with solidus: %s K, liquidus: %s K",
                              self.config[SOLIDUS_TEMPERATURE_KEY], self.config[LIQUIDUS_TEMPERATURE_KEY])
-            # Initialize visualizer only if plotting is enabled AND T is symbolic
+            # Initialize visualizer only if plotting is enabled AND dependency is symbolic
             visualizer = None
-            should_visualize = enable_plotting and isinstance(T, sp.Symbol)
+            should_visualize = enable_plotting and isinstance(dependency, sp.Symbol)
             if should_visualize:
                 self.visualizer.initialize_plots()
                 self.visualizer.reset_visualization_tracking()
                 visualizer = self.visualizer
                 logger.info("Visualization enabled for symbolic temperature")
             else:
-                if not isinstance(T, sp.Symbol):
+                if not isinstance(dependency, sp.Symbol):
                     logger.debug("Visualization disabled - numeric temperature provided")
                 else:
                     logger.debug("Visualization disabled - plotting not enabled")
@@ -139,7 +139,7 @@ class MaterialYAMLParser(YAMLFileParser):
             logger.info("Starting property processing for material: %s", name)
             self.property_processor.process_properties(
                 material=material,
-                T=T,
+                dependency=dependency,
                 properties=self.config[PROPERTIES_KEY],
                 categorized_properties=self.categorized_properties,
                 base_dir=self.base_dir,

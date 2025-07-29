@@ -98,7 +98,7 @@ def demonstrate_material_properties():
 
     if yaml_path_Al.exists():
         try:
-            mat_Al = create_material(yaml_path=yaml_path_Al, T=T1, enable_plotting=True)
+            mat_Al = create_material(yaml_path=yaml_path_Al, dependency=T1, enable_plotting=True)
             materials.append(mat_Al)
             material_symbols[mat_Al.name] = T1
             print(f"✓ Successfully created: {mat_Al.name} (using symbol {T1})")
@@ -107,7 +107,7 @@ def demonstrate_material_properties():
 
     if yaml_path_SS304L.exists():
         try:
-            mat_SS304L = create_material(yaml_path=yaml_path_SS304L, T=T2, enable_plotting=True)
+            mat_SS304L = create_material(yaml_path=yaml_path_SS304L, dependency=T2, enable_plotting=True)
             materials.append(mat_SS304L)
             material_symbols[mat_SS304L.name] = T2
             print(f"✓ Successfully created: {mat_SS304L.name} (using symbol {T2})")
@@ -418,7 +418,7 @@ def demonstrate_advanced_usage():
 
     if yaml_path_Al.exists():
         try:
-            mat_Al = create_material(yaml_path_Al, T=T1, enable_plotting=True)
+            mat_Al = create_material(yaml_path_Al, dependency=T1, enable_plotting=True)
             materials_advanced.append((mat_Al, T1, "Aluminum"))
             print(f"✓ Created {mat_Al.name} with symbol {T1}")
         except Exception as e:
@@ -426,7 +426,7 @@ def demonstrate_advanced_usage():
 
     if yaml_path_SS304L.exists():
         try:
-            mat_SS = create_material(yaml_path_SS304L, T=T2, enable_plotting=True)
+            mat_SS = create_material(yaml_path_SS304L, dependency=T2, enable_plotting=True)
             materials_advanced.append((mat_SS, T2, "Steel 1.4301"))
             print(f"✓ Created {mat_SS.name} with symbol {T2}")
         except Exception as e:

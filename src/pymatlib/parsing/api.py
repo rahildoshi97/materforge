@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # CORE MATERIAL CREATION AND VALIDATION
 # ====================================================================
 
-def create_material(yaml_path: Union[str, Path], T: Union[float, sp.Symbol],
+def create_material(yaml_path: Union[str, Path], dependency: Union[float, sp.Symbol],
                     enable_plotting: bool = True) -> Material:
     """
     Create material instance from YAML configuration file.
@@ -40,8 +40,7 @@ def create_material(yaml_path: Union[str, Path], T: Union[float, sp.Symbol],
 
     Args:
         yaml_path: Path to the YAML configuration file
-        T: Temperature value or symbol for property evaluation
-           - Use a float value for a specific temperature
+        dependency: Sympy symbol for property evaluation
            - Use a symbolic variable (e.g., sp.Symbol('T') or sp.Symbol('u_C'))
              for symbolic temperature expressions
         enable_plotting: Whether to generate visualization plots (default: True)
@@ -71,15 +70,15 @@ def create_material(yaml_path: Union[str, Path], T: Union[float, sp.Symbol],
         u_C = sp.Symbol('u_C')
         material = create_material('copper.yaml', u_C)
     """
-    logger.info("Creating material from: %s with T=%s, plotting=%s", yaml_path, T, enable_plotting)
+    logger.info("Creating material from: %s with dependency=%s, plotting=%s", yaml_path, dependency, enable_plotting)
 
     try:
         # Accept symbolic temperatures only
-        if not isinstance(T, sp.Symbol):
-            raise TypeError(f"Temperature '{T}' must be a sympy Symbol, got {type(T)}")
+        if not isinstance(dependency, sp.Symbol):
+            raise TypeError(f"Dependency '{dependency}' must be a sympy Symbol, got {type(dependency)}")
 
         parser = MaterialYAMLParser(yaml_path=yaml_path)
-        material = parser.create_material(T=T, enable_plotting=enable_plotting)
+        material = parser.create_material(dependency=dependency, enable_plotting=enable_plotting)
 
         logger.info("Successfully created material: %s with %d properties",
                     material.name, len([attr for attr in dir(material)
@@ -247,7 +246,7 @@ def get_material_property_names(material: Material) -> List[str]:
         ValueError: If material is not a Material instance
 
     Example:
-        material = create_material('steel.yaml', T=sp.Symbol('T'))
+        material = create_material('steel.yaml', dependency=sp.Symbol('T'))
         available = get_material_property_names(material)
         print(f"Available properties: {available}")
     """
