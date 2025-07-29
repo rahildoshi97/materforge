@@ -74,9 +74,9 @@ def create_material(yaml_path: Union[str, Path], T: Union[float, sp.Symbol],
     logger.info("Creating material from: %s with T=%s, plotting=%s", yaml_path, T, enable_plotting)
 
     try:
-        # Accept both symbolic and numeric temperatures
-        if not isinstance(T, (sp.Symbol, int, float)):
-            raise TypeError(f"Temperature 'T' must be a sympy Symbol, int, or float, got {type(T)}")
+        # Accept symbolic temperatures only
+        if not isinstance(T, sp.Symbol):
+            raise TypeError(f"Temperature '{T}' must be a sympy Symbol, got {type(T)}")
 
         parser = MaterialYAMLParser(yaml_path=yaml_path)
         material = parser.create_material(T=T, enable_plotting=enable_plotting)
