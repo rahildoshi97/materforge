@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import sympy as sp
@@ -301,3 +301,128 @@ class Material:
         """Detailed representation of the material."""
         return (f"Material(name='{self.name}', material_type='{self.material_type}', "
                 f"elements={len(self.elements)}, composition={self.composition})")
+
+    def evaluate_properties_at_temperature(self, temperature: Union[float, int],
+                                           properties: Optional[List[str]] = None,
+                                           include_constants: bool = True) -> Dict[str, float]:
+        """
+        Evaluate all or specified material properties at a given temperature.
+
+        Args:
+            temperature: Temperature value in Kelvin
+            properties: List of specific property names to evaluate. If None, evaluates all properties.
+            include_constants: Whether to include constant properties in the result
+
+        Returns:
+            Dictionary mapping property names to their evaluated values
+
+        Examples:
+            # Evaluate all properties
+            values = material.evaluate_properties_at_temperature(500.0)
+
+            # Evaluate specific properties
+            values = material.evaluate_properties_at_temperature(500.0, ['density', 'heat_capacity'])
+
+            # Exclude constants
+            values = material.evaluate_properties_at_temperature(500.0, include_constants=False)
+        """
+        import sympy as sp
+        from typing import Dict, List, Optional, Union
+
+        logger.info("Evaluating properties at T=%.1f K for material: %s", temperature, self.name)
+
+        # Validate temperature
+        if not isinstance(temperature, (int, float)):
+            raise ValueError(f"Temperature must be numeric, got {type(temperature).__name__}")
+
+        if temperature <= 0:
+            raise ValueError(f"Temperature must be positive, got {temperature}")
+
+        # Get all property attributes
+        all_properties = {
+            'density': self.density,
+            'dynamic_viscosity': self.dynamic_viscosity,
+            'energy_density': self.energy_density,
+            'heat_capacity': self.heat_capacity,
+            'heat_conductivity': self.heat_conductivity,
+            'kinematic_viscosity': self.kinematic_viscosity,
+            'latent_heat_of_fusion': self.latent_heat_of_fusion,
+            'latent_heat_of_vaporization': self.latent_heat_of_vaporization,
+            'specific_enthalpy': self.specific_enthalpy,
+            'surface_tension': self.surface_tension,
+            'thermal_diffusivity': self.thermal_diffusivity,
+            'thermal_expansion_coefficient': self.thermal_expansion_coefficient
+        }
+
+        # Filter to only properties that exist (not None)
+        existing_properties = {name: prop for name, prop in all_properties.items() if prop is not None}
+
+        # Filter to requested properties if specified
+        if properties is not None:
+            if not isinstance(properties, list):
+                raise ValueError("Properties must be a list of strings")
+
+            invalid_props = set(properties) - set(existing_properties.keys())
+            if invalid_props:
+                available = list(existing_properties.keys())
+                raise ValueError(f"Invalid properties: {invalid_props}. Available: {available}")
+
+            existing_properties = {name: prop for name, prop in existing_properties.items()
+                                   if name in properties}
+
+        logger.debug("Evaluating %d properties: %s", len(existing_properties), list(existing_properties.keys()))
+
+        results = {}
+
+        # Find the temperature symbol used in this material
+        temp_symbol = None
+        for prop_name, prop_value in existing_properties.items():
+            if hasattr(prop_value, 'free_symbols') and prop_value.free_symbols:
+                temp_symbol = list(prop_value.free_symbols)[0]
+                break
+
+        if temp_symbol is None:
+            logger.debug("No symbolic temperature found, assuming all properties are constants")
+        else:
+            logger.debug("Using temperature symbol: %s", temp_symbol)
+
+        for prop_name, prop_value in existing_properties.items():
+            try:
+                if hasattr(prop_value, 'free_symbols') and prop_value.free_symbols:
+                    # Symbolic property - substitute and evaluate
+                    if temp_symbol:
+                        evaluated = prop_value.subs(temp_symbol, temperature)
+
+                        # Handle any remaining symbolic expressions
+                        if hasattr(evaluated, 'evalf'):
+                            result = float(evaluated.evalf())
+                        else:
+                            result = float(evaluated)
+                    else:
+                        result = float(prop_value)
+
+                    results[prop_name] = result
+
+                elif isinstance(prop_value, (sp.Float, sp.Integer)):
+                    # SymPy numeric constant
+                    if include_constants:
+                        results[prop_name] = float(prop_value)
+
+                elif isinstance(prop_value, (int, float)):
+                    # Python numeric constant
+                    if include_constants:
+                        results[prop_name] = float(prop_value)
+
+                else:
+                    logger.warning("Unknown property type for '%s': %s", prop_name, type(prop_value))
+
+            except Exception as e:
+                logger.error("Failed to evaluate property '%s': %s", prop_name, e)
+                # Continue with other properties instead of failing completely
+                results[prop_name] = None
+
+        # Remove None values
+        results = {k: v for k, v in results.items() if v is not None}
+
+        logger.info("Successfully evaluated %d properties at T=%.1f K", len(results), temperature)
+        return results
