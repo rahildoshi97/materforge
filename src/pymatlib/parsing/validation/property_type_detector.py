@@ -6,8 +6,8 @@ from typing import Any, Dict, Set
 import sympy as sp
 
 from pymatlib.parsing.config.yaml_keys import (
-    FILE_PATH_KEY, X_DATA_COLUMN_KEY, PROPERTY_COLUMN_KEY, BOUNDS_KEY,
-    REGRESSION_KEY, X_DATA_KEY, EQUATION_KEY, CONSTANT_KEY,
+    FILE_PATH_KEY, DEPENDENCY_COLUMN_KEY, PROPERTY_COLUMN_KEY, BOUNDS_KEY,
+    REGRESSION_KEY, DEPENDENCY_KEY, EQUATION_KEY, CONSTANT_KEY,
     EXTRAPOLATE_KEY, SIMPLIFY_KEY, DEGREE_KEY, SEGMENTS_KEY, PRE_KEY, POST_KEY,
     MELTING_TEMPERATURE_KEY, BOILING_TEMPERATURE_KEY, SOLIDUS_TEMPERATURE_KEY,
     LIQUIDUS_TEMPERATURE_KEY, INITIAL_BOILING_TEMPERATURE_KEY, FINAL_BOILING_TEMPERATURE_KEY, VALUE_KEY
@@ -38,12 +38,12 @@ class PropertyTypeDetector:
         # Unique key checks first (most efficient)
         (lambda c: FILE_PATH_KEY in c, PropertyType.FILE_IMPORT),
         # Patterns sharing keys (order matters)
-        (lambda c: X_DATA_KEY in c and VALUE_KEY in c and PropertyTypeDetector._is_step_function(c),
+        (lambda c: DEPENDENCY_KEY in c and VALUE_KEY in c and PropertyTypeDetector._is_step_function(c),
          PropertyType.STEP_FUNCTION),
-        (lambda c: X_DATA_KEY in c and VALUE_KEY in c, PropertyType.TABULAR_DATA),
-        (lambda c: X_DATA_KEY in c and EQUATION_KEY in c and isinstance(c.get(EQUATION_KEY), list),
+        (lambda c: DEPENDENCY_KEY in c and VALUE_KEY in c, PropertyType.TABULAR_DATA),
+        (lambda c: DEPENDENCY_KEY in c and EQUATION_KEY in c and isinstance(c.get(EQUATION_KEY), list),
          PropertyType.PIECEWISE_EQUATION),
-        (lambda c: X_DATA_KEY in c and EQUATION_KEY in c and isinstance(c.get(EQUATION_KEY), str),
+        (lambda c: DEPENDENCY_KEY in c and EQUATION_KEY in c and isinstance(c.get(EQUATION_KEY), str),
          PropertyType.COMPUTED_PROPERTY),
     ]
 
@@ -80,7 +80,7 @@ class PropertyTypeDetector:
         A step function has a list of 2 values AND a single temperature point (not a list).
         """
         val_list = config.get(VALUE_KEY)
-        temp_def = config.get(X_DATA_KEY)
+        temp_def = config.get(DEPENDENCY_KEY)
         is_two_values = isinstance(val_list, list) and len(val_list) == 2
         is_single_temp = not isinstance(temp_def, list)  # Must be a string or number
         return is_two_values and is_single_temp
@@ -118,7 +118,7 @@ class PropertyTypeDetector:
 
     @staticmethod
     def _validate_step_function(prop_name: str, config: Dict[str, Any]) -> None:
-        required = {X_DATA_KEY, VALUE_KEY}
+        required = {DEPENDENCY_KEY, VALUE_KEY}
         optional = {BOUNDS_KEY}
         PropertyTypeDetector._check_keys(config, required, optional, "STEP_FUNCTION")
         if BOUNDS_KEY in config:
@@ -131,7 +131,7 @@ class PropertyTypeDetector:
             float(val_list[1])
         except (ValueError, TypeError):
             raise ValueError(f"step function values must be numeric, got {val_list}")
-        temp_def = config[X_DATA_KEY]
+        temp_def = config[DEPENDENCY_KEY]
         if isinstance(temp_def, str):  # Check if it's a valid arithmetic expression
             match = re.match(ProcessingConstants.TEMP_ARITHMETIC_REGEX, temp_def.strip())
             if match:  # If it matches, check if the base reference is valid
@@ -157,7 +157,7 @@ class PropertyTypeDetector:
 
     @staticmethod
     def _validate_file_import(prop_name: str, config: Dict[str, Any]) -> None:
-        required = {FILE_PATH_KEY, X_DATA_COLUMN_KEY, PROPERTY_COLUMN_KEY, BOUNDS_KEY}
+        required = {FILE_PATH_KEY, DEPENDENCY_COLUMN_KEY, PROPERTY_COLUMN_KEY, BOUNDS_KEY}
         optional = {REGRESSION_KEY}
         PropertyTypeDetector._check_keys(config, required, optional, "FILE_IMPORT")
         PropertyTypeDetector._check_bounds(config[BOUNDS_KEY])
@@ -168,13 +168,13 @@ class PropertyTypeDetector:
 
     @staticmethod
     def _validate_tabular_data(prop_name: str, config: Dict[str, Any]) -> None:
-        required = {X_DATA_KEY, VALUE_KEY, BOUNDS_KEY}
+        required = {DEPENDENCY_KEY, VALUE_KEY, BOUNDS_KEY}
         optional = {REGRESSION_KEY}
         PropertyTypeDetector._check_keys(config, required, optional, "TABULAR_DATA")
         PropertyTypeDetector._check_bounds(config[BOUNDS_KEY])
         if REGRESSION_KEY in config:
             PropertyTypeDetector._check_regression(config[REGRESSION_KEY])
-        temp_def = config[X_DATA_KEY]
+        temp_def = config[DEPENDENCY_KEY]
         val_list = config[VALUE_KEY]
         if not isinstance(val_list, list):
             raise ValueError("'value' for a key-val property must be a list.")
@@ -184,7 +184,7 @@ class PropertyTypeDetector:
 
     @staticmethod
     def _validate_piecewise_equation(prop_name: str, config: Dict[str, Any]) -> None:
-        required = {X_DATA_KEY, EQUATION_KEY, BOUNDS_KEY}
+        required = {DEPENDENCY_KEY, EQUATION_KEY, BOUNDS_KEY}
         optional = {REGRESSION_KEY}
         PropertyTypeDetector._check_keys(config, required, optional, "PIECEWISE_EQUATION")
         PropertyTypeDetector._check_bounds(config[BOUNDS_KEY])
@@ -195,7 +195,7 @@ class PropertyTypeDetector:
 
     @staticmethod
     def _validate_computed_property(prop_name: str, config: Dict[str, Any]) -> None:
-        required = {X_DATA_KEY, EQUATION_KEY, BOUNDS_KEY}
+        required = {DEPENDENCY_KEY, EQUATION_KEY, BOUNDS_KEY}
         optional = {REGRESSION_KEY}
         PropertyTypeDetector._check_keys(config, required, optional, "COMPUTED_PROPERTY")
         PropertyTypeDetector._check_bounds(config[BOUNDS_KEY])

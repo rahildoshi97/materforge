@@ -12,7 +12,7 @@ from pymatlib.parsing.validation.property_validator import validate_monotonic_en
 from pymatlib.algorithms.interpolation import ensure_ascending_order
 from pymatlib.algorithms.piecewise_builder import PiecewiseBuilder
 from pymatlib.parsing.config.yaml_keys import (
-    X_DATA_KEY, VALUE_KEY, BOUNDS_KEY, FILE_PATH_KEY, EQUATION_KEY
+    DEPENDENCY_KEY, VALUE_KEY, BOUNDS_KEY, FILE_PATH_KEY, EQUATION_KEY
 )
 from pymatlib.data.constants import PhysicalConstants, ProcessingConstants
 
@@ -62,7 +62,7 @@ class StepFunctionPropertyHandler(BasePropertyHandler):
                          prop_config: Dict[str, Any], T: Union[float, sp.Symbol]) -> None:
         """Process step function with unified symbol handling."""
         try:
-            temp_key = prop_config[X_DATA_KEY]
+            temp_key = prop_config[DEPENDENCY_KEY]
             val_array = prop_config[VALUE_KEY]
             transition_temp = TemperatureResolver.resolve_temperature_reference(temp_key, material)
             T_standard = sp.Symbol('T')
@@ -115,7 +115,7 @@ class TabularDataPropertyHandler(BasePropertyHandler):
                          prop_config: Dict[str, Any], T: Union[float, sp.Symbol]) -> None:
         """Process property defined with key-val pairs."""
         try:
-            temp_def = prop_config[X_DATA_KEY]
+            temp_def = prop_config[DEPENDENCY_KEY]
             val_array = prop_config[VALUE_KEY]
             key_array = TemperatureResolver.resolve_temperature_definition(temp_def, len(val_array), material)
             if len(key_array) != len(val_array):
@@ -137,7 +137,7 @@ class PiecewiseEquationPropertyHandler(BasePropertyHandler):
         """Process piecewise equation property."""
         try:
             eqn_strings = prop_config[EQUATION_KEY]
-            temp_def = prop_config[X_DATA_KEY]
+            temp_def = prop_config[DEPENDENCY_KEY]
             temp_points = TemperatureResolver.resolve_temperature_definition(temp_def, len(eqn_strings) + 1)
             # Validate equations
             for eqn in eqn_strings:

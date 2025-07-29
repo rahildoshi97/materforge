@@ -4,7 +4,7 @@ from typing import Union, Tuple, Dict
 import pandas as pd
 from pathlib import Path
 
-from pymatlib.parsing.config.yaml_keys import FILE_PATH_KEY, X_DATA_COLUMN_KEY, PROPERTY_COLUMN_KEY
+from pymatlib.parsing.config.yaml_keys import FILE_PATH_KEY, DEPENDENCY_COLUMN_KEY, PROPERTY_COLUMN_KEY
 from pymatlib.data.constants import ProcessingConstants, FileConstants
 
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ def load_property_data(file_config: Dict[str, Union[str, int]], header: bool = T
     _validate_file_config(file_config)
     # Extract configuration
     file_path = Path(file_config[FILE_PATH_KEY])
-    temp_col = file_config[X_DATA_COLUMN_KEY]
+    temp_col = file_config[DEPENDENCY_COLUMN_KEY]
     prop_col = file_config[PROPERTY_COLUMN_KEY]
     # Check file existence and permissions
     if not file_path.exists():
@@ -67,7 +67,7 @@ def load_property_data(file_config: Dict[str, Union[str, int]], header: bool = T
 
 def _validate_file_config(file_config: Dict) -> None:
     """Validate the file configuration dictionary."""
-    required_keys = {FILE_PATH_KEY, X_DATA_COLUMN_KEY, PROPERTY_COLUMN_KEY}
+    required_keys = {FILE_PATH_KEY, DEPENDENCY_COLUMN_KEY, PROPERTY_COLUMN_KEY}
     missing_keys = required_keys - set(file_config.keys())
     if missing_keys:
         raise ValueError(f"Missing required configuration keys: {missing_keys}")

@@ -35,20 +35,32 @@ class Material:
     initial_boiling_temperature: Optional[sp.Float] = None
     final_boiling_temperature: Optional[sp.Float] = None
     # Optional properties with default values
+    bulk_modulus: Optional[sp.Float] = None
     density: sp.Expr = None
     dynamic_viscosity: sp.Expr = None
+    elastic_modulus: Optional[sp.Expr] = None  # Young's modulus
+    electrical_conductivity: Optional[sp.Expr] = None
+    electrical_resistivity: Optional[sp.Expr] = None
     energy_density: Optional[Union[sp.Piecewise, sp.Expr]] = None
     energy_density_solidus: sp.Float = None
     energy_density_liquidus: sp.Float = None
+    fracture_toughness: Optional[sp.Expr] = None
+    hardness: Optional[sp.Expr] = None
     heat_capacity: sp.Expr = None
     heat_conductivity: sp.Expr = None
     kinematic_viscosity: sp.Expr = None
     latent_heat_of_fusion: sp.Expr = None
     latent_heat_of_vaporization: sp.Expr = None
+    magnetic_permeability: Optional[sp.Expr] = None
+    poisson_ratio: Optional[sp.Float] = None
+    shear_modulus: Optional[sp.Expr] = None
     specific_enthalpy: sp.Expr = None
     surface_tension: sp.Expr = None
     thermal_diffusivity: sp.Expr = None
     thermal_expansion_coefficient: sp.Expr = None
+    ultimate_tensile_strength: Optional[sp.Expr] = None
+    viscosity: sp.Expr = None
+    yield_strength: Optional[sp.Expr] = None
     # Calculated properties (set during initialization)
     atomic_number: Optional[float] = field(default=None, init=False)
     atomic_mass: Optional[float] = field(default=None, init=False)

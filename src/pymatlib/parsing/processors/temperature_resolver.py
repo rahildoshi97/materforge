@@ -9,7 +9,7 @@ from pymatlib.parsing.config.yaml_keys import (
     MELTING_TEMPERATURE_KEY, BOILING_TEMPERATURE_KEY,
     SOLIDUS_TEMPERATURE_KEY, LIQUIDUS_TEMPERATURE_KEY,
     INITIAL_BOILING_TEMPERATURE_KEY, FINAL_BOILING_TEMPERATURE_KEY,
-    FILE_PATH_KEY, X_DATA_KEY, VALUE_KEY
+    FILE_PATH_KEY, DEPENDENCY_KEY, VALUE_KEY
 )
 from pymatlib.data.constants import PhysicalConstants, ProcessingConstants
 
@@ -99,8 +99,8 @@ class TemperatureResolver:
             except Exception as e:
                 raise ValueError(f"Failed to extract dependency array from file: {str(e)}") from e
         # Handle properties with explicit temperature definitions
-        if X_DATA_KEY in prop_config:
-            temp_def = prop_config[X_DATA_KEY]
+        if DEPENDENCY_KEY in prop_config:
+            temp_def = prop_config[DEPENDENCY_KEY]
             n_values = len(prop_config[VALUE_KEY]) if VALUE_KEY in prop_config else None
             return TemperatureResolver.resolve_temperature_definition(temp_def, n_values, material)
         raise ValueError("Cannot extract dependency array: no dependency information in config")

@@ -13,7 +13,8 @@ from pymatlib.parsing.validation.property_type_detector import PropertyType, Pro
 from pymatlib.visualization.plotters import PropertyVisualizer
 from pymatlib.parsing.config.yaml_keys import PROPERTIES_KEY, MATERIAL_TYPE_KEY, \
     COMPOSITION_KEY, PURE_METAL_KEY, MELTING_TEMPERATURE_KEY, BOILING_TEMPERATURE_KEY, SOLIDUS_TEMPERATURE_KEY, \
-    LIQUIDUS_TEMPERATURE_KEY, INITIAL_BOILING_TEMPERATURE_KEY, FINAL_BOILING_TEMPERATURE_KEY, ALLOY_KEY, NAME_KEY
+    LIQUIDUS_TEMPERATURE_KEY, INITIAL_BOILING_TEMPERATURE_KEY, FINAL_BOILING_TEMPERATURE_KEY, ALLOY_KEY, NAME_KEY, \
+    INDEPENDENT_VARIABLES_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -61,18 +62,30 @@ class MaterialYAMLParser(YAMLFileParser):
     """Parser for material configuration files in YAML format."""
 
     VALID_YAML_PROPERTIES = {
+        "bulk_modulus",
         "density",
         "dynamic_viscosity",
+        "elastic_modulus",
+        "electrical_conductivity",
+        "electrical_resistivity",
         "energy_density",
+        "fracture_toughness",
+        "hardness",
         "heat_capacity",
         "heat_conductivity",
         "kinematic_viscosity",
         "latent_heat_of_fusion",
         "latent_heat_of_vaporization",
+        "magnetic_permeability",
+        "poisson_ratio",
+        "shear_modulus",
         "specific_enthalpy",
         "surface_tension",
         "thermal_diffusivity",
         "thermal_expansion_coefficient",
+        "ultimate_tensile_strength",
+        "viscosity",
+        "yield_strength",
         # Extend to include other material properties as needed
     }
 
