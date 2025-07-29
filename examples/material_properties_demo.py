@@ -31,9 +31,9 @@ def demonstrate_material_properties():
     """Comprehensive demonstration of material property evaluation."""
     setup_logging()
 
-    # Create symbolic temperature variable
-    T = sp.Symbol('u_C')
-    # Alternatively, use numeric temperature: T = 300.15
+    # Create symbolic temperature variables for different materials
+    T1 = sp.Symbol('T_Al')  # Temperature symbol for Aluminum
+    T2 = sp.Symbol('T_SS')  # Temperature symbol for Steel 1.4301
 
     # Set up file paths
     current_file = Path(__file__)
@@ -41,6 +41,7 @@ def demonstrate_material_properties():
     yaml_path_SS304L = current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
     materials = []
+    material_symbols = {}  # Dictionary to track which symbol goes with which material
 
     print(f"\n{'=' * 80}")
     print("PYMATLIB MATERIAL PROPERTY DEMONSTRATION")
@@ -97,17 +98,19 @@ def demonstrate_material_properties():
 
     if yaml_path_Al.exists():
         try:
-            mat_Al = create_material(yaml_path=yaml_path_Al, T=T, enable_plotting=True)
+            mat_Al = create_material(yaml_path=yaml_path_Al, T=T1, enable_plotting=False)
             materials.append(mat_Al)
-            print(f"✓ Successfully created: {mat_Al.name}")
+            material_symbols[mat_Al.name] = T1
+            print(f"✓ Successfully created: {mat_Al.name} (using symbol {T1})")
         except Exception as e:
             print(f"✗ Failed to create Aluminum: {e}")
 
     if yaml_path_SS304L.exists():
         try:
-            mat_SS304L = create_material(yaml_path=yaml_path_SS304L, T=T, enable_plotting=True)
+            mat_SS304L = create_material(yaml_path=yaml_path_SS304L, T=T2, enable_plotting=False)
             materials.append(mat_SS304L)
-            print(f"✓ Successfully created: {mat_SS304L.name}")
+            material_symbols[mat_SS304L.name] = T2
+            print(f"✓ Successfully created: {mat_SS304L.name} (using symbol {T2})")
         except Exception as e:
             print(f"✗ Failed to create SS304L: {e}")
 
@@ -129,8 +132,11 @@ def demonstrate_material_properties():
     print(f"{'-' * 50}")
 
     for mat in materials:
+        # Get the appropriate temperature symbol for this material
+        T_mat = material_symbols[mat.name]
+
         print(f"\n{'=' * 80}")
-        print(f"MATERIAL: {mat.name}")
+        print(f"MATERIAL: {mat.name} (Temperature symbol: {T_mat})")
         print(f"{'=' * 80}")
 
         # Basic material info
@@ -185,7 +191,7 @@ def demonstrate_material_properties():
             try:
                 prop_value = getattr(mat, prop_name)
                 if isinstance(prop_value, sp.Expr):
-                    numerical_value = prop_value.subs(T, test_temp).evalf()
+                    numerical_value = prop_value.subs(T_mat, test_temp).evalf()
                     print(f"{prop_name:<30}: {numerical_value} (symbolic)")
                 else:
                     print(f"{prop_name:<30}: {prop_value} (constant)")
@@ -292,17 +298,20 @@ def demonstrate_material_properties():
     print(f"\n{'6. INVERSE FUNCTION TESTING':<50}")
     print(f"{'-' * 50}")
 
-    test_inverse_functions(materials, T)
+    test_inverse_functions(materials, material_symbols)
 
 
-def test_inverse_functions(materials, T):
+def test_inverse_functions(materials, material_symbols):
     """Test inverse function creation and accuracy for materials with energy density."""
     print(f"\n{'=' * 80}")
     print("INVERSE FUNCTION TESTING")
     print(f"{'=' * 80}")
 
     for mat in materials:
-        print(f"\n--- Testing Inverse Functions for {mat.name} ---")
+        # Get the appropriate temperature symbol for this material
+        T_mat = material_symbols[mat.name]
+
+        print(f"\n--- Testing Inverse Functions for {mat.name} (symbol: {T_mat}) ---")
 
         if not hasattr(mat, 'energy_density') or mat.energy_density is None:
             print(f"!  {mat.name} has no energy_density property - skipping inverse test")
@@ -315,7 +324,7 @@ def test_inverse_functions(materials, T):
                 E = sp.Symbol('E')
                 inverse_func1 = PiecewiseInverter.create_energy_density_inverse(mat, 'E')
                 print("✓ Method 1 succeeded!")
-                test_round_trip_accuracy(mat, inverse_func1, T, E, method="Method 1")
+                test_round_trip_accuracy(mat, inverse_func1, T_mat, E, method="Method 1")
             except Exception as e:
                 print(f"✗ Method 1 failed: {e}")
 
@@ -397,18 +406,39 @@ def demonstrate_advanced_usage():
     print("\n7. TEMPERATURE SWEEP ANALYSIS")
     print("-" * 50)
 
-    # Create material
+    # Create materials with different symbols
     current_file = Path(__file__)
-    yaml_path = current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
+    yaml_path_Al = current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
+    yaml_path_SS304L = current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
-    if yaml_path.exists():
-        T = sp.Symbol('T')
-        mat = create_material(yaml_path, T=T, enable_plotting=False)
+    T1 = sp.Symbol('T_Al')  # Temperature symbol for Aluminum
+    T2 = sp.Symbol('T_SS')  # Temperature symbol for Steel
 
-        # Temperature sweep
-        temp_range = range(300, 3001, 100)  # 300K to 3000K in 100K steps
+    materials_advanced = []
+
+    if yaml_path_Al.exists():
+        try:
+            mat_Al = create_material(yaml_path_Al, T=T1, enable_plotting=False)
+            materials_advanced.append((mat_Al, T1, "Aluminum"))
+            print(f"✓ Created {mat_Al.name} with symbol {T1}")
+        except Exception as e:
+            print(f"✗ Failed to create Aluminum: {e}")
+
+    if yaml_path_SS304L.exists():
+        try:
+            mat_SS = create_material(yaml_path_SS304L, T=T2, enable_plotting=False)
+            materials_advanced.append((mat_SS, T2, "Steel 1.4301"))
+            print(f"✓ Created {mat_SS.name} with symbol {T2}")
+        except Exception as e:
+            print(f"✗ Failed to create Steel: {e}")
+
+    # Temperature sweep for each material
+    temp_range = range(300, 3001, 100)  # 300K to 3000K in 100K steps
+
+    for mat, T_symbol, mat_name in materials_advanced:
+        print(f"\n--- Temperature Sweep for {mat_name} ---")
+
         sweep_data = []
-
         for temp in temp_range:
             try:
                 props = mat.evaluate_properties_at_temperature(
@@ -423,13 +453,13 @@ def demonstrate_advanced_usage():
 
         if sweep_data:
             df = pd.DataFrame(sweep_data)
-            print("Temperature sweep results:")
-            print(df.head(10))
+            print(f"Temperature sweep results for {mat_name}:")
+            print(df.head(5))
 
             # Simple analysis
             if 'density' in df.columns:
                 density_change = ((df['density'].iloc[-1] - df['density'].iloc[0]) / df['density'].iloc[0]) * 100
-                print(f"\nDensity change from {temp_range[0]}K to {temp_range[-1]}K: {density_change:.2f}%")
+                print(f"Density change from {temp_range[0]}K to {temp_range[-1]}K: {density_change:.2f}%")
 
 
 if __name__ == "__main__":
