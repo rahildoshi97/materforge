@@ -52,6 +52,7 @@ class Material:
     latent_heat_of_fusion: sp.Expr = None
     latent_heat_of_vaporization: sp.Expr = None
     magnetic_permeability: Optional[sp.Expr] = None
+    melting_point_pressure: Optional[sp.Float] = None
     poisson_ratio: Optional[sp.Float] = None
     shear_modulus: Optional[sp.Expr] = None
     specific_enthalpy: sp.Expr = None
