@@ -2,11 +2,11 @@
 
 # File property keys
 FILE_PATH_KEY = "file_path"
-TEMPERATURE_COLUMN_KEY = "temperature_column"
+X_DATA_COLUMN_KEY = "dependency_column"
 PROPERTY_COLUMN_KEY = "property_column"
 
 # Temperature and value keys
-TEMPERATURE_KEY = "temperature"
+X_DATA_KEY = "dependency"
 VALUE_KEY = "value"
 
 # Equation keys

@@ -9,7 +9,7 @@ from pymatlib.core.symbol_registry import SymbolRegistry
 from pymatlib.parsing.processors.temperature_resolver import TemperatureResolver
 from pymatlib.parsing.validation.property_validator import validate_monotonic_energy_density
 from pymatlib.parsing.validation.errors import DependencyError, CircularDependencyError
-from pymatlib.parsing.config.yaml_keys import EQUATION_KEY, TEMPERATURE_KEY
+from pymatlib.parsing.config.yaml_keys import EQUATION_KEY, X_DATA_KEY
 from pymatlib.parsing.utils.utilities import handle_numeric_temperature
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class DependencyProcessor:
             prop_config = self.properties[prop_name]
             if not isinstance(prop_config, dict) or EQUATION_KEY not in prop_config:
                 raise ValueError(f"Invalid COMPUTE property configuration for {prop_name}")
-            temp_def = prop_config[TEMPERATURE_KEY]
+            temp_def = prop_config[X_DATA_KEY]
             temp_array = TemperatureResolver.resolve_temperature_definition(temp_def, material=material)
             expression = prop_config[EQUATION_KEY]
             logger.debug(f"Computing property '{prop_name}' with expression: {expression}")

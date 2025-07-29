@@ -30,12 +30,12 @@ properties:
   # ====================================================================================================
   
   latent_heat_of_fusion:
-    temperature: melting_temperature - 1  # Transition 1K before melting point
+    dependency: melting_temperature - 1  # Transition 1K before melting point
     value: [0.0, 10790.0]                  # [before_transition, after_transition] in J/kg
     bounds: [constant, constant]           # Keep constant values outside range
   
   latent_heat_of_vaporization:
-    temperature: 2743.0                    # Transition at boiling point
+    dependency: 2743.0                    # Transition at boiling point
     value: [0.0, 294000.0]                 # [before_boiling, after_boiling] in J/kg
     bounds: [constant, constant]
   
@@ -45,7 +45,7 @@ properties:
   # ====================================================================================================
   
   heat_capacity:
-    temperature: (273.15, 100.0)           # Tuple: (start=273.15K, increment=100K)
+    dependency: (273.15, 100.0)           # Tuple: (start=273.15K, increment=100K)
     # Generates: [273.15, 373.15, 473.15, 573.15, 673.15, 773.15, 873.15, 973.15]
     value: [897, 921, 950, 980, 1010, 1040, 1070, 1084]  # J/kg·K values
     bounds: [constant, constant]
@@ -55,7 +55,7 @@ properties:
       segments: 1                          # Single segment (no breakpoints)
 
   thermal_expansion_coefficient:
-    temperature: [373.15, 473.15, 573.15, 673.15, 773.15, 873.15]  # Explicit temperature list
+    dependency: [373.15, 473.15, 573.15, 673.15, 773.15, 873.15]  # Explicit temperature list
     value: [24.56e-06, 26.54e-06, 28.51e-06, 30.49e-06, 32.47e-06, 34.45e-06]  # 1/K values
     bounds: [constant, constant]
     regression:
@@ -69,7 +69,7 @@ properties:
   # ====================================================================================================
   
   heat_conductivity:
-    temperature: [300, 1700, 3000]         # Three breakpoints define two ranges
+    dependency: [300, 1700, 3000]         # Three breakpoints define two ranges
     equation: [0.0124137215440647*T + 13.0532171803243, 0.0124137215440647*T + 13.0532171803243]
     # Equation 1: 500-1700K, Equation 2: 1700-3000K
     bounds: [constant, constant]
@@ -84,7 +84,7 @@ properties:
   # ====================================================================================================
   
   density:
-    temperature: (300, 3000, 541)          # (start, stop, points) - 541 evenly spaced points
+    dependency: (300, 3000, 541)          # (start, stop, points) - 541 evenly spaced points
     equation: 2700 / (1 + 3 * thermal_expansion_coefficient * (T - 293.15))  # Thermal expansion model
     bounds: [constant, constant]
     regression:
@@ -93,7 +93,7 @@ properties:
       segments: 1
   
   thermal_diffusivity:
-    temperature: (3000, 300, -5.)          # (start, stop, negative_step) - decreasing by 5K
+    dependency: (3000, 300, -5.)          # (start, stop, negative_step) - decreasing by 5K
     equation: heat_conductivity / (density * heat_capacity)  # Standard thermal diffusivity formula
     bounds: [extrapolate, extrapolate]     # Allow extrapolation outside range
     regression:
@@ -102,7 +102,7 @@ properties:
       segments: 1
 
   energy_density:
-    temperature: (300, 3000, 5.0)          # (start, stop, step) - 5K increments
+    dependency: (300, 3000, 5.0)          # (start, stop, step) - 5K increments
     equation: density * specific_enthalpy  # Property dependencies automatically resolved
     bounds: [extrapolate, extrapolate]
     regression:
@@ -111,7 +111,7 @@ properties:
       segments: 6
 
   specific_enthalpy:
-    temperature: (300, 3000, 541)          # (start, stop, num_points) - 541 evenly spaced points
+    dependency: (300, 3000, 541)          # (start, stop, num_points) - 541 evenly spaced points
     equation: Integral(heat_capacity, T)   # Symbolic integration
     bounds: [ constant, constant ]
     regression:

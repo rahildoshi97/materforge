@@ -56,12 +56,12 @@ properties:
   # ====================================================================================================
 
   latent_heat_of_fusion:
-    temperature: [solidus_temperature - 1, liquidus_temperature + 1]  # Temperature references with arithmetic
+    dependency: [solidus_temperature - 1, liquidus_temperature + 1]  # Temperature references with arithmetic
     value: [0, 171401.]                    # Corresponding property values
     bounds: [constant, constant]           # Boundary behavior: 'constant' or 'extrapolate'
 
   thermal_expansion_coefficient:
-    temperature: [300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1500, 2000, 2500, 3000]
+    dependency: [300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1500, 2000, 2500, 3000]
     value: [1.2632e-5, 1.468e-5, 1.524e-5, 1.581e-5, 1.639e-5, 1.699e-5, 1.759e-5, 1.821e-5, 1.885e-5, 2.1e-5, 2.3e-5, 2.5e-5, 2.7e-5]
     bounds: [constant, constant]
     regression:                            # Optional regression configuration
@@ -77,7 +77,7 @@ properties:
 
   heat_capacity:
     file_path: ./1.4301.xlsx               # Relative path from YAML file location
-    temperature_column: T (K)              # Column name for temperature data
+    dependency_column: T (K)              # Column name for temperature data
     property_column: Specific heat (J/(Kg K)) # Column name for property data
     bounds: [constant, constant]           # Required boundary behavior
     regression:                            # Optional regression for data simplification
@@ -87,7 +87,7 @@ properties:
 
   density:
     file_path: ./1.4301.xlsx
-    temperature_column: T (K)
+    dependency_column: T (K)
     property_column: Density (kg/(m)^3)
     bounds: [constant, constant]
     regression:
@@ -102,7 +102,7 @@ properties:
   # ====================================================================================================
 
   heat_conductivity:
-    temperature: [500, 1700, 3000]         # Temperature breakpoints (K)
+    dependency: [500, 1700, 3000]         # Temperature breakpoints (K)
     equation: [0.0124137215440647*T + 13.0532171803243, 0.0124137215440647*T + 13.0532171803243]
     # Two equations for three breakpoints: [500-1700K] and [1700-3000K]
     bounds: [constant, constant]           # Boundary behavior outside range
@@ -118,7 +118,7 @@ properties:
   # ====================================================================================================
 
   specific_enthalpy:
-    temperature: (300, 3000, 541)          # (start, stop, num_points) - 541 evenly spaced points
+    dependency: (300, 3000, 541)          # (start, stop, num_points) - 541 evenly spaced points
     equation: Integral(heat_capacity, T)   # Symbolic integration
     bounds: [constant, constant]
     regression:
@@ -127,7 +127,7 @@ properties:
       segments: 2
 
   energy_density:
-    temperature: (300, 3000, 5.0)          # (start, stop, step) - 5K increments
+    dependency: (300, 3000, 5.0)          # (start, stop, step) - 5K increments
     equation: density * specific_enthalpy  # Property dependencies automatically resolved
     bounds: [extrapolate, extrapolate]
     regression:
@@ -136,7 +136,7 @@ properties:
       segments: 6
 
   thermal_diffusivity:
-    temperature: (3000, 300, -5.0)         # (start, stop, negative_step) - decreasing temperature
+    dependency: (3000, 300, -5.0)         # (start, stop, negative_step) - decreasing temperature
     equation: heat_conductivity /(density * heat_capacity)  # Multi-property dependency
     bounds: [constant, constant]
     regression:
