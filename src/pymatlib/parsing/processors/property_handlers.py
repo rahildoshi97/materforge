@@ -65,10 +65,10 @@ class StepFunctionPropertyHandler(BasePropertyHandler):
             temp_key = prop_config[TEMPERATURE_KEY]
             val_array = prop_config[VALUE_KEY]
             transition_temp = TemperatureResolver.resolve_temperature_reference(temp_key, material)
-            T_standard = sp.Symbol('T')
-            step_function = sp.Piecewise((val_array[0], T_standard < transition_temp), (val_array[1], True))
-            if str(T) != 'T':
-                step_function = step_function.subs(T_standard, T)
+            # T_standard = sp.Symbol('T')
+            step_function = sp.Piecewise((val_array[0], T < transition_temp), (val_array[1], True))
+            """if str(T) != 'T':
+                step_function = step_function.subs(T_standard, T)"""
             # Create visualization data
             offset = ProcessingConstants.STEP_FUNCTION_OFFSET
             val1 = max(transition_temp - offset, PhysicalConstants.ABSOLUTE_ZERO)
@@ -136,6 +136,8 @@ class PiecewiseEquationPropertyHandler(BasePropertyHandler):
                          prop_config: Dict[str, Any], T: Union[float, sp.Symbol]) -> None:
         """Process piecewise equation property."""
         try:
+            # T_symbol_str = str(T)
+            T_symbol_str = T.name
             eqn_strings = prop_config[EQUATION_KEY]
             temp_def = prop_config[TEMPERATURE_KEY]
             temp_points = TemperatureResolver.resolve_temperature_definition(temp_def, len(eqn_strings) + 1)
@@ -143,26 +145,36 @@ class PiecewiseEquationPropertyHandler(BasePropertyHandler):
             for eqn in eqn_strings:
                 expr = sp.sympify(eqn)
                 for symbol in expr.free_symbols:
-                    if str(symbol) != 'T':
+                    # if str(symbol) != T_symbol_str:  # check symbol(YAML config) == symbol(Python API)
+                    if symbol.name != T_symbol_str:  # check symbol(YAML config) == symbol(Python API)
                         raise ValueError(
-                            f"Unsupported symbol '{symbol}' in equation '{eqn}' for property '{prop_name}'. "
-                            f"Only 'T' is allowed.")
+                            f"Temperature symbol mismatch in property '{prop_name}':\n"
+                            f"  • Found in YAML equation: '{symbol}'\n"
+                            f"  • Expected from Python API: '{T_symbol_str}'\n\n"
+                            f"To fix this, you can either:\n"
+                            f"  1. Update your YAML equation '{eqn}' to use '{T_symbol_str}' instead of '{symbol}'\n"
+                            f"  2. Change your Python API call to use symbol '{symbol}' instead of '{T_symbol_str}'\n\n"
+                            f"Example fixes:\n"
+                            f"  • YAML: Replace '{symbol}' with '{T_symbol_str}' in the equation\n"
+                            f"  • Python: Use sp.Symbol('{symbol}') when calling the method"
+                        )
             lower_bound_type, upper_bound_type = prop_config[BOUNDS_KEY]
             temp_points, eqn_strings = ensure_ascending_order(temp_points, eqn_strings)
             # Create piecewise function from formulas
-            T_standard = sp.Symbol('T')
-            piecewise_standard = PiecewiseBuilder.build_from_formulas(temp_points, list(eqn_strings), T_standard,
+            # T_standard = sp.Symbol('T')
+            print(f"Building piecewise function for property '{prop_name}' with T = {T}")
+            piecewise_func = PiecewiseBuilder.build_from_formulas(temp_points, list(eqn_strings), T,
                                                                       lower_bound_type, upper_bound_type)
             # Substitute the actual temperature symbol if different
-            if str(T) != 'T':
+            """if str(T) != 'T':
                 piecewise_func = piecewise_standard.subs(T_standard, T)
             else:
-                piecewise_func = piecewise_standard
+                piecewise_func = piecewise_standard"""
             # Create dense temperature array for visualization
             diff = max(np.min(np.diff(np.sort(temp_points))) / 10.0, 1.0)
             temp_dense = np.arange(temp_points[0], temp_points[-1] + diff / 2, diff)
             # Evaluate for visualization
-            f_pw = sp.lambdify(T_standard, piecewise_standard, 'numpy')
+            f_pw = sp.lambdify(T, piecewise_func, 'numpy')
             y_dense = f_pw(temp_dense)
             validate_monotonic_energy_density(prop_name, temp_dense, y_dense)
             # Use piecewise finalization

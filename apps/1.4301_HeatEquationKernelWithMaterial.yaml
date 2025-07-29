@@ -29,25 +29,19 @@ properties:
 
   ##################################################
 
-  energy_density:  # COMPUTED_PROPERTY
-    temperature: (300, 3000, 5.0)
-    equation: density * specific_enthalpy
-    bounds: [ extrapolate, extrapolate ]
-    regression:
-        simplify: post
-        degree: 1
-        segments: 6
+
 
   ##################################################
 
-  specific_enthalpy:  # COMPUTED_PROPERTY
-    temperature: (3000, 300, 541)
-    equation: Integral(heat_capacity, T)
-    bounds: [ constant, constant ]
+  energy_density:
+    temperature: [500, 1700, 3000]         # Temperature breakpoints (K)
+    equation: [0.0124137215440647*u_C + 13.0532171803243, 0.0124137215440647*u_C + 13.0532171803243]
+    # Two equations for three breakpoints: [500-1700K] and [1700-3000K]
+    bounds: [constant, constant]           # Boundary behavior outside range
     regression:
-      simplify: post
-      degree: 2
-      segments: 4
+      simplify: post                       # Apply regression after symbolic processing
+      degree: 1
+      segments: 2
 
   ##################################################
 

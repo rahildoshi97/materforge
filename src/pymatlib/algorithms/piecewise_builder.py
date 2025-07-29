@@ -119,7 +119,7 @@ class PiecewiseBuilder:
                     expr = sp.sympify(eqn_str)
                     # Validate that only T symbol is used
                     free_symbols = expr.free_symbols
-                    invalid_symbols = [str(sym) for sym in free_symbols if str(sym) != str(T)]
+                    invalid_symbols = [sym.name for sym in free_symbols if sym.name != T.name]
                     if invalid_symbols:
                         logger.error("Invalid symbols in equation %d '%s': %s (only '%s' allowed)",
                                      i + 1, eqn_str, invalid_symbols, T)
@@ -145,8 +145,10 @@ class PiecewiseBuilder:
             conditions = []
             logger.debug("Building piecewise conditions for %d segments", len(parsed_equations))
             # Handle lower bound
+            T_new = sp.Symbol(T.name)
             if lower_bound_type == CONSTANT_KEY:
-                const_value = parsed_equations[0].subs(T, temp_points[0])
+                const_value = parsed_equations[0].subs(T_new, temp_points[0])
+                print("Lower constant value:", const_value)
                 conditions.append((const_value, T < temp_points[0]))
                 logger.debug("Added lower constant boundary: value=%.3f at T<%.1f",
                              float(const_value), temp_points[0])

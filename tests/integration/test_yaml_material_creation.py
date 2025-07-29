@@ -8,27 +8,32 @@ from pymatlib.parsing.api import create_material, get_supported_properties
 class TestYAMLMaterialCreation:
     """Integration tests for creating materials from YAML files."""
     @pytest.fixture
-    def temp_symbol(self):
-        """Temperature symbol for testing."""
-        return sp.Symbol('T')
+    def aluminum_temp_symbol(self):
+        """Temperature symbol for aluminum testing."""
+        return sp.Symbol('T_Al')
+
+    @pytest.fixture
+    def steel_temp_symbol(self):
+        """Temperature symbol for steel testing."""
+        return sp.Symbol('T_SS')
 
     @pytest.fixture
     def aluminum_yaml_path(self):
         """Path to aluminum YAML file."""
         current_file = Path(__file__)
-        return current_file.parent.parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
+        return current_file.parent.parent.parent / "tests"/ "Al.yaml"
 
     @pytest.fixture
     def steel_yaml_path(self):
         """Path to steel YAML file."""
         current_file = Path(__file__)
-        return current_file.parent.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+        return current_file.parent.parent.parent / "tests" / "SS.yaml"
 
-    def test_aluminum_material_creation(self, aluminum_yaml_path, temp_symbol):
+    def test_aluminum_material_creation(self, aluminum_yaml_path, aluminum_temp_symbol):
         """Test aluminum material creation from YAML."""
         if not aluminum_yaml_path.exists():
             pytest.skip(f"Aluminum YAML file not found: {aluminum_yaml_path}")
-        mat_Al = create_material(yaml_path=aluminum_yaml_path, T=temp_symbol, enable_plotting=False)
+        mat_Al = create_material(yaml_path=aluminum_yaml_path, T=aluminum_temp_symbol, enable_plotting=False)
         # Basic material verification
         assert mat_Al.name == "Aluminum"
         assert mat_Al.material_type == "pure_metal"
@@ -42,11 +47,11 @@ class TestYAMLMaterialCreation:
         assert melting_temp > 0
         assert boiling_temp > melting_temp
 
-    def test_steel_material_creation(self, steel_yaml_path, temp_symbol):
+    def test_steel_material_creation(self, steel_yaml_path, steel_temp_symbol):
         """Test steel material creation from YAML."""
         if not steel_yaml_path.exists():
             pytest.skip(f"Steel YAML file not found: {steel_yaml_path}")
-        mat_steel = create_material(yaml_path=steel_yaml_path, T=temp_symbol, enable_plotting=False)
+        mat_steel = create_material(yaml_path=steel_yaml_path, T=steel_temp_symbol, enable_plotting=False)
         # Basic material verification
         assert "Steel" in mat_steel.name or "1.4301" in mat_steel.name
         assert mat_steel.material_type == "alloy"
@@ -59,11 +64,11 @@ class TestYAMLMaterialCreation:
         assert solidus_temp > 0
         assert liquidus_temp > solidus_temp
 
-    def test_material_property_evaluation(self, aluminum_yaml_path, temp_symbol):
+    def test_material_property_evaluation(self, aluminum_yaml_path, aluminum_temp_symbol):
         """Test material property evaluation at specific temperatures."""
         if not aluminum_yaml_path.exists():
             pytest.skip(f"Aluminum YAML file not found: {aluminum_yaml_path}")
-        mat_Al = create_material(yaml_path=aluminum_yaml_path, T=temp_symbol, enable_plotting=False)
+        mat_Al = create_material(yaml_path=aluminum_yaml_path, T=aluminum_temp_symbol, enable_plotting=False)
         # Test property evaluation if properties exist
         test_temp = 300.0
         valid_properties = get_supported_properties()
@@ -72,7 +77,7 @@ class TestYAMLMaterialCreation:
                 prop_value = getattr(mat_Al, prop_name)
                 if isinstance(prop_value, sp.Expr):
                     try:
-                        numerical_value = float(prop_value.subs(temp_symbol, test_temp))
+                        numerical_value = float(prop_value.subs(aluminum_temp_symbol, test_temp))
                         assert isinstance(numerical_value, float)
                         assert not sp.nan(numerical_value)
                     except (TypeError, ValueError):
@@ -83,11 +88,11 @@ class TestYAMLMaterialCreation:
                         except:
                             pass  # Skip if can't evaluate
 
-    def test_comprehensive_material_properties(self, aluminum_yaml_path, temp_symbol):
+    def test_comprehensive_material_properties(self, aluminum_yaml_path, aluminum_temp_symbol):
         """Test comprehensive material property evaluation."""
         if not aluminum_yaml_path.exists():
             pytest.skip(f"Aluminum YAML file not found: {aluminum_yaml_path}")
-        mat_Al = create_material(yaml_path=aluminum_yaml_path, T=temp_symbol, enable_plotting=False)
+        mat_Al = create_material(yaml_path=aluminum_yaml_path, T=aluminum_temp_symbol, enable_plotting=False)
         test_temp = 300.0
         # Test all properties that exist on the material
         for attr_name in dir(mat_Al):
@@ -98,7 +103,7 @@ class TestYAMLMaterialCreation:
                     attr_value = getattr(mat_Al, attr_name)
                     if isinstance(attr_value, sp.Expr):
                         try:
-                            numerical_value = float(attr_value.subs(temp_symbol, test_temp))
+                            numerical_value = float(attr_value.subs(aluminum_temp_symbol, test_temp))
                             assert isinstance(numerical_value, float)
                             assert not sp.isnan(numerical_value)
                         except (TypeError, ValueError):

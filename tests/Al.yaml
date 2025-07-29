@@ -70,7 +70,7 @@ properties:
   
   heat_conductivity:
     temperature: [300, 1700, 3000]         # Three breakpoints define two ranges
-    equation: [0.0124137215440647*T_Al + 13.0532171803243, 0.0124137215440647*T_Al-1 + 13.0532171803243]
+    equation: [0.0124137215440647*T_Al + 13.0532171803243, 0.0124137215440647*T_Al + 13.0532171803243]
     # Equation 1: 500-1700K, Equation 2: 1700-3000K
     bounds: [constant, constant]
     regression:

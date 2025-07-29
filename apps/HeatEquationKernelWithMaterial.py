@@ -22,6 +22,9 @@ with SourceFileGenerator() as sfg:
     data_type = "float64"
 
     u, u_tmp = ps.fields(f"u, u_tmp: {data_type}[2D]", layout='fzyx')
+    print(f"u: {u}, type = {type(u)}")
+    print(f"u.center: {u.center}, type = {type(u.center)}")
+    print(f"{u.center().name=}, type = {type(u.center())}")
     thermal_diffusivity_symbol = sp.Symbol("thermal_diffusivity")
     thermal_diffusivity_field = ps.fields(f"thermal_diffusivity_field: {data_type}[2D]", layout='fzyx')
     dx, dt = sp.Symbol("dx"), sp.Symbol("dt")
@@ -33,12 +36,13 @@ with SourceFileGenerator() as sfg:
     heat_pde_discretized = heat_pde_discretized.args[1] + heat_pde_discretized.args[0].simplify()
 
     yaml_path = Path(__file__).parent / '1.4301_HeatEquationKernelWithMaterial.yaml'
-    yaml_path_Al = Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
-    yaml_path_SS304L = Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+    # yaml_path_Al = Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
+    # yaml_path_SS304L = Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
     mat = create_material(yaml_path=yaml_path, T=u.center(), enable_plotting=True)
-    mat_Al = create_material(yaml_path=yaml_path_Al, T=u.center(), enable_plotting=True)
-    mat_SS304L = create_material(yaml_path=yaml_path_SS304L, T=u.center(), enable_plotting=True)
+    mat = create_material(yaml_path=yaml_path, T={'T': sp.Symbol('u_C'), 'p': sp.Symbol('p_C')}, enable_plotting=True)
+    # mat_Al = create_material(yaml_path=yaml_path_Al, T=u.center(), enable_plotting=True)
+    # mat_SS304L = create_material(yaml_path=yaml_path_SS304L, T=u.center(), enable_plotting=True)
 
     print(f"Energy density function: {mat.energy_density}")
     print(f"Type: {type(mat.energy_density)}")

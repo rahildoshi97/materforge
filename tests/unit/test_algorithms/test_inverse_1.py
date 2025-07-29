@@ -7,11 +7,11 @@ from pymatlib.parsing.api import create_material
 
 logger = logging.getLogger(__name__)
 
-T = sp.Symbol('T')
+T = sp.Symbol('T_SS')
 E = sp.Symbol('E')
 
 current_file = Path(__file__)
-yaml_path = current_file.parent.parent.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+yaml_path = current_file.parent.parent.parent / "SS.yaml"
 ss316l = create_material(yaml_path=yaml_path, T=T, enable_plotting=True)
 
 # Display the energy density function
@@ -223,10 +223,10 @@ def test_with_real_material():
     print("Testing with Real SS316L Material")
     print("=" * 50)
     # Create material with consistent symbol
-    T = sp.Symbol('T')
+    T = sp.Symbol('T_SS')
     E = sp.Symbol('E')
     current_file = Path(__file__)
-    yaml_path = current_file.parent.parent.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+    yaml_path = current_file.parent.parent.parent / "SS.yaml"
     ss316l = create_material(yaml_path=yaml_path, T=T, enable_plotting=True)
     print(f"Energy Density Function: {ss316l.energy_density}")
     # Create inverter

@@ -93,10 +93,31 @@ class DependencyProcessor:
         """Parse and process a mathematical expression string into a SymPy expression."""
         try:
             logger.debug(f"Parsing expression for '{prop_name}': {expression}")
-            T_standard = sp.Symbol('T')
+            # T_symbol_str = str(T)
+            T_symbol_str = T.name
+            # T_standard = sp.Symbol('T')
             sympy_expr = sp.sympify(expression, evaluate=False)
+            # Validate that temperature symbols match between YAML and API
+            for symbol in sympy_expr.free_symbols:
+                # symbol_str = str(symbol)
+                symbol_str = symbol.name
+                # Check if this might be a temperature symbol that doesn't match
+                if symbol_str != T_symbol_str and symbol_str not in self.properties and not hasattr(material, symbol_str):
+                    # This could be a temperature symbol mismatch - provide helpful error
+                    if any(temp_like in symbol_str.lower() for temp_like in ['t', 'temp', 'temperature']):
+                        raise ValueError(
+                            f"Temperature symbol mismatch in property '{prop_name}':\n"
+                            f"  • Found in YAML equation: '{symbol_str}'\n"
+                            f"  • Expected from Python API: '{T_symbol_str}'\n\n"
+                            f"To fix this, you can either:\n"
+                            f"  1. Update your YAML equation '{expression}' to use '{T_symbol_str}' instead of '{symbol_str}'\n"
+                            f"  2. Change your Python API call to use symbol '{symbol_str}' instead of '{T_symbol_str}'\n\n"
+                            f"Example fixes:\n"
+                            f"  • YAML: Replace '{symbol_str}' with '{T_symbol_str}' in the equation\n"
+                            f"  • Python: Use sp.Symbol('{symbol_str}') when calling the method"
+                        )
             # Extract dependencies
-            dependencies = [str(symbol) for symbol in sympy_expr.free_symbols if str(symbol) != 'T']
+            dependencies = [str(symbol) for symbol in sympy_expr.free_symbols if str(symbol) != T_symbol_str]  # check symbol(YAML config) == symbol(Python API)
             if dependencies:
                 logger.debug(f"Property '{prop_name}' depends on: {dependencies}")
                 # Check for missing dependencies
@@ -138,10 +159,10 @@ class DependencyProcessor:
                     raise ValueError(f"Symbol '{dep}' not found in symbol registry")
                 substitutions[dep_symbol] = dep_value
             # Handle temperature substitution based on type
-            if isinstance(T, sp.Symbol):  # If T is a symbolic variable, substitute the standard 'T' with it
+            """if isinstance(T, sp.Symbol):  # If T is a symbolic variable, substitute the standard 'T' with it
                 substitutions[T_standard] = T
             else:  # For numeric T, substitute with the value directly
-                substitutions[T_standard] = T
+                substitutions[T_standard] = T"""
             # Perform substitution and evaluate integrals
             result_expr = sympy_expr.subs(substitutions)
             if isinstance(result_expr, sp.Integral):

@@ -2,6 +2,7 @@
 
 import pytest
 import tempfile
+import sympy as sp
 from ruamel.yaml import YAML
 from pathlib import Path
 
@@ -9,13 +10,12 @@ from pymatlib.parsing.api import create_material
 
 class TestEndToEnd:
     """End-to-end integration tests."""
-    def test_create_aluminum_material_from_existing_yaml(self, temp_symbol):
+    def test_create_aluminum_material_from_existing_yaml(self, temp_symbol=sp.Symbol('T_Al')):
         """Test material creation from existing aluminum YAML file."""
         # Try multiple possible paths for the aluminum YAML file
         possible_paths = [
-            Path("src/pymatlib/data/materials/pure_metals/Al/Al.yaml"),
-            Path("../src/pymatlib/data/materials/pure_metals/Al/Al.yaml"),
-            Path("pymatlib/data/materials/pure_metals/Al/Al.yaml"),
+            Path("tests/Al.yaml"),
+            Path("../tests/Al.yaml"),
         ]
         aluminum_yaml_path = None
         for path in possible_paths:
@@ -48,13 +48,12 @@ class TestEndToEnd:
             density_value = float(material.density)
         assert density_value > 0
 
-    def test_create_steel_material_from_existing_yaml(self, temp_symbol):
+    def test_create_steel_material_from_existing_yaml(self, temp_symbol=sp.Symbol('T_SS')):
         """Test material creation from existing steel YAML file."""
         # Try multiple possible paths for the steel YAML file
         possible_paths = [
-            Path("src/pymatlib/data/materials/alloys/1.4301/1.4301.yaml"),
-            Path("../src/pymatlib/data/materials/alloys/1.4301/1.4301.yaml"),
-            Path("pymatlib/data/materials/alloys/1.4301/1.4301.yaml"),
+            Path("tests/SS.yaml"),
+            Path("../tests/SS.yaml"),
         ]
         steel_yaml_path = None
         for path in possible_paths:

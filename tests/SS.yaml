@@ -76,7 +76,7 @@ properties:
   # ====================================================================================================
 
   heat_capacity:
-    file_path: ./1.4301.xlsx               # Relative path from YAML file location
+    file_path: ./SS.xlsx               # Relative path from YAML file location
     temperature_column: T (K)              # Column name for temperature data
     property_column: Specific heat (J/(Kg K)) # Column name for property data
     bounds: [constant, constant]           # Required boundary behavior
@@ -86,7 +86,7 @@ properties:
       segments: 4                          # Divide into 4 piecewise segments
 
   density:
-    file_path: ./1.4301.xlsx
+    file_path: ./SS.xlsx
     temperature_column: T (K)
     property_column: Density (kg/(m)^3)
     bounds: [constant, constant]
