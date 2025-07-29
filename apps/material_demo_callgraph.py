@@ -64,7 +64,7 @@ def create_robust_inverse_visualization():
         for yaml_path in yaml_paths:
             if yaml_path.exists():
                 try:
-                    mat = create_material(yaml_path=yaml_path, T=T, enable_plotting=False)
+                    mat = create_material(yaml_path=yaml_path, dependency=T, enable_plotting=False)
                     print(f"Created material: {mat.name}")
 
                     if hasattr(mat, 'energy_density'):
@@ -152,7 +152,7 @@ def create_heat_equation_workflow_visualization():
 
         if yaml_path.exists():
             try:
-                mat = create_material(yaml_path=yaml_path, T=u.center(), enable_plotting=False)
+                mat = create_material(yaml_path=yaml_path, dependency=u.center(), enable_plotting=False)
                 print(f"Created material for heat equation: {mat.name}")
 
                 # Test inverse function creation (Method 2)

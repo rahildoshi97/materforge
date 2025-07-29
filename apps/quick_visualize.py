@@ -72,7 +72,7 @@ def test_material_with_energy_density():
     for yaml_path in yaml_paths:
         if yaml_path.exists():
             try:
-                mat = create_material(yaml_path=yaml_path, T=T, enable_plotting=False)
+                mat = create_material(yaml_path=yaml_path, dependency=T, enable_plotting=False)
                 has_energy = analyze_material_properties(mat)
                 if has_energy:
                     materials_with_energy.append(mat)
@@ -139,7 +139,7 @@ def test_heat_equation_workflow():
 
     if yaml_path.exists():
         try:
-            mat = create_material(yaml_path=yaml_path, T=u.center(), enable_plotting=False)
+            mat = create_material(yaml_path=yaml_path, dependency=u.center(), enable_plotting=False)
             print(f"✓ Created material: {mat.name}")
 
             if hasattr(mat, 'energy_density') and mat.energy_density is not None:
