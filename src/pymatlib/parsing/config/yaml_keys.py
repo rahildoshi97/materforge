@@ -17,6 +17,9 @@ PROPERTY_COLUMN_KEY = "property_column"
 TEMPERATURE_COLUMN_KEY = "temperature_column"
 TEMPERATURE_KEY = "temperature"
 
+# Generic dependency keys
+DEPENDENCY_KEY = "dependency"  # Generic dependency key for legacy format
+
 # Value and equation keys
 VALUE_KEY = "value"
 EQUATION_KEY = "equation"
