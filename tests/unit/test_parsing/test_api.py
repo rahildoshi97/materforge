@@ -38,7 +38,7 @@ properties:
     def test_create_material_file_not_found(self):
         """Test error handling for missing files."""
         with pytest.raises(FileNotFoundError):
-            create_material("nonexistent.yaml", 500.0)
+            create_material("nonexistent.yaml", sp.Symbol('T'), enable_plotting=False)
 
     def test_create_material_invalid_yaml(self):
         """Test error handling for invalid YAML."""
