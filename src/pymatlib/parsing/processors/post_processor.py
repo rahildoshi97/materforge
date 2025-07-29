@@ -82,8 +82,8 @@ class PropertyPostProcessor:
         try:
             temp_array = TemperatureResolver.extract_from_config(prop_config, material)
         except Exception as e:
-            logger.error(f"Failed to extract temperature array for {prop_name}: {e}", exc_info=True)
-            raise ValueError(f"Failed to extract temperature array for {prop_name}: {str(e)}") from e
+            logger.error(f"Failed to extract dependency array for {prop_name}: {e}", exc_info=True)
+            raise ValueError(f"Failed to extract dependency array for {prop_name}: {str(e)}") from e
         # Validate and convert temp_array
         if isinstance(temp_array, str):
             raise ValueError(f"Temperature array for {prop_name} is a string: '{temp_array}'. Expected numpy array.")

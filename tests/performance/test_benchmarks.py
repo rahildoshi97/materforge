@@ -130,7 +130,7 @@ class TestPerformance:
             'properties': {
                 'density': 7850.0,
                 'heat_capacity': {
-                    'temperature': list(range(300, 1501, 50)),  # Many points
+                    'dependency': list(range(300, 1501, 50)),  # Many points
                     'value': [500 + i*0.1 for i in range(300, 1501, 50)],
                     'bounds': ['constant', 'constant']
                 }

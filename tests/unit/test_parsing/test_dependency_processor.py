@@ -94,7 +94,7 @@ class TestDependencyProcessor:
             'volume': 0.001,
             'mass': {
                 'equation': 'density * volume',
-                'temperature': [300, 400, 500]
+                'dependency': [300, 400, 500]
             }
         }
         processed_properties = {'density', 'volume'}
@@ -118,7 +118,7 @@ class TestDependencyProcessor:
         properties = {
             'mass': {
                 'equation': 'density * volume',  # density and volume not defined
-                'temperature': [300, 400, 500]
+                'dependency': [300, 400, 500]
             }
         }
         processed_properties = set()
@@ -144,11 +144,11 @@ class TestDependencyProcessor:
             'density': 2700.0,
             'specific_volume': {
                 'equation': '1 / density',
-                'temperature': [300, 400, 500]
+                'dependency': [300, 400, 500]
             },
             'normalized_volume': {
                 'equation': 'specific_volume * 1000',
-                'temperature': [300, 400, 500]
+                'dependency': [300, 400, 500]
             }
         }
         processed_properties = {'density'}
@@ -180,7 +180,7 @@ class TestDependencyProcessor:
             'heat_capacity': 900.0,
             'thermal_mass': {
                 'equation': 'density * heat_capacity',
-                'temperature': [300, 400, 500]
+                'dependency': [300, 400, 500]
             }
         }
         processed_properties = {'density', 'heat_capacity'}
@@ -205,7 +205,7 @@ class TestDependencyProcessor:
         properties = {
             'test_property': {
                 'equation': 'melting_temperature * 2',
-                'temperature': [300, 400, 500]
+                'dependency': [300, 400, 500]
             }
         }
         processed_properties = set()

@@ -21,12 +21,12 @@ class TestMaterialCreation:
             'properties': {
                 'density': 4506.0,
                 'heat_capacity': {
-                    'temperature': [300, 600, 900, 1200],
+                    'dependency': [300, 600, 900, 1200],
                     'value': [523, 565, 590, 615],
                     'bounds': ['constant', 'constant']
                 },
                 'heat_conductivity': {
-                    'temperature': [300, 600, 900],
+                    'dependency': [300, 600, 900],
                     'value': [21.9, 24.5, 27.1],
                     'bounds': ['extrapolate', 'extrapolate']
                 }
@@ -83,12 +83,12 @@ class TestMaterialCreation:
             'properties': {
                 'density': 8220.0,
                 'heat_capacity': {
-                    'temperature': [300, 600, 900, 1200, 1500],
+                    'dependency': [300, 600, 900, 1200, 1500],
                     'value': [435, 485, 520, 555, 590],
                     'bounds': ['constant', 'constant']
                 },
                 'heat_conductivity': {
-                    'temperature': [300, 600, 900],
+                    'dependency': [300, 600, 900],
                     'equation': ['211000 - 45*T', '180000 - 20*T'],
                     'bounds': ['constant', 'extrapolate']
                 }

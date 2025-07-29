@@ -25,7 +25,7 @@ class TestLoadPropertyData:
         try:
             config = {
                 'file_path': str(csv_path),
-                'temperature_column': 'Temperature',
+                'dependency_column': 'Temperature',
                 'property_column': 'Property'
             }
             temp_array, prop_array = load_property_data(config)
@@ -48,7 +48,7 @@ class TestLoadPropertyData:
             df.to_excel(excel_path, index=False)
             config = {
                 'file_path': str(excel_path),
-                'temperature_column': 'Temp',
+                'dependency_column': 'Temp',
                 'property_column': 'Value'
             }
             temp_array, prop_array = load_property_data(config)
@@ -61,7 +61,7 @@ class TestLoadPropertyData:
         """Test error handling for missing files."""
         config = {
             'file_path': 'nonexistent.csv',
-            'temperature_column': 'Temperature',
+            'dependency_column': 'Temperature',
             'property_column': 'Property'
         }
         with pytest.raises(FileNotFoundError):
@@ -74,7 +74,7 @@ class TestLoadPropertyData:
         try:
             config = {
                 'file_path': str(xyz_path),
-                'temperature_column': 'Temperature',
+                'dependency_column': 'Temperature',
                 'property_column': 'Property'
             }
             with pytest.raises(ValueError, match="Unsupported file type"):
@@ -95,7 +95,7 @@ class TestLoadPropertyData:
         try:
             config = {
                 'file_path': str(csv_path),
-                'temperature_column': 'Temperature',
+                'dependency_column': 'Temperature',
                 'property_column': 'Property'
             }
             temp_array, prop_array = load_property_data(config)
@@ -118,7 +118,7 @@ class TestLoadPropertyData:
         try:
             config = {
                 'file_path': str(csv_path),
-                'temperature_column': 'NonexistentColumn',
+                'dependency_column': 'NonexistentColumn',
                 'property_column': 'Property'
             }
             with pytest.raises(ValueError, match="not found"):
@@ -134,7 +134,7 @@ class TestLoadPropertyData:
         try:
             config = {
                 'file_path': f.name,
-                'temperature_column': 'Temperature',
+                'dependency_column': 'Temperature',
                 'property_column': 'Property'
             }
             with pytest.raises(ValueError, match="empty|No data"):
@@ -205,7 +205,7 @@ class TestConfigValidation:
         """Test error handling for missing configuration keys."""
         config = {
             'file_path': 'test.csv',
-            # Missing temperature_column and property_column
+            # Missing dependency_column and property_column
         }
         with pytest.raises(ValueError, match="Missing required configuration keys"):
             load_property_data(config)
@@ -214,7 +214,7 @@ class TestConfigValidation:
         """Test error handling for empty file path."""
         config = {
             'file_path': '',
-            'temperature_column': 'Temperature',
+            'dependency_column': 'Temperature',
             'property_column': 'Property'
         }
         with pytest.raises(ValueError, match="File path cannot be empty"):

@@ -50,7 +50,7 @@ class TestRegressionSuite:
             'boiling_temperature': 2792.0,
             'properties': {
                 'heat_capacity': {
-                    'temperature': [300, 600, 900],
+                    'dependency': [300, 600, 900],
                     'value': [900, 950, 1000],
                     'bounds': ['constant', 'constant']
                 }
@@ -110,7 +110,7 @@ class TestRegressionSuite:
             'boiling_temperature': 3134.0,
             'properties': {
                 'thermal_expansion_coefficient': {
-                    'temperature': [300, 600, 900],
+                    'dependency': [300, 600, 900],
                     'value': [1.2e-5, 1.4e-5, 1.6e-5],
                     'bounds': ['constant', 'constant']
                 }

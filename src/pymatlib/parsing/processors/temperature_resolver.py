@@ -97,13 +97,13 @@ class TemperatureResolver:
                 temp_array, _ = load_property_data(prop_config)
                 return temp_array
             except Exception as e:
-                raise ValueError(f"Failed to extract temperature array from file: {str(e)}") from e
+                raise ValueError(f"Failed to extract dependency array from file: {str(e)}") from e
         # Handle properties with explicit temperature definitions
         if X_DATA_KEY in prop_config:
             temp_def = prop_config[X_DATA_KEY]
             n_values = len(prop_config[VALUE_KEY]) if VALUE_KEY in prop_config else None
             return TemperatureResolver.resolve_temperature_definition(temp_def, n_values, material)
-        raise ValueError("Cannot extract temperature array: no temperature information in config")
+        raise ValueError("Cannot extract dependency array: no dependency information in config")
 
     # --- Temperature Reference Resolution ---
     @staticmethod

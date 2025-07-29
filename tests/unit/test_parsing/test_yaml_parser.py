@@ -86,7 +86,7 @@ class TestMaterialYAMLParser:
             'properties': {
                 'density': 8960.0,
                 'heat_capacity': {
-                    'temperature': [300, 600, 900],
+                    'dependency': [300, 600, 900],
                     'value': [385, 420, 455],
                     'bounds': ['constant', 'constant']
                 }
@@ -99,7 +99,7 @@ class TestMaterialYAMLParser:
         try:
             T = sp.Symbol('T')
             parser = MaterialYAMLParser(yaml_path)
-            material = parser.create_material(T=T, enable_plotting=False)
+            material = parser.create_material(dependency=T, enable_plotting=False)
             assert material.name == "Parser Test Material"
             assert material.material_type == "pure_metal"
             assert len(material.elements) == 1

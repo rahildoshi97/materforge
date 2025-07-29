@@ -38,7 +38,7 @@ def test_basic_material_creation():
     # Test aluminum material creation if file exists
     if yaml_path_Al.exists():
         try:
-            mat_Al = create_material(yaml_path=yaml_path_Al, T=T, enable_plotting=False)
+            mat_Al = create_material(yaml_path=yaml_path_Al, dependency=T, enable_plotting=False)
             assert mat_Al is not None
             assert mat_Al.name == "Aluminum"
             assert mat_Al.material_type == "pure_metal"
@@ -49,7 +49,7 @@ def test_basic_material_creation():
     # Test steel material creation if file exists
     if yaml_path_SS304L.exists():
         try:
-            mat_SS304L = create_material(yaml_path=yaml_path_SS304L, T=T, enable_plotting=False)
+            mat_SS304L = create_material(yaml_path=yaml_path_SS304L, dependency=T, enable_plotting=False)
             assert mat_SS304L is not None
             assert "Steel" in mat_SS304L.name or "1.4301" in mat_SS304L.name
             assert mat_SS304L.material_type == "alloy"

@@ -96,7 +96,7 @@ class TestEndToEnd:
             'properties': {
                 'density': 2700.0,
                 'heat_capacity': {
-                    'temperature': [300, 400, 500],
+                    'dependency': [300, 400, 500],
                     'value': [900, 950, 1000],
                     'bounds': ['constant', 'constant']
                 }
@@ -142,7 +142,7 @@ class TestEndToEnd:
             'properties': {
                 'density': 7850.0,
                 'heat_capacity': {
-                    'temperature': [300, 600, 900, 1200],
+                    'dependency': [300, 600, 900, 1200],
                     'value': [500, 550, 600, 650],
                     'bounds': ['constant', 'constant']
                 }

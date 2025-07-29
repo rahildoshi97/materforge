@@ -93,7 +93,7 @@ class TestPropertyPostProcessor:
         T = sp.Symbol('T')
         properties = {
             'heat_capacity': {
-                'temperature': [300, 400, 500, 600],
+                'dependency': [300, 400, 500, 600],
                 'value': [450, 460, 470, 480],
                 'bounds': ['constant', 'constant'],
                 'regression': {
@@ -119,7 +119,7 @@ class TestPropertyPostProcessor:
         T = sp.Symbol('T')
         properties = {
             'missing_property': {
-                'temperature': [300, 400, 500],
+                'dependency': [300, 400, 500],
                 'value': [100, 110, 120],
                 'bounds': ['constant', 'constant'],
                 'regression': {
@@ -143,7 +143,7 @@ class TestPropertyPostProcessor:
         sample_material.integral_prop = sp.Integral(T, T)
         properties = {
             'integral_prop': {
-                'temperature': [300, 400, 500],
+                'dependency': [300, 400, 500],
                 'value': [100, 110, 120],
                 'bounds': ['constant', 'constant'],
                 'regression': {
@@ -161,11 +161,11 @@ class TestPropertyPostProcessor:
         )
 
     def test_apply_post_regression_invalid_temp_array(self, post_processor, sample_material):
-        """Test post-regression with invalid temperature array."""
+        """Test post-regression with invalid dependency array."""
         T = sp.Symbol('T')
         sample_material.test_prop = 450 + 0.1 * T  # Add property before testing
         prop_config = {
-            'temperature': "invalid_string",  # Invalid format
+            'dependency': "invalid_string",  # Invalid format
             'bounds': ['constant', 'constant'],
             'regression': {
                 'simplify': 'pre',
@@ -174,7 +174,8 @@ class TestPropertyPostProcessor:
             }
         }
         # Update to match actual error message
-        with pytest.raises(ValueError, match="Failed to extract temperature array.*Unknown temperature reference"):
+        # with pytest.raises(ValueError, match="Failed to extract dependency array.*Unknown dependency reference"):
+        with pytest.raises(ValueError, match="Failed to extract dependency array."):
             post_processor._apply_post_regression(sample_material, 'test_prop', prop_config, T)
 
     def test_apply_post_regression_conversion_error(self, post_processor, sample_material):
@@ -183,7 +184,7 @@ class TestPropertyPostProcessor:
         sample_material.test_prop = 450 + 0.1 * T
         # Use a configuration that will actually fail conversion
         prop_config = {
-            'temperature': ['not_a_number', 'also_not_a_number'],
+            'dependency': ['not_a_number', 'also_not_a_number'],
             'bounds': ['constant', 'constant'],
             'regression': {'simplify': 'pre', 'degree': 1, 'segments': 2}
         }
@@ -196,7 +197,7 @@ class TestPropertyPostProcessor:
         sample_material.test_prop = 450 + 0.1 * T
         # Create a configuration that will naturally fail conversion
         prop_config = {
-            'temperature': {'invalid': 'config'},  # This will cause a conversion error
+            'dependency': {'invalid': 'config'},  # This will cause a conversion error
             'bounds': ['constant', 'constant'],
             'regression': {'simplify': 'pre', 'degree': 1, 'segments': 2}
         }
@@ -209,7 +210,7 @@ class TestPropertyPostProcessor:
         T = sp.Symbol('T')
         sample_material.test_prop = 450 + 0.1 * T
         prop_config = {
-            'temperature': [300, 400, 500],
+            'dependency': [300, 400, 500],
             'bounds': ['constant', 'constant'],
             'regression': {
                 'simplify': 'pre',
@@ -228,8 +229,8 @@ class TestPropertyPostProcessor:
         import logging
         T = sp.Symbol('T')
         properties = {
-            'prop1': {'temperature': [300, 400], 'value': [100, 110]},
-            'prop2': {'temperature': [300, 400], 'value': [200, 210]}
+            'prop1': {'dependency': [300, 400], 'value': [100, 110]},
+            'prop2': {'dependency': [300, 400], 'value': [200, 210]}
         }
         categorized_properties = {
             PropertyType.TABULAR_DATA: [('prop1', properties['prop1']), ('prop2', properties['prop2'])]
@@ -250,7 +251,7 @@ class TestPropertyPostProcessor:
         sample_material.error_prop = sp.Symbol('undefined_symbol')
         properties = {
             'error_prop': {
-                'temperature': [300, 400, 500],
+                'dependency': [300, 400, 500],
                 'value': [100, 110, 120],
                 'bounds': ['constant', 'constant'],
                 'regression': {

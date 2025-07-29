@@ -28,7 +28,7 @@ class TestYAMLMaterialCreation:
         """Test aluminum material creation from YAML."""
         if not aluminum_yaml_path.exists():
             pytest.skip(f"Aluminum YAML file not found: {aluminum_yaml_path}")
-        mat_Al = create_material(yaml_path=aluminum_yaml_path, T=temp_symbol, enable_plotting=False)
+        mat_Al = create_material(yaml_path=aluminum_yaml_path, dependency=temp_symbol, enable_plotting=False)
         # Basic material verification
         assert mat_Al.name == "Aluminum"
         assert mat_Al.material_type == "pure_metal"
@@ -46,7 +46,7 @@ class TestYAMLMaterialCreation:
         """Test steel material creation from YAML."""
         if not steel_yaml_path.exists():
             pytest.skip(f"Steel YAML file not found: {steel_yaml_path}")
-        mat_steel = create_material(yaml_path=steel_yaml_path, T=temp_symbol, enable_plotting=False)
+        mat_steel = create_material(yaml_path=steel_yaml_path, dependency=temp_symbol, enable_plotting=False)
         # Basic material verification
         assert "Steel" in mat_steel.name or "1.4301" in mat_steel.name
         assert mat_steel.material_type == "alloy"
@@ -63,7 +63,7 @@ class TestYAMLMaterialCreation:
         """Test material property evaluation at specific temperatures."""
         if not aluminum_yaml_path.exists():
             pytest.skip(f"Aluminum YAML file not found: {aluminum_yaml_path}")
-        mat_Al = create_material(yaml_path=aluminum_yaml_path, T=temp_symbol, enable_plotting=False)
+        mat_Al = create_material(yaml_path=aluminum_yaml_path, dependency=temp_symbol, enable_plotting=False)
         # Test property evaluation if properties exist
         test_temp = 300.0
         valid_properties = get_supported_properties()
@@ -87,7 +87,7 @@ class TestYAMLMaterialCreation:
         """Test comprehensive material property evaluation."""
         if not aluminum_yaml_path.exists():
             pytest.skip(f"Aluminum YAML file not found: {aluminum_yaml_path}")
-        mat_Al = create_material(yaml_path=aluminum_yaml_path, T=temp_symbol, enable_plotting=False)
+        mat_Al = create_material(yaml_path=aluminum_yaml_path, dependency=temp_symbol, enable_plotting=False)
         test_temp = 300.0
         # Test all properties that exist on the material
         for attr_name in dir(mat_Al):

@@ -12,7 +12,7 @@ E = sp.Symbol('E')
 
 current_file = Path(__file__)
 yaml_path = current_file.parent.parent.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
-ss316l = create_material(yaml_path=yaml_path, T=T, enable_plotting=True)
+ss316l = create_material(yaml_path=yaml_path, dependency=T, enable_plotting=True)
 
 # Display the energy density function
 print(f"Energy Density Function: {ss316l.energy_density}")
@@ -227,7 +227,7 @@ def test_with_real_material():
     E = sp.Symbol('E')
     current_file = Path(__file__)
     yaml_path = current_file.parent.parent.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
-    ss316l = create_material(yaml_path=yaml_path, T=T, enable_plotting=True)
+    ss316l = create_material(yaml_path=yaml_path, dependency=T, enable_plotting=True)
     print(f"Energy Density Function: {ss316l.energy_density}")
     # Create inverter
     inverter = PiecewiseInverter()

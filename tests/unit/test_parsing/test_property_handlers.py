@@ -62,7 +62,7 @@ class TestKeyValPropertyHandler:
             boiling_temperature=sp.Float(2792.0)
         )
         config = {
-            'temperature': [300, 400, 500],
+            'dependency': [300, 400, 500],
             'value': [900, 950, 1000],
             'bounds': ['constant', 'constant']
         }
@@ -89,7 +89,7 @@ class TestStepFunctionPropertyHandler:
             boiling_temperature=sp.Float(2792.0)
         )
         config = {
-            'temperature': 'melting_temperature',
+            'dependency': 'melting_temperature',
             'value': [100.0, 200.0]
         }
         handler = StepFunctionPropertyHandler()
@@ -117,7 +117,7 @@ class TestPiecewiseEquationPropertyHandler:
             boiling_temperature=sp.Float(2792.0)
         )
         config = {
-            'temperature': [300, 500, 700],
+            'dependency': [300, 500, 700],
             'equation': ['2*T + 100', '3*T - 200'],
             'bounds': ['constant', 'constant']
         }
@@ -159,7 +159,7 @@ class TestFilePropertyHandler:
         try:
             config = {
                 'file_path': csv_path.name,
-                'temperature_column': 'temperature',
+                'dependency_column': 'temperature',
                 'property_column': 'heat_capacity',
                 'bounds': ['constant', 'constant']
             }

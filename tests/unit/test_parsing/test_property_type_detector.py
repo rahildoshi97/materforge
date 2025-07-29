@@ -8,11 +8,11 @@ class TestPropertyTypeDetector:
     @pytest.mark.parametrize("config,expected_type", [
         (5.0, PropertyType.CONSTANT_VALUE),
         ("2.5", PropertyType.CONSTANT_VALUE),
-        ({"file_path": "data.csv", "temperature_header": "T", "value_header": "rho", "bounds": ["constant", "constant"]}, PropertyType.FILE_IMPORT),
-        ({"temperature": "melting_temperature", "value": [900, 1000]}, PropertyType.STEP_FUNCTION),
-        ({"temperature": [300, 400, 500], "value": [900, 950, 1000]}, PropertyType.TABULAR_DATA),
-        ({"temperature": [300, 400, 500], "equation": ["2*T + 100", "3*T - 50"], "bounds": ["constant", "constant"]}, PropertyType.PIECEWISE_EQUATION),
-        ({"temperature": [300, 400, 500], "equation": "density * heat_capacity"}, PropertyType.COMPUTED_PROPERTY),
+        ({"file_path": "data.csv", "dependency_header": "T", "value_header": "rho", "bounds": ["constant", "constant"]}, PropertyType.FILE_IMPORT),
+        ({"dependency": "melting_temperature", "value": [900, 1000]}, PropertyType.STEP_FUNCTION),
+        ({"dependency": [300, 400, 500], "value": [900, 950, 1000]}, PropertyType.TABULAR_DATA),
+        ({"dependency": [300, 400, 500], "equation": ["2*T + 100", "3*T - 50"], "bounds": ["constant", "constant"]}, PropertyType.PIECEWISE_EQUATION),
+        ({"dependency": [300, 400, 500], "equation": "density * heat_capacity"}, PropertyType.COMPUTED_PROPERTY),
     ])
     def test_determine_property_type(self, config, expected_type):
         """Test property type detection for various configurations."""
@@ -49,7 +49,7 @@ class TestPropertyTypeDetector:
     def test_validate_step_function_invalid_values(self):
         """Test validation of step function with invalid values."""
         config = {
-            "temperature": "melting_temperature",
+            "dependency": "melting_temperature",
             "value": [900]  # Should have exactly 2 values
         }
         with pytest.raises(ValueError, match="must be a list of exactly two numbers"):
