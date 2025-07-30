@@ -2,7 +2,7 @@
 
 import pytest
 import sympy as sp
-from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
+from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 class TestPiecewiseInverter:
     """Test cases for PiecewiseInverter."""
@@ -73,7 +73,7 @@ class TestPiecewiseInverter:
 
     def test_create_energy_density_inverse(self, sample_aluminum_element):
         """Test creating energy density inverse for a material."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",

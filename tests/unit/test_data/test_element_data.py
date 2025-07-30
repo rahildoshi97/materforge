@@ -1,8 +1,8 @@
 """Unit tests for element data."""
 
 import pytest
-from pymatlib.data.elements.element_data import element_map, get_element
-from pymatlib.core.elements import ChemicalElement
+from materforge.data.elements.element_data import element_map, get_element
+from materforge.core.elements import ChemicalElement
 
 class TestElementData:
     """Test cases for element data."""

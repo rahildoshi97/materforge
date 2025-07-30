@@ -5,8 +5,8 @@ from pathlib import Path
 from pystencilssfg import SourceFileGenerator
 from walberla.codegen import Sweep
 
-from pymatlib.parsing.api import create_material
-from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
+from materforge.parsing.api import create_material
+from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 logging.basicConfig(
     level=logging.WARNING,  # DEBUG/INFO/WARNING/ERROR/CRITICAL
@@ -33,8 +33,8 @@ with SourceFileGenerator() as sfg:
     heat_pde_discretized = heat_pde_discretized.args[1] + heat_pde_discretized.args[0].simplify()
 
     yaml_path = Path(__file__).parent / '1.4301_HeatEquationKernelWithMaterial.yaml'
-    yaml_path_Al = Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
-    yaml_path_SS304L = Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+    yaml_path_Al = Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
+    yaml_path_SS304L = Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
     mat = create_material(yaml_path=yaml_path, dependency=u.center(), enable_plotting=True)
     mat_Al = create_material(yaml_path=yaml_path_Al, dependency=u.center(), enable_plotting=True)

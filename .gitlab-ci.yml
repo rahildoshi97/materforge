@@ -1,4 +1,4 @@
-# PyMatLib GitLab CI/CD Configuration
+# MaterForge GitLab CI/CD Configuration
 # Optimized for Python library development and comprehensive testing
 
 stages:
@@ -19,7 +19,7 @@ variables:
 
   # Project-specific variables
   PYTHON_VERSION: "3.10"
-  PACKAGE_DIR: "src/pymatlib"
+  PACKAGE_DIR: "src/materforge"
 
 include:
   - template: Jobs/SAST.gitlab-ci.yml
@@ -106,7 +106,7 @@ validate_yaml_files:
     - pip install pytest pytest-cov pytest-xdist numpy sympy matplotlib pyyaml ruamel.yaml pwlf pandas openpyxl scipy
   script:
     # Run all tests except performance tests
-    - pytest tests/ --cov=pymatlib --cov-report=xml --cov-report=term -v -m "not slow"
+    - pytest tests/ --cov=materforge --cov-report=xml --cov-report=term -v -m "not slow"
     - echo "✅ Python tests completed"
   artifacts:
     reports:
@@ -192,7 +192,7 @@ test_material_files:
       python3 -c "
       import sys
       sys.path.append('../src')
-      from pymatlib.parsing.api import create_material, validate_yaml_file
+      from materforge.parsing.api import create_material, validate_yaml_file
       import sympy as sp
 
       # Test YAML validation
@@ -288,11 +288,11 @@ deploy_package_test:
     - pip install dist/*.whl
     - |
       python3 -c "
-      import pymatlib
-      print(f'✅ Package installation successful: {pymatlib.__version__}')
+      import materforge
+      print(f'✅ Package installation successful: {materforge.__version__}')
 
       # Test basic functionality
-      from pymatlib.parsing.api import get_supported_properties
+      from materforge.parsing.api import get_supported_properties
       props = get_supported_properties()
       print(f'✅ Supported properties: {len(props)} properties available')
       "
@@ -329,7 +329,7 @@ manual_full_test_suite:
     - pip install pytest pytest-cov pytest-xdist numpy sympy matplotlib pyyaml ruamel.yaml pwlf pandas openpyxl scipy
   script:
     - echo "Running comprehensive test suite..."
-    - pytest tests/ --cov=pymatlib --cov-report=html --cov-report=term -v --maxfail=5
+    - pytest tests/ --cov=materforge --cov-report=html --cov-report=term -v --maxfail=5
     - echo "✅ Comprehensive testing completed"
   artifacts:
     paths:
@@ -361,7 +361,7 @@ manual_code_quality_check:
 # ================================
 
 cache:
-  key: pymatlib-cache-${CI_COMMIT_REF_SLUG}
+  key: materforge-cache-${CI_COMMIT_REF_SLUG}
   paths:
     - .pip-cache/
     - .pytest_cache/

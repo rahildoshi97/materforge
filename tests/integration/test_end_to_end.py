@@ -5,7 +5,7 @@ import tempfile
 from ruamel.yaml import YAML
 from pathlib import Path
 
-from pymatlib.parsing.api import create_material
+from materforge.parsing.api import create_material
 
 class TestEndToEnd:
     """End-to-end integration tests."""
@@ -13,9 +13,9 @@ class TestEndToEnd:
         """Test material creation from existing aluminum YAML file."""
         # Try multiple possible paths for the aluminum YAML file
         possible_paths = [
-            Path("src/pymatlib/data/materials/pure_metals/Al/Al.yaml"),
-            Path("../src/pymatlib/data/materials/pure_metals/Al/Al.yaml"),
-            Path("pymatlib/data/materials/pure_metals/Al/Al.yaml"),
+            Path("src/materforge/data/materials/pure_metals/Al/Al.yaml"),
+            Path("../src/materforge/data/materials/pure_metals/Al/Al.yaml"),
+            Path("materforge/data/materials/pure_metals/Al/Al.yaml"),
         ]
         aluminum_yaml_path = None
         for path in possible_paths:
@@ -52,9 +52,9 @@ class TestEndToEnd:
         """Test material creation from existing steel YAML file."""
         # Try multiple possible paths for the steel YAML file
         possible_paths = [
-            Path("src/pymatlib/data/materials/alloys/1.4301/1.4301.yaml"),
-            Path("../src/pymatlib/data/materials/alloys/1.4301/1.4301.yaml"),
-            Path("pymatlib/data/materials/alloys/1.4301/1.4301.yaml"),
+            Path("src/materforge/data/materials/alloys/1.4301/1.4301.yaml"),
+            Path("../src/materforge/data/materials/alloys/1.4301/1.4301.yaml"),
+            Path("materforge/data/materials/alloys/1.4301/1.4301.yaml"),
         ]
         steel_yaml_path = None
         for path in possible_paths:

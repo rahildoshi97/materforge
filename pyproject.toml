@@ -3,9 +3,9 @@ requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pymatlib"
+name = "materforge"
 dynamic = ["version"]
-description = "A high-performance Python library for material simulation and analysis with temperature-dependent properties"
+description = "A high-performance Python library for material simulation and analysis"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
@@ -82,26 +82,26 @@ simulation = [
     "pystencils>=1.3.0",
 ]
 all = [
-    "pymatlib[dev,test,docs,performance,simulation]"
+    "materforge[dev,test,docs,performance,simulation]"
 ]
 
 [project.urls]
-Homepage = "https://i10git.cs.fau.de/rahil.doshi/pymatlib"
-Repository = "https://i10git.cs.fau.de/rahil.doshi/pymatlib"
-"Bug Tracker" = "https://i10git.cs.fau.de/rahil.doshi/pymatlib/-/issues"
-Documentation = "https://i10git.cs.fau.de/rahil.doshi/pymatlib/-/wikis/home"
-Changelog = "https://i10git.cs.fau.de/rahil.doshi/pymatlib/-/blob/master/CHANGELOG.md"
+Homepage = "https://i10git.cs.fau.de/rahil.doshi/materforge"
+Repository = "https://i10git.cs.fau.de/rahil.doshi/materforge"
+"Bug Tracker" = "https://i10git.cs.fau.de/rahil.doshi/materforge/-/issues"
+Documentation = "https://i10git.cs.fau.de/rahil.doshi/materforge/-/wikis/home"
+Changelog = "https://i10git.cs.fau.de/rahil.doshi/materforge/-/blob/master/CHANGELOG.md"
 
 [project.scripts]
-pymatlib-validate = "pymatlib.parsing.api:validate_yaml_file"
+materforge-validate = "materforge.parsing.api:validate_yaml_file"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["pymatlib*"]
+include = ["materforge*"]
 exclude = ["tests*", "apps*", "examples*"]
 
 [tool.setuptools.package-data]
-pymatlib = [
+materforge = [
     "data/**/*",
     "data/alloys/**/*",
     "data/pure_metals/**/*",
@@ -116,7 +116,7 @@ pymatlib = [
 
 # Add setuptools_scm configuration for dynamic versioning
 [tool.setuptools_scm]
-write_to = "src/pymatlib/_version.py"
+write_to = "src/materforge/_version.py"
 version_scheme = "python-simplified-semver"
 local_scheme = "node-and-date"
 fallback_version = "0.4.1"
@@ -126,7 +126,7 @@ addopts = [
     "-v",
     "--strict-markers",
     "--strict-config",
-    # "--cov=src/pymatlib",
+    # "--cov=src/materforge",
     # "--cov-report=html:tests/htmlcov",
     # "--cov-report=term-missing",
     # "--cov-fail-under=85",
@@ -154,7 +154,7 @@ filterwarnings = [
 
 # COMPLETELY REMOVED ALL COVERAGE SECTIONS
 # [tool.coverage.run]
-# source = ["pymatlib"]
+# source = ["materforge"]
 # omit = [
 #     "*/tests/*",
 #     "*/test_*",
@@ -219,7 +219,7 @@ use_parentheses = true
 ensure_newline_before_comments = true
 src_paths = ["src", "tests"]
 skip_glob = ["*/_version.py"]
-known_first_party = ["pymatlib"]
+known_first_party = ["materforge"]
 known_third_party = [
     "numpy",
     "sympy",
@@ -267,7 +267,7 @@ module = [
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = "pymatlib._version"
+module = "materforge._version"
 ignore_errors = true
 
 [[tool.mypy.overrides]]

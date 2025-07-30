@@ -1,10 +1,10 @@
-# Material Properties in PyMatLib
+# Material Properties in MaterForge
 
-This document explains the conceptual framework behind temperature-dependent material properties in PyMatLib, how they are represented internally, and the mathematical models used for computed properties.
+This document explains the conceptual framework behind temperature-dependent material properties in MaterForge, how they are represented internally, and the mathematical models used for computed properties.
 
 ## Conceptual Framework
 
-Material properties in PyMatLib are designed around these key principles:
+Material properties in MaterForge are designed around these key principles:
 
 1. **Temperature Dependence**: Most material properties vary with temperature, especially during phase transitions
 2. **Symbolic Representation**: Properties are represented as symbolic expressions for mathematical manipulation
@@ -15,7 +15,7 @@ Material properties in PyMatLib are designed around these key principles:
 
 ### Material Class
 
-At the core of PyMatLib's property system is the `Material` class, which contains:
+At the core of MaterForge's property system is the `Material` class, which contains:
 
 - Basic material information (name, type, composition)
 - Temperature properties (melting/boiling points, solidus/liquidus temperatures)
@@ -47,7 +47,7 @@ Properties are processed through a sophisticated pipeline:
 
 ## Property Definition Methods
 
-pymatlib supports multiple ways to define material properties:
+materforge supports multiple ways to define material properties:
 
 1. Constant Values
 
@@ -122,7 +122,7 @@ Symbolic expressions that reference other material properties with automatic dep
 
 ## Temperature Processing
 
-PyMatLib provides sophisticated temperature definition processing through `TemperatureResolver`:
+MaterForge provides sophisticated temperature definition processing through `TemperatureResolver`:
 
 ### Temperature Definition Formats
 

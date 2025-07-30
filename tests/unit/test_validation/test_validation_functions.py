@@ -1,7 +1,7 @@
 # test_validation_functions.py
 import numpy as np
-from pymatlib.parsing.validation.property_validator import validate_monotonic_energy_density
-from pymatlib.parsing.validation.array_validator import is_monotonic
+from materforge.parsing.validation.property_validator import validate_monotonic_energy_density
+from materforge.parsing.validation.array_validator import is_monotonic
 
 def test_moved_functions():
     """Test that moved validation functions work correctly."""

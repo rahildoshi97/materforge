@@ -5,7 +5,7 @@ from pycallgraph2 import PyCallGraph, Config
 from pycallgraph2.output import GraphvizOutput
 from pycallgraph2.globbing_filter import GlobbingFilter
 
-# Add pymatlib to path
+# Add materforge to path
 sys.path.append(str(Path(__file__).parent.parent))
 
 
@@ -57,14 +57,14 @@ def analyze_material_properties(mat):
 def test_material_with_energy_density():
     """Test material creation focusing on materials with energy density."""
     import sympy as sp
-    from pymatlib.parsing.api import create_material
+    from materforge.parsing.api import create_material
 
     T = sp.Symbol('T')
 
     # Test multiple materials to find ones with energy density
     yaml_paths = [
-        Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml",
-        Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml",
+        Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml",
+        Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml",
     ]
 
     materials_with_energy = []
@@ -85,7 +85,7 @@ def test_material_with_energy_density():
 def test_inverse_with_working_material():
     """Test inverse function with materials that have energy density."""
     import sympy as sp
-    from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
+    from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
     materials = test_material_with_energy_density()
 
@@ -124,8 +124,8 @@ def test_heat_equation_workflow():
     """Test the complete heat equation workflow."""
     import sympy as sp
     import pystencils as ps
-    from pymatlib.parsing.api import create_material
-    from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
+    from materforge.parsing.api import create_material
+    from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
     print("\n--- Heat Equation Workflow Test ---")
 
@@ -135,7 +135,7 @@ def test_heat_equation_workflow():
 
     # Test with 1.4301 (known to have energy density)
     yaml_path = Path(
-        __file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+        __file__).parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
     if yaml_path.exists():
         try:
@@ -185,28 +185,28 @@ if __name__ == "__main__":
     quick_visualize(
         test_material_with_energy_density,
         'enhanced_material_creation',
-        ['pymatlib.parsing.*', 'pymatlib.core.materials.*', 'create_material']
+        ['materforge.parsing.*', 'materforge.core.materials.*', 'create_material']
     )
 
     # Test inverse function with working materials
     quick_visualize(
         test_inverse_with_working_material,
         'working_inverse_function',
-        ['pymatlib.algorithms.piecewise_inverter.*', 'PiecewiseInverter.*', 'create_inverse']
+        ['materforge.algorithms.piecewise_inverter.*', 'PiecewiseInverter.*', 'create_inverse']
     )
 
     # Test heat equation workflow
     quick_visualize(
         test_heat_equation_workflow,
         'heat_equation_workflow',
-        ['pymatlib.*', 'pystencils.*', '!pymatlib.*.logging.*']
+        ['materforge.*', 'pystencils.*', '!materforge.*.logging.*']
     )
 
     # Test comprehensive demo
     quick_visualize(
         create_comprehensive_demo,
         'comprehensive_demo',
-        ['pymatlib.*', '!pymatlib.*.logging.*', '!pymatlib.*.matplotlib.*']
+        ['materforge.*', '!materforge.*.logging.*', '!materforge.*.matplotlib.*']
     )
 
     print("All enhanced visualizations completed!")

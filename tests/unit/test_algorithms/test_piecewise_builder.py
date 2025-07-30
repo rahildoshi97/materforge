@@ -3,7 +3,7 @@
 import pytest
 import numpy as np
 import sympy as sp
-from pymatlib.algorithms.piecewise_builder import PiecewiseBuilder
+from materforge.algorithms.piecewise_builder import PiecewiseBuilder
 
 class TestPiecewiseBuilder:
     """Test cases for PiecewiseBuilder."""

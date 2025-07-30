@@ -1,8 +1,8 @@
 """Unit tests for constants modules."""
 
 import pytest
-from pymatlib.data.constants.processing_constants import ProcessingConstants
-from pymatlib.data.constants.physical_constants import PhysicalConstants
+from materforge.data.constants.processing_constants import ProcessingConstants
+from materforge.data.constants.physical_constants import PhysicalConstants
 
 class TestProcessingConstants:
     """Test cases for ProcessingConstants."""

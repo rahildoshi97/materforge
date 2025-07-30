@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 import sympy as sp
 from ruamel.yaml import YAML
-from pymatlib.parsing.api import create_material
+from materforge.parsing.api import create_material
 
 class TestMaterialCreation:
     """Integration tests for complete material creation workflows."""

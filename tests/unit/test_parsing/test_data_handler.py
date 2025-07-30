@@ -5,7 +5,7 @@ import tempfile
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from pymatlib.parsing.io.data_handler import (
+from materforge.parsing.io.data_handler import (
     load_property_data, _extract_data_columns, _clean_and_validate_data
 )
 

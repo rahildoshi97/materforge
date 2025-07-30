@@ -2,9 +2,9 @@
 
 import pytest
 import sympy as sp
-from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
-from pymatlib.core.materials import Material
-from pymatlib.core.elements import ChemicalElement
+from materforge.algorithms.piecewise_inverter import PiecewiseInverter
+from materforge.core.materials import Material
+from materforge.core.elements import ChemicalElement
 
 
 class TestPiecewiseInverterComprehensive:

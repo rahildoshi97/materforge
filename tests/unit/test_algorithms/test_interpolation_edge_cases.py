@@ -2,7 +2,7 @@
 
 import pytest
 import numpy as np
-from pymatlib.algorithms.interpolation import interpolate_value, ensure_ascending_order
+from materforge.algorithms.interpolation import interpolate_value, ensure_ascending_order
 
 
 class TestInterpolationComprehensive:

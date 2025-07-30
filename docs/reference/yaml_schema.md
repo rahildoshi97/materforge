@@ -1,5 +1,5 @@
 # YAML Schema for Material Definition
-This document defines the schema for material definition YAML files in pymatlib v0.4.1.
+This document defines the schema for material definition YAML files in materforge v0.4.1.
 
 ## Schema Overview
 
@@ -136,11 +136,11 @@ Automatic plot generation when using symbolic temperature:
 
 ```python
 import sympy as sp
-from pymatlib.parsing.api import create_material
+from materforge.parsing.api import create_material
 
 T = sp.Symbol('T')
 material = create_material('1.4301.yaml', T, enable_plotting=True)
-# Plots automatically saved to 'pymatlib_plots/' directory
+# Plots automatically saved to 'materforge_plots/' directory
 ```
 
 ## 🧪 Energy-Temperature Inversion
@@ -148,8 +148,8 @@ For applications requiring temperature from energy density:
 
 ```python
 import sympy as sp
-from pymatlib.parsing.api import create_material
-from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
+from materforge.parsing.api import create_material
+from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 # Create inverse function T = f_inv(E)
 T = sp.Symbol('T')
@@ -167,7 +167,7 @@ temperature = float(inverse_func.subs(E, energy_value))
 ## 🔍 Supported Properties
 
 ```python
-from pymatlib.parsing.api import get_supported_properties
+from materforge.parsing.api import get_supported_properties
 
 print(get_supported_properties())
 ```

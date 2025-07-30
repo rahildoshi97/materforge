@@ -3,9 +3,9 @@ import pytest
 import numpy as np
 import sympy as sp
 
-from pymatlib.core.materials import Material
-from pymatlib.core.exceptions import MaterialCompositionError, MaterialTemperatureError
-from pymatlib.core.elements import ChemicalElement
+from materforge.core.materials import Material
+from materforge.core.exceptions import MaterialCompositionError, MaterialTemperatureError
+from materforge.core.elements import ChemicalElement
 
 class TestMaterial:
     """Test cases for Material class."""

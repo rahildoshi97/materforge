@@ -3,9 +3,9 @@
 import pytest
 import numpy as np
 import sympy as sp
-from pymatlib.parsing.processors.temperature_resolver import TemperatureResolver
-from pymatlib.core.materials import Material
-from pymatlib.core.elements import ChemicalElement
+from materforge.parsing.processors.temperature_resolver import TemperatureResolver
+from materforge.core.materials import Material
+from materforge.core.elements import ChemicalElement
 
 
 class TestTemperatureResolverEdgeCases:

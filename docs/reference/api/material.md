@@ -7,7 +7,7 @@
 A dataclass representing a material (pure metal or alloy) with temperature-dependent properties.
 
 ```python
-from pymatlib.core.materials import Material
+from materforge.core.materials import Material
 ```
 
 #### Properties
@@ -57,7 +57,7 @@ Returns the solidification interval (solidus, liquidus) for alloys.
 #### Example Usage
 ```python
 import sympy as sp
-from pymatlib.parsing.api import create_material
+from materforge.parsing.api import create_material
 
 # Create symbolic temperature
 T = sp.Symbol('T')
@@ -85,7 +85,7 @@ if material.material_type == 'alloy':
 
 A dataclass representing a chemical element with its properties.
 ````python
-from pymatlib.core.elements import ChemicalElement
+from materforge.core.elements import ChemicalElement
 ````
 
 #### Properties
@@ -100,7 +100,7 @@ from pymatlib.core.elements import ChemicalElement
 
 #### Example Usage
 ```python
-from pymatlib.data.elements.element_data import element_map
+from materforge.data.elements.element_data import element_map
 
 # Access element data
 iron = element_map['Fe']
@@ -114,7 +114,7 @@ print(f"Iron atomic mass: {iron.atomic_mass}u")
 
 Create material instance from YAML configuration file.
 ```python
-from pymatlib.parsing.api import create_material
+from materforge.parsing.api import create_material
 
 def create_material(yaml_path: Union[str, Path],
                     T: Union[float, sp.Symbol],
@@ -134,7 +134,7 @@ def create_material(yaml_path: Union[str, Path],
 **Example:**
 ```python
 import sympy as sp
-from pymatlib.parsing.api import create_material
+from materforge.parsing.api import create_material
 
 # Create material at specific temperature
 material = create_material('aluminum.yaml', 500.0)
@@ -152,7 +152,7 @@ material = create_material('copper.yaml', u_C)
 
 Returns a list of all supported material properties.
 ```python
-from pymatlib.parsing.api import get_supported_properties
+from materforge.parsing.api import get_supported_properties
 
 def get_supported_properties() -> list:
 ```
@@ -169,7 +169,7 @@ print("Supported properties:", properties)
 
 Validate a YAML file without creating the material.
 ```python
-from pymatlib.parsing.api import validate_yaml_file
+from materforge.parsing.api import validate_yaml_file
 
 def validate_yaml_file(yaml_path: Union[str, Path]) -> bool:
 ```
@@ -197,7 +197,7 @@ try:
 
 ### Element Interpolation Functions
 ```python
-from pymatlib.core.elements import (
+from materforge.core.elements import (
 interpolate_atomic_number,
 interpolate_atomic_mass,
 interpolate_melting_temperature,
@@ -223,7 +223,7 @@ avg_melting_temp = interpolate_melting_temperature(elements, composition)
 
 Registry for SymPy symbols to ensure uniqueness across the application.
 ```python
-from pymatlib.core.symbol_registry import SymbolRegistry
+from materforge.core.symbol_registry import SymbolRegistry
 
 # Get or create a symbol
 T = SymbolRegistry.get('T')
@@ -240,14 +240,14 @@ SymbolRegistry.clear()
 ### Material Errors
 
 ```python
-from pymatlib.core.materials import MaterialCompositionError, MaterialTemperatureError
+from materforge.core.materials import MaterialCompositionError, MaterialTemperatureError
 ```
 These are raised automatically during material validation
 
 ### Property Errors
 
 ```python
-from pymatlib.parsing.validation.errors import (
+from materforge.parsing.validation.errors import (
   PropertyError,
   DependencyError,
   CircularDependencyError
@@ -260,7 +260,7 @@ These are raised during property processing
 ### PropertyType Enum
 
 ```python
-from pymatlib.parsing.validation.property_type_detector import PropertyType
+from materforge.parsing.validation.property_type_detector import PropertyType
 
 # Available property types:
 PropertyType.CONSTANT_VALUE
@@ -271,5 +271,5 @@ PropertyType.PIECEWISE_EQUATION
 PropertyType.COMPUTED_PROPERTY
 ```
 
-This API provides a comprehensive interface for working with materials in PyMatLib,
+This API provides a comprehensive interface for working with materials in MaterForge,
 from basic material creation to advanced property manipulation and validation.

@@ -2,7 +2,7 @@
 
 import pytest
 import numpy as np
-from pymatlib.parsing.validation.property_validator import (
+from materforge.parsing.validation.property_validator import (
     validate_monotonic_energy_density,
     validate_monotonic_property
 )

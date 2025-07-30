@@ -1,8 +1,8 @@
 """Unit tests for ChemicalElement class."""
 
 import pytest
-from pymatlib.core.elements import ChemicalElement, interpolate, interpolate_atomic_number
-from pymatlib.data.elements.element_data import element_map
+from materforge.core.elements import ChemicalElement, interpolate, interpolate_atomic_number
+from materforge.data.elements.element_data import element_map
 
 class TestChemicalElement:
     """Test cases for ChemicalElement class."""

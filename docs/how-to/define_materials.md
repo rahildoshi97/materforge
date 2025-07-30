@@ -1,10 +1,10 @@
 # Defining Custom Material Properties
 
-This guide explains how to define custom material properties in PyMatLib using different methods.
+This guide explains how to define custom material properties in MaterForge using different methods.
 
 ## YAML Configuration Options
 
-PyMatLib supports several ways to define material properties in YAML files, following SI units (m, s, kg, A, V, K, etc.).
+MaterForge supports several ways to define material properties in YAML files, following SI units (m, s, kg, A, V, K, etc.).
 
 ### 1. Constant Value
 
@@ -180,7 +180,7 @@ Here's a complete example for Aluminum (Pure metal):
 # ====================================================================================================
 # PYMATLIB MATERIAL CONFIGURATION FILE - PURE METAL
 # ====================================================================================================
-# This file defines material properties for pure Aluminum using the pymatlib format.
+# This file defines material properties for pure Aluminum using the materforge format.
 # Pymatlib supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA, PIECEWISE_EQUATION, and COMPUTED_PROPERTY
 # Pure metals require 'melting_temperature' and 'boiling_temperature' instead of solidus/liquidus
 # ====================================================================================================
@@ -327,7 +327,7 @@ Here's a complete example for 1.4301 (Alloy):
 # ====================================================================================================
 # PYMATLIB MATERIAL CONFIGURATION FILE
 # ====================================================================================================
-# This file defines material properties for 1.4301 (Steel) using the new pymatlib format.
+# This file defines material properties for 1.4301 (Steel) using the new materforge format.
 # Pymatlib supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA, PIECEWISE_EQUATION, and COMPUTED_PROPERTY
 #
 # IMPORTANT: All property configurations must include 'bounds' parameter (except CONSTANT properties)
@@ -501,7 +501,7 @@ properties:
 
 ## Validation and Error Handling
 
-PyMatLib's new architecture includes comprehensive validation:
+MaterForge's new architecture includes comprehensive validation:
 
 - **Composition validation**: Ensures fractions sum to 1.0
 - **Temperature validation**: Checks for monotonicity and physical validity

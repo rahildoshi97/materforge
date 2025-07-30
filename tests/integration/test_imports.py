@@ -3,27 +3,27 @@
 from pathlib import Path
 import pytest
 import sympy as sp
-from pymatlib import create_material
+from materforge import create_material
 
 def test_all_imports():
     """Test that all modules can be imported without circular dependencies."""
     try:
         # Test main package imports
-        import pymatlib
-        import pymatlib.core
-        import pymatlib.algorithms
-        import pymatlib.parsing
-        import pymatlib.visualization
+        import materforge
+        import materforge.core
+        import materforge.algorithms
+        import materforge.parsing
+        import materforge.visualization
         # Test core imports
-        from pymatlib.core.materials import Material
-        from pymatlib.core.elements import ChemicalElement
+        from materforge.core.materials import Material
+        from materforge.core.elements import ChemicalElement
         # Test parsing imports
-        from pymatlib.parsing.validation.property_validator import validate_monotonic_energy_density
+        from materforge.parsing.validation.property_validator import validate_monotonic_energy_density
         # Test algorithm imports
-        from pymatlib.algorithms.interpolation import interpolate_value
-        from pymatlib.algorithms.piecewise_builder import PiecewiseBuilder
+        from materforge.algorithms.interpolation import interpolate_value
+        from materforge.algorithms.piecewise_builder import PiecewiseBuilder
         # Test visualization imports
-        from pymatlib.visualization.plotters import PropertyVisualizer
+        from materforge.visualization.plotters import PropertyVisualizer
     except ImportError as e:
         pytest.fail(f"Import failed: {e}")
 
@@ -33,8 +33,8 @@ def test_basic_material_creation():
     # Construct paths more reliably
     current_file = Path(__file__)
     project_root = current_file.parent.parent.parent
-    yaml_path_Al = project_root / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
-    yaml_path_SS304L = project_root / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+    yaml_path_Al = project_root / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
+    yaml_path_SS304L = project_root / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
     # Test aluminum material creation if file exists
     if yaml_path_Al.exists():
         try:
@@ -61,19 +61,19 @@ def test_basic_material_creation():
 def test_circular_dependencies():
     """Test specifically for circular import dependencies."""
     import sys
-    # Clear any previously imported pymatlib modules
-    modules_to_remove = [name for name in sys.modules.keys() if name.startswith('pymatlib')]
+    # Clear any previously imported materforge modules
+    modules_to_remove = [name for name in sys.modules.keys() if name.startswith('materforge')]
     for module_name in modules_to_remove:
         if module_name in sys.modules:
             del sys.modules[module_name]
     try:
         # Import in different orders to catch circular dependencies
-        import pymatlib.core.materials
-        import pymatlib.parsing.api
-        import pymatlib.algorithms.interpolation
-        import pymatlib.visualization.plotters
+        import materforge.core.materials
+        import materforge.parsing.api
+        import materforge.algorithms.interpolation
+        import materforge.visualization.plotters
         # Import main package last
-        import pymatlib
+        import materforge
     except ImportError as e:
         pytest.fail(f"Circular dependency detected: {e}")
 

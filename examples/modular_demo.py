@@ -6,7 +6,7 @@ import pandas as pd
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
-from pymatlib.parsing.api import (
+from materforge.parsing.api import (
     create_material,
     get_supported_properties,
     evaluate_material_properties,
@@ -14,7 +14,7 @@ from pymatlib.parsing.api import (
     validate_yaml_file,
     get_material_info
 )
-from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
+from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 
 @dataclass
@@ -77,7 +77,7 @@ class MaterialPropertyDemonstrator:
     def setup_paths(self):
         """Setup file paths for materials."""
         current_file = Path(__file__)
-        base_path = current_file.parent.parent / "src" / "pymatlib" / "data" / "materials"
+        base_path = current_file.parent.parent / "src" / "materforge" / "data" / "materials"
 
         self.yaml_paths = {}
         if self.config.include_aluminum:

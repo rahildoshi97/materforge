@@ -1,6 +1,6 @@
-# Contributing to PyMatLib
+# Contributing to MaterForge
 
-Thank you for your interest in contributing to PyMatLib! 
+Thank you for your interest in contributing to MaterForge! 
 We welcome contributions from the community and appreciate your help in making this project better.
 
 ## Getting Started
@@ -15,8 +15,8 @@ We welcome contributions from the community and appreciate your help in making t
 1. Fork the repository on GitLab
 2. Clone your fork locally:
 ```bash
-git clone https://i10git.cs.fau.de/your-username/pymatlib.git
-cd pymatlib
+git clone https://i10git.cs.fau.de/your-username/materforge.git
+cd materforge
 ```
 3. Create a virtual environment and install dependencies:
 ```bash
@@ -60,7 +60,7 @@ pytest tests/integration/
 pytest tests/performance/
 
 # Run with coverage
-pytest --cov=src/pymatlib
+pytest --cov=src/materforge
 ```
 
 ### Code Standards
@@ -79,7 +79,7 @@ isort src/ tests/
 
 # Check linting
 flake8 src/ tests/
-mypy src/pymatlib/
+mypy src/materforge/
 ```
 
 ## Submitting Changes
@@ -111,4 +111,4 @@ Brief description of changes
 - [ ] Manual testing performed
 ```
 
-Thank you for contributing to PyMatLib! 🚀
+Thank you for contributing to MaterForge! 🚀

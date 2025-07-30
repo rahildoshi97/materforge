@@ -5,9 +5,9 @@ import numpy as np
 import sympy as sp
 from pathlib import Path
 from unittest.mock import Mock
-from pymatlib.parsing.processors.property_processor_base import PropertyProcessorBase
-from pymatlib.core.materials import Material
-from pymatlib.core.elements import ChemicalElement
+from materforge.parsing.processors.property_processor_base import PropertyProcessorBase
+from materforge.core.materials import Material
+from materforge.core.elements import ChemicalElement
 
 
 class TestPropertyProcessorBaseComprehensive:

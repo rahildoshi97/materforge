@@ -2,8 +2,8 @@
 
 import pytest
 import sympy as sp
-from pymatlib.parsing.processors.dependency_processor import DependencyProcessor
-from pymatlib.parsing.validation.errors import DependencyError, CircularDependencyError
+from materforge.parsing.processors.dependency_processor import DependencyProcessor
+from materforge.parsing.validation.errors import DependencyError, CircularDependencyError
 
 class TestDependencyProcessor:
     """Test cases for DependencyProcessor."""
@@ -76,7 +76,7 @@ class TestDependencyProcessor:
 
     def test_process_computed_property_simple(self, sample_aluminum_element):
         """Test processing simple computed property."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
 
         material = Material(
             name="Test Material",
@@ -106,7 +106,7 @@ class TestDependencyProcessor:
 
     def test_process_computed_property_missing_dependency(self, sample_aluminum_element):
         """Test processing computed property with missing dependency."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",
@@ -129,7 +129,7 @@ class TestDependencyProcessor:
 
     def test_process_computed_property_with_dependencies(self, sample_aluminum_element):
         """Test processing computed property that depends on other computed properties."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",
@@ -163,7 +163,7 @@ class TestDependencyProcessor:
 
     def test_parse_and_process_expression_basic(self, sample_aluminum_element):
         """Test basic expression parsing and processing."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",
@@ -193,7 +193,7 @@ class TestDependencyProcessor:
 
     def test_get_temperature_value_from_material(self, sample_aluminum_element):
         """Test getting temperature values from material references."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",

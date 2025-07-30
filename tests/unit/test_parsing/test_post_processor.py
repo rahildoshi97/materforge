@@ -6,10 +6,10 @@ import sympy as sp
 import sys
 import importlib
 from unittest.mock import Mock, patch, MagicMock
-from pymatlib.parsing.processors.post_processor import PropertyPostProcessor
-from pymatlib.parsing.validation.property_type_detector import PropertyType
-from pymatlib.core.materials import Material
-from pymatlib.core.elements import ChemicalElement
+from materforge.parsing.processors.post_processor import PropertyPostProcessor
+from materforge.parsing.validation.property_type_detector import PropertyType
+from materforge.core.materials import Material
+from materforge.core.elements import ChemicalElement
 
 
 class TestPropertyPostProcessor:
@@ -23,8 +23,8 @@ class TestPropertyPostProcessor:
         yield
         # Force cleanup of any modified modules
         modules_to_reload = [
-            'pymatlib.parsing.processors.post_processor',
-            'pymatlib.parsing.processors.temperature_resolver'
+            'materforge.parsing.processors.post_processor',
+            'materforge.parsing.processors.temperature_resolver'
         ]
         for module_name in modules_to_reload:
             if module_name in sys.modules:
@@ -219,7 +219,7 @@ class TestPropertyPostProcessor:
             }
         }
         # Mock to return string array
-        with patch('pymatlib.parsing.processors.post_processor.TemperatureResolver.extract_from_config') as mock_extract:
+        with patch('materforge.parsing.processors.post_processor.TemperatureResolver.extract_from_config') as mock_extract:
             mock_extract.return_value = np.array(['300', '400', '500'], dtype='U10')  # String dtype
             # Should handle dtype conversion
             post_processor._apply_post_regression(sample_material, 'test_prop', prop_config, T)

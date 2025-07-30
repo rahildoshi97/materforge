@@ -1,6 +1,6 @@
-# Getting Started with pymatlib
+# Getting Started with materforge
 
-This tutorial will guide you through the basics of using pymatlib to model material properties for simulations.
+This tutorial will guide you through the basics of using materforge to model material properties for simulations.
 
 ## Prerequisites
 
@@ -12,25 +12,25 @@ Before starting, ensure you have:
 
 ## Installation
 
-Install pymatlib using pip:
+Install materforge using pip:
 
 ```bash
-pip install "git+https://i10git.cs.fau.de/rahil.doshi/pymatlib.git"
+pip install "git+https://i10git.cs.fau.de/rahil.doshi/materforge.git"
 ```
 
 
 For development, clone the repository and install in development mode:
 
 ```bash
-git clone https://i10git.cs.fau.de/rahil.doshi/pymatlib.git
-cd pymatlib
+git clone https://i10git.cs.fau.de/rahil.doshi/materforge.git
+cd materforge
 pip install -e .
 ```
 
 
 ## Basic Concepts
 
-PyMatLib organizes material data around these key concepts:
+MaterForge organizes material data around these key concepts:
 
 1. **Materials**: Pure metals and alloys with temperature-dependent properties
 2. **Property Types**: Six different ways to define material properties
@@ -79,7 +79,7 @@ properties:
 2. Load the material in Python:
 ```python
 import sympy as sp
-from pymatlib.parsing.api import create_material
+from materforge.parsing.api import create_material
 
 # Create symbolic temperature variable
 T = sp.Symbol('T')

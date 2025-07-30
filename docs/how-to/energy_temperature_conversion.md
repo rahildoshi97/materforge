@@ -1,6 +1,6 @@
 # Converting Between Energy Density and Temperature
 
-This guide explains how to perform bilateral conversions between energy density and temperature in PyMatLib using the current architecture.
+This guide explains how to perform bilateral conversions between energy density and temperature in MaterForge using the current architecture.
 
 ## Why Energy-Temperature Conversion Matters
 
@@ -16,7 +16,7 @@ This conversion is essential because:
 
 ## Current Implementation Status
 
-**Important Note**: The energy-temperature conversion functionality is currently under development in PyMatLib v0.3.0. The following features are planned but not yet implemented:
+**Important Note**: The energy-temperature conversion functionality is currently under development in MaterForge v0.3.0. The following features are planned but not yet implemented:
 
 - InterpolationArrayContainer class
 - Automatic C++ code generation for interpolation
@@ -27,7 +27,7 @@ This conversion is essential because:
 ### 1. Create Material with Energy Density
 ```python
 import sympy as sp
-from pymatlib.parsing.api import create_material
+from materforge.parsing.api import create_material
 
 # Create symbolic temperature variable
 T = sp.Symbol('T')
@@ -56,7 +56,7 @@ if hasattr(material, 'energy_density'):
 
 The inverse conversion (energy to temperature) will be available through:
 ```python
-from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
+from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 # Create inverse function (when implemented)
 if hasattr(material, 'energy_density'):

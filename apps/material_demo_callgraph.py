@@ -6,7 +6,7 @@ from pycallgraph2 import PyCallGraph, Config
 from pycallgraph2.output import GraphvizOutput
 from pycallgraph2.globbing_filter import GlobbingFilter
 
-# Add pymatlib to path
+# Add materforge to path
 sys.path.append(str(Path(__file__).parent.parent))
 
 
@@ -25,9 +25,9 @@ def create_robust_inverse_visualization():
     config = Config(max_depth=12, min_depth=1)
     config.trace_filter = GlobbingFilter(
         include=[
-            'pymatlib.algorithms.piecewise_inverter.*',
-            'pymatlib.parsing.api.*',
-            'pymatlib.core.materials.*',
+            'materforge.algorithms.piecewise_inverter.*',
+            'materforge.parsing.api.*',
+            'materforge.core.materials.*',
             'PiecewiseInverter.*',
             'create_material',
             'create_inverse',
@@ -51,14 +51,14 @@ def create_robust_inverse_visualization():
 
     with PyCallGraph(config=config, output=graphviz):
         import sympy as sp
-        from pymatlib.parsing.api import create_material
-        from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
+        from materforge.parsing.api import create_material
+        from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
         T = sp.Symbol('T')
         current_file = Path(__file__)
         yaml_paths = [
-            current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml",
-            current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+            current_file.parent.parent / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml",
+            current_file.parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
         ]
 
         for yaml_path in yaml_paths:
@@ -111,7 +111,7 @@ def create_heat_equation_workflow_visualization():
     config = Config(max_depth=10)
     config.trace_filter = GlobbingFilter(
         include=[
-            'pymatlib.*',
+            'materforge.*',
             'pystencils.*',
             'create_material',
             'PiecewiseInverter.*',
@@ -137,8 +137,8 @@ def create_heat_equation_workflow_visualization():
         # Simplified version of your heat equation code
         import sympy as sp
         import pystencils as ps
-        from pymatlib.parsing.api import create_material
-        from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
+        from materforge.parsing.api import create_material
+        from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
         # Create fields
         data_type = "float64"
@@ -148,7 +148,7 @@ def create_heat_equation_workflow_visualization():
         yaml_path = Path(__file__).parent / '1.4301_HeatEquationKernelWithMaterial.yaml'
         if not yaml_path.exists():
             yaml_path = Path(
-                __file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+                __file__).parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
         if yaml_path.exists():
             try:

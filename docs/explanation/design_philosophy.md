@@ -1,10 +1,10 @@
-# Design Philosophy of PyMatLib
+# Design Philosophy of MaterForge
 
-This document explains the core design principles, architectural decisions, and the rationale behind PyMatLib's structure and implementation.
+This document explains the core design principles, architectural decisions, and the rationale behind MaterForge's structure and implementation.
 
 ## Core Principles
 
-PyMatLib is built upon several core principles:
+MaterForge is built upon several core principles:
 
 - **Modularity**: Clearly separated components for ease of maintenance, testing, and extensibility
 - **Flexibility**: Allow users to define material properties in various intuitive ways
@@ -13,7 +13,7 @@ PyMatLib is built upon several core principles:
 
 ## Layered Architecture
 
-PyMatLib follows a layered architecture to separate concerns clearly:
+MaterForge follows a layered architecture to separate concerns clearly:
 
 ### 1. User Interface Layer (YAML Configuration)
 
@@ -56,32 +56,32 @@ PyMatLib follows a layered architecture to separate concerns clearly:
 
 ## Modular Architecture
 
-PyMatLib's architecture is organized into distinct modules:
+MaterForge's architecture is organized into distinct modules:
 
-### Core Module (`pymatlib.core`)
+### Core Module (`materforge.core`)
 - **Material**: Fundamental material representation with composition validation
 - **ChemicalElement**: Element data and properties from periodic table
 - **Interfaces**: Abstract base classes for extensibility (`PropertyProcessor`, `TemperatureResolver`, etc.)
 - **Symbol Registry**: SymPy symbol management to ensure uniqueness
 
-### Parsing Module (`pymatlib.parsing`)
+### Parsing Module (`materforge.parsing`)
 - **API**: Main entry points (`create_material`, `validate_yaml_file`, `get_supported_properties`)
 - **Configuration**: YAML parsing and validation through `MaterialConfigParser`
 - **Processors**: Property and temperature processing (`PropertyManager`, `TemperatureResolver`)
 - **I/O**: File handling for external data (`read_data_from_file`)
 - **Validation**: Type detection and error handling (`PropertyConfigAnalyzer`)
 
-### Algorithms Module (`pymatlib.algorithms`)
+### Algorithms Module (`materforge.algorithms`)
 - **Interpolation**: Temperature-dependent property evaluation
 - **Regression**: Data simplification and fitting through `RegressionManager`
 - **Piecewise**: Piecewise function construction via `PiecewiseBuilder`
 - **Inversion**: Inverse function creation for specialized applications
 
-### Visualization Module (`pymatlib.visualization`)
+### Visualization Module (`materforge.visualization`)
 - **Property Plots**: Automatic visualization generation through `PropertyVisualizer`
 - **Scientific Plotting**: Integration with matplotlib for publication-quality plots
 
-### Data Module (`pymatlib.data`)
+### Data Module (`materforge.data`)
 - **Elements**: Chemical element database with periodic table data
 - **Constants**: Physical and processing constants
 - **Materials**: Pre-defined material configurations (Steel 1.4301, aluminum, etc.)
@@ -98,21 +98,21 @@ YAML was chosen as the primary configuration format because:
 
 ## Integration with pystencils
 
-PyMatLib integrates with [pystencils](https://pycodegen.pages.i10git.cs.fau.de/pystencils/) through the following workflow:
+MaterForge integrates with [pystencils](https://pycodegen.pages.i10git.cs.fau.de/pystencils/) through the following workflow:
 
-1. **Symbolic Definition**: Material properties are defined symbolically in PyMatLib using YAML configurations
+1. **Symbolic Definition**: Material properties are defined symbolically in MaterForge using YAML configurations
 2. **Property Processing**: The parsing system converts YAML definitions into SymPy expressions
 3. **Symbolic Evaluation**: Material properties can be evaluated at specific temperatures or kept as symbolic expressions
 4. **Simulation Integration**: Symbolic expressions can be used directly in pystencils-based simulations
 
-This integration allows PyMatLib to leverage:
+This integration allows MaterForge to leverage:
 - Symbolic mathematics from SymPy for property relationships
 - Temperature-dependent material properties in numerical simulations
 - Flexible property definitions that adapt to simulation needs
 
 ## Property Type System
 
-PyMatLib uses a sophisticated property type detection system with six distinct types:
+MaterForge uses a sophisticated property type detection system with six distinct types:
 
 ### Six Property Types
 
@@ -132,7 +132,7 @@ The `PropertyConfigAnalyzer` automatically detects property types based on confi
 
 ## Dependency Resolution
 
-PyMatLib automatically handles property dependencies:
+MaterForge automatically handles property dependencies:
 
 ### Dependency Analysis
 - Extracts dependencies from symbolic expressions using SymPy
@@ -146,7 +146,7 @@ PyMatLib automatically handles property dependencies:
 
 ## Extensibility Framework
 
-PyMatLib is designed for extensibility through abstract interfaces:
+MaterForge is designed for extensibility through abstract interfaces:
 
 ### Abstract Interfaces
 - `PropertyProcessor`: For custom property processing logic
@@ -161,7 +161,7 @@ PyMatLib is designed for extensibility through abstract interfaces:
 
 ## Error Handling Philosophy
 
-PyMatLib emphasizes clear, actionable error messages:
+MaterForge emphasizes clear, actionable error messages:
 
 ### Validation at Every Layer
 - YAML syntax and structure validation
@@ -195,7 +195,7 @@ Performance-critical operations are optimized:
 
 ## Testing and Validation
 
-PyMatLib includes comprehensive testing:
+MaterForge includes comprehensive testing:
 
 ### Unit Testing
 - Individual component testing for all modules
@@ -214,7 +214,7 @@ PyMatLib includes comprehensive testing:
 
 ## Scientific Computing Integration
 
-PyMatLib is designed to integrate seamlessly with the scientific Python ecosystem:
+MaterForge is designed to integrate seamlessly with the scientific Python ecosystem:
 
 ### SymPy Integration
 - Properties as SymPy expressions enable symbolic manipulation
@@ -231,4 +231,4 @@ PyMatLib is designed to integrate seamlessly with the scientific Python ecosyste
 - Publication-quality scientific plots
 - Customizable visualization options
 
-This design philosophy ensures PyMatLib is both powerful and user-friendly, suitable for research applications while maintaining the flexibility needed for diverse materials science applications.
+This design philosophy ensures MaterForge is both powerful and user-friendly, suitable for research applications while maintaining the flexibility needed for diverse materials science applications.

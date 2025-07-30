@@ -3,7 +3,7 @@ import pytest
 import sympy as sp
 from pathlib import Path
 
-from pymatlib.parsing.api import create_material, get_supported_properties
+from materforge.parsing.api import create_material, get_supported_properties
 
 class TestYAMLMaterialCreation:
     """Integration tests for creating materials from YAML files."""
@@ -16,13 +16,13 @@ class TestYAMLMaterialCreation:
     def aluminum_yaml_path(self):
         """Path to aluminum YAML file."""
         current_file = Path(__file__)
-        return current_file.parent.parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
+        return current_file.parent.parent.parent / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
 
     @pytest.fixture
     def steel_yaml_path(self):
         """Path to steel YAML file."""
         current_file = Path(__file__)
-        return current_file.parent.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+        return current_file.parent.parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
     def test_aluminum_material_creation(self, aluminum_yaml_path, temp_symbol):
         """Test aluminum material creation from YAML."""

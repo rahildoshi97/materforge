@@ -3,7 +3,7 @@
 import sympy as sp
 import tempfile
 from pathlib import Path
-from pymatlib.parsing.processors.property_handlers import (
+from materforge.parsing.processors.property_handlers import (
     ConstantValuePropertyHandler,
     StepFunctionPropertyHandler,
     FileImportPropertyHandler,
@@ -15,7 +15,7 @@ class TestConstantPropertyHandler:
     """Test cases for ConstantPropertyHandler."""
     def test_process_constant_property_float(self, sample_aluminum_element, temp_symbol):
         """Test processing constant float property."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
 
         material = Material(
             name="Test Material",
@@ -33,7 +33,7 @@ class TestConstantPropertyHandler:
 
     def test_process_constant_property_string(self, sample_aluminum_element, temp_symbol):
         """Test processing constant string property."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",
@@ -52,7 +52,7 @@ class TestKeyValPropertyHandler:
     """Test cases for KeyValPropertyHandler."""
     def test_process_keyval_property(self, sample_aluminum_element, temp_symbol):
         """Test processing key-value property."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",
@@ -79,7 +79,7 @@ class TestStepFunctionPropertyHandler:
     """Test cases for StepFunctionPropertyHandler."""
     def test_process_step_function_property(self, sample_aluminum_element, temp_symbol):
         """Test processing step function property."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",
@@ -107,7 +107,7 @@ class TestPiecewiseEquationPropertyHandler:
     """Test cases for PiecewiseEquationPropertyHandler."""
     def test_process_piecewise_equation_property(self, sample_aluminum_element, temp_symbol):
         """Test processing piecewise equation property."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",
@@ -138,7 +138,7 @@ class TestFilePropertyHandler:
     """Test cases for FilePropertyHandler."""
     def test_process_file_property_csv(self, sample_aluminum_element, temp_symbol):
         """Test processing property from CSV file."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",

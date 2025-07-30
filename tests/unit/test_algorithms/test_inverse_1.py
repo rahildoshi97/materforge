@@ -3,7 +3,7 @@ import sympy as sp
 from typing import List, Tuple
 import logging
 from pathlib import Path
-from pymatlib.parsing.api import create_material
+from materforge.parsing.api import create_material
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ T = sp.Symbol('T')
 E = sp.Symbol('E')
 
 current_file = Path(__file__)
-yaml_path = current_file.parent.parent.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+yaml_path = current_file.parent.parent.parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 ss316l = create_material(yaml_path=yaml_path, dependency=T, enable_plotting=True)
 
 # Display the energy density function
@@ -226,7 +226,7 @@ def test_with_real_material():
     T = sp.Symbol('T')
     E = sp.Symbol('E')
     current_file = Path(__file__)
-    yaml_path = current_file.parent.parent.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+    yaml_path = current_file.parent.parent.parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
     ss316l = create_material(yaml_path=yaml_path, dependency=T, enable_plotting=True)
     print(f"Energy Density Function: {ss316l.energy_density}")
     # Create inverter

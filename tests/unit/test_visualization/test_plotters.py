@@ -6,7 +6,7 @@ import sympy as sp
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
-from pymatlib.visualization.plotters import PropertyVisualizer
+from materforge.visualization.plotters import PropertyVisualizer
 
 class TestPropertyVisualizer:
     """Test cases for PropertyVisualizer."""
@@ -57,7 +57,7 @@ class TestPropertyVisualizer:
                                       mock_xlabel, mock_plot, mock_figure,
                                       mock_parser, sample_aluminum_element):
         """Test basic property visualization."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",
@@ -86,7 +86,7 @@ class TestPropertyVisualizer:
     @patch('matplotlib.pyplot.figure')
     def test_visualize_property_disabled(self, mock_figure, mock_parser, sample_aluminum_element):
         """Test that visualization is skipped when disabled."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",
@@ -114,7 +114,7 @@ class TestPropertyVisualizer:
     def test_visualize_constant_property(self, mock_plot, mock_figure,
                                          mock_parser, sample_aluminum_element):
         """Test visualization of constant property."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",
@@ -152,7 +152,7 @@ class TestPropertyVisualizer:
             # Should not raise any exception
             visualizer.initialize_plots()
             # Check that plot directory was created
-            plot_dir = Path(temp_dir) / "pymatlib_plots"
+            plot_dir = Path(temp_dir) / "materforge_plots"
             assert plot_dir.exists()
 
     def test_reset_visualization_tracking(self, mock_parser):
@@ -168,7 +168,7 @@ class TestPropertyVisualizer:
     def test_visualize_property_with_regression(self, mock_plot, mock_figure,
                                                 mock_parser, sample_aluminum_element):
         """Test visualization with regression data."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
 
         material = Material(
             name="Test Material",
@@ -198,7 +198,7 @@ class TestPropertyVisualizer:
 
     def test_visualize_property_error_handling(self, mock_parser, sample_aluminum_element):
         """Test error handling in property visualization."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",
@@ -220,7 +220,7 @@ class TestPropertyVisualizer:
     @patch('matplotlib.pyplot.figure')
     def test_visualize_multiple_properties(self, mock_figure, mock_parser, sample_aluminum_element):
         """Test visualization of multiple properties."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Material",
             material_type="pure_metal",
@@ -265,7 +265,7 @@ class TestPropertyVisualizer:
             # Test initialization
             visualizer.initialize_plots()
             # Check that plot directory was created
-            plot_dir = Path(temp_dir) / "pymatlib_plots"
+            plot_dir = Path(temp_dir) / "materforge_plots"
             assert plot_dir.exists()
 
     def test_visualization_state_methods(self, mock_parser):

@@ -4,9 +4,9 @@ import pytest
 import numpy as np
 import sympy as sp
 from unittest.mock import Mock
-from pymatlib.parsing.utils.utilities import handle_numeric_temperature, create_step_visualization_data
-from pymatlib.core.materials import Material
-from pymatlib.core.elements import ChemicalElement
+from materforge.parsing.utils.utilities import handle_numeric_temperature, create_step_visualization_data
+from materforge.core.materials import Material
+from materforge.core.elements import ChemicalElement
 
 
 class TestUtilitiesComprehensive:

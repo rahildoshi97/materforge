@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 from ruamel.yaml import YAML
 import sympy as sp
-from pymatlib.parsing.config.material_yaml_parser import MaterialYAMLParser
+from materforge.parsing.config.material_yaml_parser import MaterialYAMLParser
 
 class TestMaterialYAMLParser:
     """Test cases for MaterialYAMLParser."""

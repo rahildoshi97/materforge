@@ -2,7 +2,7 @@
 
 import pytest
 import sympy as sp
-from pymatlib.core.symbol_registry import SymbolRegistry
+from materforge.core.symbol_registry import SymbolRegistry
 
 class TestSymbolRegistry:
     """Test cases for SymbolRegistry class."""

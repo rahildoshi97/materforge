@@ -3,7 +3,7 @@
 import pytest
 import numpy as np
 import sympy as sp
-from pymatlib.parsing.processors.temperature_resolver import TemperatureResolver
+from materforge.parsing.processors.temperature_resolver import TemperatureResolver
 
 class TestTemperatureResolver:
     """Test cases for TemperatureResolver."""
@@ -37,7 +37,7 @@ class TestTemperatureResolver:
 
     def test_resolve_temperature_reference(self, sample_aluminum_element):
         """Test resolution of temperature reference."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Aluminum",
             material_type="pure_metal",
@@ -51,7 +51,7 @@ class TestTemperatureResolver:
 
     def test_resolve_temperature_arithmetic(self, sample_aluminum_element):
         """Test resolution of temperature arithmetic expressions."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Aluminum",
             material_type="pure_metal",
@@ -72,7 +72,7 @@ class TestTemperatureResolver:
 
     def test_invalid_temperature_reference(self, sample_aluminum_element):
         """Test invalid temperature reference."""
-        from pymatlib.core.materials import Material
+        from materforge.core.materials import Material
         material = Material(
             name="Test Aluminum",
             material_type="pure_metal",

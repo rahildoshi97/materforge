@@ -5,9 +5,9 @@ import tempfile
 import sympy as sp
 from pathlib import Path
 from unittest.mock import Mock, patch
-from pymatlib.visualization.plotters import PropertyVisualizer
-from pymatlib.core.materials import Material
-from pymatlib.core.elements import ChemicalElement
+from materforge.visualization.plotters import PropertyVisualizer
+from materforge.core.materials import Material
+from materforge.core.elements import ChemicalElement
 
 
 class TestPropertyVisualizerErrorHandling:

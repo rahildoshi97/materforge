@@ -1,12 +1,12 @@
-# PyMatLib - Python Material Properties Library
+# MaterForge - Materials Formulation Engine with Python
 
-A high-performance Python library for material simulation and analysis with a focus on temperature-dependent properties. PyMatLib enables efficient modeling of pure metals and alloys through YAML configuration files, providing symbolic and numerical property evaluation for various material properties.
+A high-performance Python library for material simulation and analysis. MaterForge enables efficient modeling of pure metals and alloys through YAML configuration files, providing symbolic and numerical property evaluation for various material properties.
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Latest Release](https://i10git.cs.fau.de/rahil.doshi/pymatlib/-/badges/release.svg)](https://i10git.cs.fau.de/rahil.doshi/pymatlib/-/releases)
+[![Latest Release](https://i10git.cs.fau.de/rahil.doshi/materforge/-/badges/release.svg)](https://i10git.cs.fau.de/rahil.doshi/materforge/-/releases)
 [![License](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg)](LICENSE)
-[![Pipeline Status](https://i10git.cs.fau.de/rahil.doshi/pymatlib/badges/master/pipeline.svg)](https://i10git.cs.fau.de/rahil.doshi/pymatlib/-/pipelines)
-[![Code Coverage](https://i10git.cs.fau.de/rahil.doshi/pymatlib/badges/master/coverage.svg)](https://i10git.cs.fau.de/rahil.doshi/pymatlib/-/commits/master)
+[![Pipeline Status](https://i10git.cs.fau.de/rahil.doshi/materforge/badges/master/pipeline.svg)](https://i10git.cs.fau.de/rahil.doshi/materforge/-/pipelines)
+[![Code Coverage](https://i10git.cs.fau.de/rahil.doshi/materforge/badges/master/coverage.svg)](https://i10git.cs.fau.de/rahil.doshi/materforge/-/commits/master)
 
 ## Table of Contents
 - [Key Features](#-key-features)
@@ -41,12 +41,12 @@ A high-performance Python library for material simulation and analysis with a fo
 
 ### Install from Git Repository
 ```
-pip install "git+https://i10git.cs.fau.de/rahil.doshi/pymatlib.git"
+pip install "git+https://i10git.cs.fau.de/rahil.doshi/materforge.git"
 ```
 ### Development Installation
 ```bash
-git clone https://i10git.cs.fau.de/rahil.doshi/pymatlib.git
-cd pymatlib
+git clone https://i10git.cs.fau.de/rahil.doshi/materforge.git
+cd materforge
 pip install -e .[dev]
 ```
 
@@ -55,7 +55,7 @@ pip install -e .[dev]
 
 ```python
 import sympy as sp
-from pymatlib.parsing.api import create_material
+from materforge.parsing.api import create_material
 
 # Create a material with symbolic temperature
 T = sp.Symbol('T')
@@ -82,7 +82,7 @@ material_with_plot = create_material('steel.yaml', T, enable_plotting=True)
 ### Working with Piecewise Inverse Functions
 
 ```python
-from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
+from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 # Create inverse energy density function: T = f_inv(E)
 if hasattr(material, 'energy_density'):
@@ -107,13 +107,13 @@ if hasattr(material, 'energy_density'):
 
 See [the YAML schema documentation](docs/reference/yaml_schema.md) for detailed configuration options.
 YAML configuration examples can be found here:
-- [Pure Metals](src/pymatlib/data/materials/pure_metals/Al/Al.yaml)
-- [Alloys](src/pymatlib/data/materials/alloys/1.4301/1.4301.yaml)
+- [Pure Metals](src/materforge/data/materials/pure_metals/Al/Al.yaml)
+- [Alloys](src/materforge/data/materials/alloys/1.4301/1.4301.yaml)
 
 ## 📚 Documentation
 Our documentation follows the _Diátaxis_ framework with four distinct types:
 ### Tutorials - Learning-oriented guides
-- [Getting Started with pymatlib](docs/tutorials/getting_started.md)
+- [Getting Started with materforge](docs/tutorials/getting_started.md)
 - [Creating Your First Material Simulation](docs/tutorials/first_simulation.md)
 ### How-to Guides - Problem-oriented instructions
 - [Defining Custom Material Properties](docs/how-to/define_materials.md)
@@ -138,13 +138,13 @@ Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) 
 This project is licensed under the BSD 3-Clause License. See the [LICENSE](LICENSE) file for details.
 
 ## 📖 Citation
-If you use PyMatLib in your research, please cite it using the information in our [CITATION.cff](CITATION.cff) file.
+If you use MaterForge in your research, please cite it using the information in our [CITATION.cff](CITATION.cff) file.
 
 ## 📞 Support
 - **Author**: Rahil Doshi
 - **Email**: rahil.doshi@fau.de
-- **Project Homepage**: [pymatlib](https://i10git.cs.fau.de/rahil.doshi/pymatlib)
-- **Bug Tracker**: [Issues](https://i10git.cs.fau.de/rahil.doshi/pymatlib/-/issues)
+- **Project Homepage**: [materforge](https://i10git.cs.fau.de/rahil.doshi/materforge)
+- **Bug Tracker**: [Issues](https://i10git.cs.fau.de/rahil.doshi/materforge/-/issues)
 
 ## 🙏 Acknowledgments
 - Built with [SymPy](https://www.sympy.org/) for symbolic mathematics
@@ -153,6 +153,6 @@ If you use PyMatLib in your research, please cite it using the information in ou
 - Visualization powered by [Matplotlib](https://matplotlib.org/)
 - YAML parsing with [ruamel.yaml](https://yaml.dev/doc/ruamel.yaml/)
 
-#### PyMatLib - Empowering material simulation with Python 🚀
+#### MaterForge - Empowering material simulation with Python 🚀
 
 ---

@@ -4,26 +4,26 @@ import numpy as np
 import sympy as sp
 from pathlib import Path
 
-from pymatlib.core.materials import Material
-from pymatlib.core.elements import ChemicalElement
-from pymatlib.data.elements.element_data import element_map
+from materforge.core.materials import Material
+from materforge.core.elements import ChemicalElement
+from materforge.data.elements.element_data import element_map
 
 @pytest.fixture
 def test_data_dir():
     """Path to test data directory."""
-    return Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials"
+    return Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials"
 
 @pytest.fixture
 def aluminum_yaml_path():
     """Path to aluminum YAML file."""
     current_file = Path(__file__)
-    return current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
+    return current_file.parent.parent / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
 
 @pytest.fixture
 def steel_yaml_path():
     """Path to steel YAML file."""
     current_file = Path(__file__)
-    return current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+    return current_file.parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
 @pytest.fixture
 def sample_aluminum_element():

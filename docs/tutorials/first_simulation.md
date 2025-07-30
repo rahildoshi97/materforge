@@ -1,7 +1,7 @@
 # Creating Your First Material Simulation
 
-This tutorial will guide you through creating a basic heat equation simulation using [PyMatLib](https://i10git.cs.fau.de/rahil.doshi/pymatlib) and [pystencils](https://pycodegen.pages.i10git.cs.fau.de/pystencils/).
-It builds upon the existing [waLBerla tutorial for code generation](https://walberla.net/doxygen/tutorial_codegen01.html), adding material property handling with pymatlib.
+This tutorial will guide you through creating a basic heat equation simulation using [MaterForge](https://i10git.cs.fau.de/rahil.doshi/materforge) and [pystencils](https://pycodegen.pages.i10git.cs.fau.de/pystencils/).
+It builds upon the existing [waLBerla tutorial for code generation](https://walberla.net/doxygen/tutorial_codegen01.html), adding material property handling with materforge.
 
 ## Prerequisites
 
@@ -13,15 +13,15 @@ Before starting, ensure you have:
 
 ## Overview
 
-We'll create a 2D heat equation simulation with temperature-dependent material properties using PyMatLib's architecture.
+We'll create a 2D heat equation simulation with temperature-dependent material properties using MaterForge's architecture.
 
 ## Step 1: Set Up the Simulation Framework
 ```python
 import sympy as sp
 import pystencils as ps
 from pystencilssfg import SourceFileGenerator
-from pymatlib.parsing.api import create_material
-from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
+from materforge.parsing.api import create_material
+from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 with SourceFileGenerator() as sfg:
     data_type = "float64"
@@ -95,8 +95,8 @@ import pystencils as ps
 from pystencilssfg import SourceFileGenerator
 from walberla.codegen import Sweep
 
-from pymatlib.parsing.api import create_material
-from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
+from materforge.parsing.api import create_material
+from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 with SourceFileGenerator() as sfg:
     data_type = "float64"

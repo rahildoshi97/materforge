@@ -6,8 +6,8 @@ import numpy as np
 import sympy as sp
 import os
 
-from pymatlib.algorithms.interpolation import interpolate_value
-from pymatlib.algorithms.piecewise_builder import PiecewiseBuilder
+from materforge.algorithms.interpolation import interpolate_value
+from materforge.algorithms.piecewise_builder import PiecewiseBuilder
 
 # Try to import psutil, skip memory tests if not available
 try:
@@ -116,7 +116,7 @@ class TestPerformance:
         import tempfile
         from pathlib import Path
         from ruamel.yaml import YAML
-        from pymatlib.parsing.api import create_material
+        from materforge.parsing.api import create_material
         T = sp.Symbol('T')
         # Complex material configuration
         config = {

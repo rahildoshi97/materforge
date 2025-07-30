@@ -1,0 +1,147 @@
+# ====================================================================================================
+# PYMATLIB MATERIAL CONFIGURATION FILE - PURE METAL
+# ====================================================================================================
+# This file defines material properties for pure Aluminum using the materforge format.
+# Pymatlib supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA, PIECEWISE_EQUATION, and COMPUTED_PROPERTY
+# Pure metals require 'melting_temperature' and 'boiling_temperature' instead of solidus/liquidus
+#
+# IMPORTANT: All property configurations must include 'bounds' parameter (except CONSTANT properties)
+#
+# Note: T is just a placeholder in equations.
+# The final equation will depend on the symbol passed via the API.
+# ====================================================================================================
+
+name: Aluminum
+material_type: pure_metal  # Must be 'pure_metal' for single-element materials
+
+# Composition must sum to 1.0 (for pure metals, single element = 1.0)
+composition:
+  Al: 1.0  # Aluminum purity (99.95%)
+
+# Required temperature properties for pure metals
+melting_temperature: 933.47   # Temperature where solid becomes liquid (K)
+boiling_temperature: 2743.0   # Temperature where liquid becomes gas (K)
+
+properties:
+  
+  # ====================================================================================================
+  # STEP_FUNCTION EXAMPLES
+  # Step functions use a single temperature transition point with before/after values
+  # ====================================================================================================
+  
+  latent_heat_of_fusion:
+    dependency: melting_temperature - 1  # Transition 1K before melting point
+    value: [0.0, 10790.0]                  # [before_transition, after_transition] in J/kg
+    bounds: [constant, constant]           # Keep constant values outside range
+  
+  latent_heat_of_vaporization:
+    dependency: 2743.0                    # Transition at boiling point
+    value: [0.0, 294000.0]                 # [before_boiling, after_boiling] in J/kg
+    bounds: [constant, constant]
+  
+  # ====================================================================================================
+  # TABULAR_DATA EXAMPLES
+  # Tabular data with explicit temperature-property relationships
+  # ====================================================================================================
+  
+  heat_capacity:
+    dependency: (273.15, 100.0)           # Tuple: (start=273.15K, increment=100K)
+    # Generates: [273.15, 373.15, 473.15, 573.15, 673.15, 773.15, 873.15, 973.15]
+    value: [897, 921, 950, 980, 1010, 1040, 1070, 1084]  # J/kg·K values
+    bounds: [constant, constant]
+    regression:
+      simplify: post                       # Apply linear regression after processing
+      degree: 1                            # Linear fit
+      segments: 1                          # Single segment (no breakpoints)
+
+  thermal_expansion_coefficient:
+    dependency: [373.15, 473.15, 573.15, 673.15, 773.15, 873.15]  # Explicit temperature list
+    value: [24.56e-06, 26.54e-06, 28.51e-06, 30.49e-06, 32.47e-06, 34.45e-06]  # 1/K values
+    bounds: [constant, constant]
+    regression:
+      simplify: post
+      degree: 1
+      segments: 1                          # Single segment (no breakpoints)
+
+  # ====================================================================================================
+  # PIECEWISE_EQUATION EXAMPLE
+  # Multiple equations for different temperature ranges
+  # ====================================================================================================
+  
+  heat_conductivity:
+    dependency: [300, 1700, 3000]         # Three breakpoints define two ranges
+    equation: [0.0124137215440647*T + 13.0532171803243, 0.0124137215440647*T + 13.0532171803243]
+    # Equation 1: 500-1700K, Equation 2: 1700-3000K
+    bounds: [constant, constant]
+    regression:
+      simplify: post
+      degree: 1
+      segments: 1
+  
+  # ====================================================================================================
+  # COMPUTED_PROPERTY EXAMPLES
+  # Properties calculated from other properties using symbolic expressions
+  # ====================================================================================================
+  
+  density:
+    dependency: (300, 3000, 541)          # (start, stop, points) - 541 evenly spaced points
+    equation: 2700 / (1 + 3 * thermal_expansion_coefficient * (T - 293.15))  # Thermal expansion model
+    bounds: [constant, constant]
+    regression:
+      simplify: post
+      degree: 1
+      segments: 1
+  
+  thermal_diffusivity:
+    dependency: (3000, 300, -5.)          # (start, stop, negative_step) - decreasing by 5K
+    equation: heat_conductivity / (density * heat_capacity)  # Standard thermal diffusivity formula
+    bounds: [extrapolate, extrapolate]     # Allow extrapolation outside range
+    regression:
+      simplify: post
+      degree: 2
+      segments: 1
+
+  energy_density:
+    dependency: (300, 3000, 5.0)          # (start, stop, step) - 5K increments
+    equation: density * specific_enthalpy  # Property dependencies automatically resolved
+    bounds: [extrapolate, extrapolate]
+    regression:
+      simplify: pre
+      degree: 1
+      segments: 6
+
+  specific_enthalpy:
+    dependency: (300, 3000, 541)          # (start, stop, num_points) - 541 evenly spaced points
+    equation: Integral(heat_capacity, T)   # Symbolic integration
+    bounds: [ constant, constant ]
+    regression:
+      simplify: post
+      degree: 1
+      segments: 2
+
+# ====================================================================================================
+# PURE METAL SPECIFIC NOTES:
+# 
+# 1. REQUIRED FIELDS:
+#    - name, material_type: pure_metal, composition, melting_temperature, boiling_temperature
+# 
+# 2. TEMPERATURE REFERENCES:
+#    - melting_temperature, boiling_temperature (instead of solidus/liquidus for alloys)
+#    - Arithmetic expressions: melting_temperature + 50, boiling_temperature - 100
+# 
+# 3. PROPERTY DEPENDENCIES:
+#    - Properties are processed in dependency order automatically
+#    - thermal_diffusivity depends on heat_conductivity, density, heat_capacity
+#    - density depends on thermal_expansion_coefficient
+# 
+# 4. TEMPERATURE TUPLE FORMATS:
+#    - (start, increment): Requires n_values from 'value' list length
+#    - (start, stop, step): Step size (float) or number of points (integer)
+#    - Negative steps create decreasing temperature arrays
+# 
+# 5. REGRESSION BENEFITS:
+#    - Reduces memory usage and computational complexity
+#    - Smooths noisy data while preserving essential behavior
+#    - 'pre': Applied to raw data before symbolic processing
+#    - 'post': Applied after symbolic expressions are evaluated
+# ====================================================================================================

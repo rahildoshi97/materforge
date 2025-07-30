@@ -1,7 +1,7 @@
 """Unit tests for PropertyTypeDetector."""
 
 import pytest
-from pymatlib.parsing.validation.property_type_detector import PropertyType, PropertyTypeDetector
+from materforge.parsing.validation.property_type_detector import PropertyType, PropertyTypeDetector
 
 class TestPropertyTypeDetector:
     """Test cases for PropertyTypeDetector."""

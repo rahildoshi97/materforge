@@ -4,7 +4,7 @@ import pytest
 import tempfile
 from pathlib import Path
 import sympy as sp
-from pymatlib.parsing.api import create_material, validate_yaml_file, get_supported_properties
+from materforge.parsing.api import create_material, validate_yaml_file, get_supported_properties
 
 
 class TestCreateMaterial:

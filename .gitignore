@@ -132,12 +132,12 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# PyMatLib specific
+# MaterForge specific
 # Generated version file
-src/pymatlib/_version.py
+src/materforge/_version.py
 
 # Plot outputs
-pymatlib_plots/
+materforge_plots/
 *.png
 *.jpg
 *.jpeg
@@ -145,7 +145,7 @@ pymatlib_plots/
 *.svg
 
 # Report outputs
-pymatlib_reports/
+materforge_reports/
 *.pdf
 
 # Data files (unless specifically needed)

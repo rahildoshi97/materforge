@@ -4,7 +4,7 @@ from pathlib import Path
 import sympy as sp
 import pandas as pd
 
-from pymatlib.parsing.api import (
+from materforge.parsing.api import (
     create_material,
     get_supported_properties,
     evaluate_material_properties,
@@ -12,7 +12,7 @@ from pymatlib.parsing.api import (
     validate_yaml_file,
     get_material_info
 )
-from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
+from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 
 def setup_logging():
@@ -37,8 +37,8 @@ def demonstrate_material_properties():
 
     # Set up file paths
     current_file = Path(__file__)
-    yaml_path_Al = current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
-    yaml_path_SS304L = current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+    yaml_path_Al = current_file.parent.parent / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
+    yaml_path_SS304L = current_file.parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
     materials = []
     material_symbols = {}  # Dictionary to track which symbol goes with which material
@@ -408,8 +408,8 @@ def demonstrate_advanced_usage():
 
     # Create materials with different symbols
     current_file = Path(__file__)
-    yaml_path_Al = current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
-    yaml_path_SS304L = current_file.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+    yaml_path_Al = current_file.parent.parent / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
+    yaml_path_SS304L = current_file.parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
     T1 = sp.Symbol('T_Al')  # Temperature symbol for Aluminum
     T2 = sp.Symbol('T_SS')  # Temperature symbol for Steel
