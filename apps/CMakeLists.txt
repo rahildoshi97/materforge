@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 3.24 )
 
-project ( test_pymatlib )
+project ( test_materforge )
 
 SET( CMAKE_CXX_STANDARD 20 )
 SET( CMAKE_CXX_STANDARD_REQUIRED ON )
