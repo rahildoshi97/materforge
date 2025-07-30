@@ -156,6 +156,9 @@ materforge_reports/
 !README.txt
 !requirements.txt
 !LICENSE.txt
+!AUTHORS.txt
+!CHANGELOG.txt
+!CONTRIBUTING.txt
 
 # Temporary files
 *.tmp
@@ -164,9 +167,17 @@ materforge_reports/
 *.swo
 *~
 
-# IDE/Editor files
+# IDE/Editor files - JetBrains
 .idea/
+*.iml
+*.iws
+*.ipr
+
+# IDE/Editor files - VS Code
 .vscode/
+*.code-workspace
+
+# IDE/Editor files - Sublime Text
 *.sublime-project
 *.sublime-workspace
 
@@ -190,6 +201,7 @@ build.ninja
 *.vcxproj
 *.vcxproj.filters
 *.sln
+_deps/
 
 # Walberla and external dependencies
 apps/walberla/
@@ -211,9 +223,6 @@ _gen/
 # Profiling data
 *.prof
 *.lprof
-
-# Jupyter notebook checkpoints
-.ipynb_checkpoints/
 
 # PyCharm
 .idea/
@@ -237,10 +246,6 @@ tramp
 *.swo
 *~
 .netrwhist
-
-# Sublime Text
-*.sublime-project
-*.sublime-workspace
 
 # Local configuration files
 config.local.py
@@ -293,3 +298,36 @@ $RECYCLE.BIN/
 .directory
 .Trash-*
 .nfs*
+
+# PyPI/Twine configuration (sensitive)
+.pypirc
+
+# Repository sync scripts (if they contain sensitive info)
+# sync-repos.sh
+
+# Testing and release artifacts
+TestPyPI-uploads/
+release-notes/
+*.whl.backup
+
+# Conda/Mamba environment files
+environment.yml.lock
+conda-meta/
+
+# Additional Python tools
+.python-version
+.coverage.*
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.black-cache/
+
+# Additional CMake patterns
+compile_commands.json
+CTestTestfile.cmake
+Testing/
+
+# Additional build patterns
+*.a
+*.lib
+*.exe
