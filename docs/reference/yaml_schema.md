@@ -1,5 +1,5 @@
 # YAML Schema for Material Definition
-This document defines the schema for material definition YAML files in materforge v0.4.1.
+This document defines the schema for material definition YAML files in materforge v0.5.5.
 
 ## Schema Overview
 
@@ -100,7 +100,7 @@ temperature: liquidus_temperature - 10
 ## 🎯 Advanced Features
 ### Regression Configuration
 Control data simplification and memory usage:
-```yam
+```yaml
 regression:
   simplify: pre    # Apply before symbolic processing
   degree: 1        # Linear regression
