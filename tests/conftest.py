@@ -1,11 +1,16 @@
-"""Shared pytest fixtures for PyMatLib tests."""
+"""Shared pytest fixtures for MaterForge tests."""
+import matplotlib
+matplotlib.use('Agg')  # Set non-GUI backend before any tests run
+
 import pytest
 import numpy as np
 import sympy as sp
 from pathlib import Path
 
+import matplotlib
+matplotlib.use('Agg')
+
 from materforge.core.materials import Material
-from materforge.core.elements import ChemicalElement
 from materforge.data.elements.element_data import element_map
 
 @pytest.fixture
