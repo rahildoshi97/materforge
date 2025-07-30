@@ -1,9 +1,9 @@
 """
-MaterForge - A Python library for temperature-dependent material property modeling.
+MaterForge - Materials Formulation Engine with Python
 
-This library provides tools for defining, processing, and evaluating material properties
-as functions of temperature, with support for various property definition formats
-including constants, piecewise functions, file-based data, and computed properties.
+A high-performance Python library for material property modeling
+and analysis. MaterForge provides comprehensive tools for defining, processing, and
+evaluating material properties as functions of temperature and other dependencies.
 
 Key Features:
 - Temperature-dependent material property modeling
@@ -11,6 +11,7 @@ Key Features:
 - Symbolic mathematics integration with SymPy
 - Piecewise function creation and evaluation
 - Material property visualization
+- Regression and data analysis capabilities
 - Integration with numerical simulation frameworks
 
 Main Components:
@@ -33,7 +34,7 @@ except ImportError:
             from importlib_metadata import version
             __version__ = version("materforge")
         except ImportError:
-            __version__ = "0.3.0+unknown"  # Fallback version
+            __version__ = "0.5.0+unknown"  # Updated fallback version
 
 # Core material definitions
 from .core.materials import Material
@@ -44,7 +45,8 @@ from .core.symbol_registry import SymbolRegistry
 from .parsing.api import (
     create_material,
     get_supported_properties,
-    validate_yaml_file
+    validate_yaml_file,
+    get_material_info
 )
 
 # Property processing
@@ -72,6 +74,7 @@ __all__ = [
     'create_material',
     'get_supported_properties',
     'validate_yaml_file',
+    'get_material_info',
 
     # Processing
     'PropertyProcessor',
@@ -90,4 +93,4 @@ __all__ = [
 # Package metadata
 __author__ = "Rahil Doshi"
 __email__ = "rahil.doshi@fau.de"
-__description__ = "Temperature-dependent material property modeling library"
+__description__ = "Materials Formulation Engine with Python"
