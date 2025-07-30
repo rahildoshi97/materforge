@@ -34,7 +34,7 @@ except ImportError:
             from importlib_metadata import version
             __version__ = version("materforge")
         except ImportError:
-            __version__ = "0.5.0+unknown"  # Updated fallback version
+            __version__ = "0.5.5+unknown"  # Updated fallback version
 
 # Core material definitions
 from .core.materials import Material
