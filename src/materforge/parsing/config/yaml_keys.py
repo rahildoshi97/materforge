@@ -1,24 +1,23 @@
 """Constants used for YAML parsing and property processing."""
 
 # ── TOP-LEVEL KEYS ───────────────────────────────────────────────
-INDEPENDENT_VARIABLES_KEY = "independent_variables"  # Note: plural for multi-dependency
+INDEPENDENT_VARIABLES_KEY = "independent_variables"
 
-# Property structure keys
+# Multi-dependency property structure keys
 DEPENDENCIES_KEY = "dependencies"
 RANGES_KEY = "ranges"
 COLUMNS_KEY = "columns"
 
 # File property keys
 FILE_PATH_KEY = "file_path"
-DEPENDENCY_COLUMN_KEY = "dependency_column"  # Generic column key
+DEPENDENCY_COLUMN_KEY = "dependency_column"
 PROPERTY_COLUMN_KEY = "property_column"
+PROPERTY_KEY = "property"
 
 # Legacy keys (for backward compatibility)
 TEMPERATURE_COLUMN_KEY = "temperature_column"
 TEMPERATURE_KEY = "temperature"
-
-# Generic dependency keys
-DEPENDENCY_KEY = "dependency"  # Generic dependency key for legacy format
+DEPENDENCY_KEY = "dependency"
 
 # Value and equation keys
 VALUE_KEY = "value"
@@ -57,10 +56,16 @@ FINAL_BOILING_TEMPERATURE_KEY = "final_boiling_temperature"
 PROPERTIES_KEY = "properties"
 NAME_KEY = "name"
 
-# Supported dependency names
+# Multi-dependency constants
+MAX_STEP_FUNCTION_DEPENDENCIES = 1  # Step functions limited to single dependency
+MAX_DEPENDENCIES = 3  # Reasonable limit for complexity
 SUPPORTED_DEPENDENCY_NAMES = {
-    "temperature", "strain_rate", "concentration", "pressure", "time"
+    "temperature", "pressure", "strain_rate", "concentration", "time"
 }
+STEP_FUNCTION_LIMITATION_MESSAGE = (
+    "Step functions are limited to single dependency due to physical realism "
+    "and computational considerations. Use smooth multi-dependency functions instead."
+)
 
 # Automatically export all constants
 __all__ = [name for name in globals() if not name.startswith('_') and name.isupper()]
