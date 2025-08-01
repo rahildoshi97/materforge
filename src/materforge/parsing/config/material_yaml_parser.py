@@ -2,7 +2,6 @@ import logging
 from difflib import get_close_matches
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
-
 import sympy as sp
 from ruamel.yaml import YAML, constructor, scanner
 
@@ -11,13 +10,14 @@ from materforge.data import ProcessingConstants
 from materforge.parsing.processors.property_processor import PropertyProcessor
 from materforge.parsing.validation.property_type_detector import PropertyType, PropertyTypeDetector
 from materforge.visualization.plotters import PropertyVisualizer
-from materforge.parsing.config.yaml_keys import PROPERTIES_KEY, MATERIAL_TYPE_KEY, \
-    COMPOSITION_KEY, PURE_METAL_KEY, MELTING_TEMPERATURE_KEY, BOILING_TEMPERATURE_KEY, SOLIDUS_TEMPERATURE_KEY, \
-    LIQUIDUS_TEMPERATURE_KEY, INITIAL_BOILING_TEMPERATURE_KEY, FINAL_BOILING_TEMPERATURE_KEY, ALLOY_KEY, NAME_KEY, \
-    INDEPENDENT_VARIABLES_KEY
+from materforge.parsing.config.yaml_keys import (
+    PROPERTIES_KEY, MATERIAL_TYPE_KEY, COMPOSITION_KEY, PURE_METAL_KEY,
+    MELTING_TEMPERATURE_KEY, BOILING_TEMPERATURE_KEY, SOLIDUS_TEMPERATURE_KEY,
+    LIQUIDUS_TEMPERATURE_KEY, INITIAL_BOILING_TEMPERATURE_KEY, FINAL_BOILING_TEMPERATURE_KEY,
+    ALLOY_KEY, NAME_KEY, INDEPENDENT_VARIABLES_KEY, SUPPORTED_MATERIAL_TYPES, SUPPORTED_DEPENDENCY_NAMES
+)
 
 logger = logging.getLogger(__name__)
-
 
 class BaseFileParser:
     """Base class for parsing configuration files."""
@@ -31,7 +31,6 @@ class BaseFileParser:
     def _load_config(self) -> Dict[str, Any]:
         raise NotImplementedError("Subclasses must implement _load_config method")
 
-
 class YAMLFileParser(BaseFileParser):
     """Parser for YAML configuration files."""
 
@@ -42,7 +41,8 @@ class YAMLFileParser(BaseFileParser):
             logger.debug("Loading YAML file: %s", self.config_path)
             with open(self.config_path, 'r') as f:
                 config = yaml.load(f)
-            logger.debug("YAML file loaded successfully, found %d top-level keys", len(config) if config else 0)
+            logger.debug("YAML file loaded successfully, found %d top-level keys",
+                         len(config) if config else 0)
             return config
         except FileNotFoundError as e:
             logger.error("YAML file not found: %s", self.config_path)
@@ -57,9 +57,8 @@ class YAMLFileParser(BaseFileParser):
             logger.error("Unexpected error parsing YAML file %s: %s", self.config_path, e, exc_info=True)
             raise ValueError(f"Error parsing {self.config_path}: {str(e)}") from e
 
-
 class MaterialYAMLParser(YAMLFileParser):
-    """Parser for material configuration files in YAML format."""
+    """Parser for material configuration files in YAML format with multi-dependency support."""
 
     VALID_YAML_PROPERTIES = {
         "bulk_modulus",
@@ -77,6 +76,7 @@ class MaterialYAMLParser(YAMLFileParser):
         "latent_heat_of_fusion",
         "latent_heat_of_vaporization",
         "magnetic_permeability",
+        "melting_point_pressure",
         "poisson_ratio",
         "shear_modulus",
         "specific_enthalpy",
@@ -86,10 +86,8 @@ class MaterialYAMLParser(YAMLFileParser):
         "ultimate_tensile_strength",
         "viscosity",
         "yield_strength",
-        # Extend to include other material properties as needed
     }
 
-    # --- Constructor ---
     def __init__(self, yaml_path: Union[str, Path]) -> None:
         super().__init__(yaml_path)
         logger.info("Initializing MaterialYAMLParser for: %s", yaml_path)
@@ -100,14 +98,15 @@ class MaterialYAMLParser(YAMLFileParser):
         logger.info("MaterialYAMLParser initialized successfully with %d property categories",
                     len(self.categorized_properties))
 
-    # --- Public API ---
-    def create_material(self, dependency: Union[float, sp.Symbol], enable_plotting: bool = True) -> Material:
-        """Create a Material instance from the parsed configuration and temperature."""
+    def create_material(self, dependency_symbols: Dict[str, sp.Symbol], enable_plotting: bool = True) -> Material:
+        """Create a Material instance from the parsed configuration and dependency symbols."""
         logger.info("Creating material from configuration: %s", self.config_path)
         try:
             name = self.config.get(NAME_KEY, "Unnamed Material")
             material_type = self.config[MATERIAL_TYPE_KEY]
             logger.info("Creating material: %s (type: %s)", name, material_type)
+            # Validate dependency symbols against independent variables
+            self._validate_dependency_symbols(dependency_symbols)
             elements = self._get_elements()
             composition = [val for val in self.config[COMPOSITION_KEY].values()]
             # Create material with different parameters based on material_type
@@ -122,7 +121,7 @@ class MaterialYAMLParser(YAMLFileParser):
                 )
                 logger.debug("Created pure metal with melting temp: %s K, boiling temp: %s K",
                              self.config[MELTING_TEMPERATURE_KEY], self.config[BOILING_TEMPERATURE_KEY])
-            else:  # alloy
+            elif material_type == ALLOY_KEY:
                 material = Material(
                     name=name,
                     elements=elements,
@@ -135,24 +134,27 @@ class MaterialYAMLParser(YAMLFileParser):
                 )
                 logger.debug("Created alloy with solidus: %s K, liquidus: %s K",
                              self.config[SOLIDUS_TEMPERATURE_KEY], self.config[LIQUIDUS_TEMPERATURE_KEY])
-            # Initialize visualizer only if plotting is enabled AND dependency is symbolic
+            else:
+                logger.error("Invalid material type: %s", material_type)
+                raise ValueError(f"Invalid material type: {material_type}. Must be {PURE_METAL_KEY} or {ALLOY_KEY}")
+            # Set parser config and symbol mapping on the material
+            material._parser_config = self.config.copy()
+            material._symbol_mapping = self.config[INDEPENDENT_VARIABLES_KEY].copy()
+            # Initialize visualizer only if plotting is enabled AND dependency contains symbols
             visualizer = None
-            should_visualize = enable_plotting and isinstance(dependency, sp.Symbol)
+            should_visualize = enable_plotting and all(isinstance(sym, sp.Symbol) for sym in dependency_symbols.values())
             if should_visualize:
                 self.visualizer.initialize_plots()
                 self.visualizer.reset_visualization_tracking()
                 visualizer = self.visualizer
-                logger.info("Visualization enabled for symbolic temperature")
+                logger.info("Visualization enabled for symbolic dependencies")
             else:
-                if not isinstance(dependency, sp.Symbol):
-                    logger.debug("Visualization disabled - numeric temperature provided")
-                else:
-                    logger.debug("Visualization disabled - plotting not enabled")
-            # Process properties
+                logger.debug("Visualization disabled - plotting not enabled")
+            # Process properties with multi-dependency support
             logger.info("Starting property processing for material: %s", name)
             self.property_processor.process_properties(
                 material=material,
-                dependency=dependency,
+                dependency_symbols=dependency_symbols,
                 properties=self.config[PROPERTIES_KEY],
                 categorized_properties=self.categorized_properties,
                 base_dir=self.base_dir,
@@ -172,15 +174,15 @@ class MaterialYAMLParser(YAMLFileParser):
             logger.error("Failed to create material from %s: %s", self.config_path, e, exc_info=True)
             raise ValueError(f"Failed to create material \n -> {str(e)}") from e
 
-    # --- Validation Methods ---
     def _validate_config(self) -> None:
         """Validate the configuration structure and content."""
         logger.debug("Starting configuration validation")
         if not isinstance(self.config, dict):
             logger.error("Invalid YAML structure - expected dictionary at root level")
-            raise ValueError("The YAML file must start with a dictionary/object structure with key-value pairs,"
+            raise ValueError("The YAML file must start with a dictionary/object structure with key-value pairs, "
                              "not a list or scalar value")
         self._validate_required_fields()
+        self._validate_independent_variables()
         properties = self.config.get(PROPERTIES_KEY, {})
         if not isinstance(properties, dict):
             logger.error("Properties section is not a dictionary: %s", type(properties))
@@ -194,24 +196,25 @@ class MaterialYAMLParser(YAMLFileParser):
         # Check for material_type first
         if MATERIAL_TYPE_KEY not in self.config:
             logger.error("Missing required field: %s", MATERIAL_TYPE_KEY)
-            raise ValueError("Missing required field: material_type")
+            raise ValueError(f"Missing required field: {MATERIAL_TYPE_KEY}")
         material_type = self.config[MATERIAL_TYPE_KEY]
         logger.debug("Material type: %s", material_type)
-        if material_type not in [ALLOY_KEY, PURE_METAL_KEY]:
+        if material_type not in SUPPORTED_MATERIAL_TYPES:
             logger.error("Invalid material_type: %s", material_type)
-            raise ValueError(f"Invalid material_type: {material_type}. Must be {PURE_METAL_KEY} or {ALLOY_KEY}")
+            raise ValueError(f"Invalid material_type: {material_type}. Must be in {SUPPORTED_MATERIAL_TYPES}")
         # Common required fields
-        common_fields = {NAME_KEY, MATERIAL_TYPE_KEY, COMPOSITION_KEY, PROPERTIES_KEY}
-        # Material-type specific fields
+        common_fields = {NAME_KEY, MATERIAL_TYPE_KEY, COMPOSITION_KEY, INDEPENDENT_VARIABLES_KEY, PROPERTIES_KEY}
+        # Material-specific required fields
         if material_type == PURE_METAL_KEY:
             required_fields = common_fields | {MELTING_TEMPERATURE_KEY, BOILING_TEMPERATURE_KEY}
         elif material_type == ALLOY_KEY:
-            required_fields = common_fields | {SOLIDUS_TEMPERATURE_KEY, LIQUIDUS_TEMPERATURE_KEY,
-                                               INITIAL_BOILING_TEMPERATURE_KEY, FINAL_BOILING_TEMPERATURE_KEY}
+            required_fields = common_fields | {
+                SOLIDUS_TEMPERATURE_KEY, LIQUIDUS_TEMPERATURE_KEY,
+                INITIAL_BOILING_TEMPERATURE_KEY, FINAL_BOILING_TEMPERATURE_KEY
+            }
         else:
-            logger.error("Unsupported material_type: %s", material_type)
-            raise ValueError(f"Unsupported material_type: {material_type}. "
-                             f"Supported types are: {PURE_METAL_KEY}, {ALLOY_KEY}.")
+            logger.error("Unsupported material type: %s", material_type)
+            raise ValueError(f"Unsupported material type: {material_type}. Must be in {SUPPORTED_MATERIAL_TYPES}")
         missing_fields = required_fields - set(self.config.keys())
         if missing_fields:
             logger.error("Missing required fields for %s: %s", material_type, missing_fields)
@@ -230,7 +233,7 @@ class MaterialYAMLParser(YAMLFileParser):
             raise ValueError(error_msg)
         self._validate_name()
         self._validate_composition()
-        logger.debug("Required fields validation completed")
+        logger.debug("All required fields present")
 
     def _validate_name(self) -> None:
         """Validate the material name."""
@@ -293,7 +296,6 @@ class MaterialYAMLParser(YAMLFileParser):
         if len(non_zero_elements) == 0:
             logger.error("Pure metal has no elements with non-zero composition")
             raise ValueError("Pure metals must have at least one element with non-zero composition")
-
         if len(non_zero_elements) > 1:
             element_list = ", ".join(f"{elem}: {frac}" for elem, frac in non_zero_elements.items())
             logger.error("Pure metal has multiple non-zero elements: %s", element_list)
@@ -347,24 +349,65 @@ class MaterialYAMLParser(YAMLFileParser):
             )
         logger.debug("Alloy composition rules validated successfully")
 
-    def _validate_property_names(self, properties: Dict[str, Any]) -> None:
-        """Validate that all property names are supported."""
-        logger.debug("Validating property names for %d properties", len(properties))
-        invalid_props = set(properties.keys()) - self.VALID_YAML_PROPERTIES
-        if invalid_props:
-            logger.error("Invalid properties found: %s", invalid_props)
-            suggestions = {
-                prop: get_close_matches(prop, self.VALID_YAML_PROPERTIES, n=1, cutoff=0.6)
-                for prop in invalid_props
-            }
-            error_msg = "Invalid properties found: \n ->"
-            for prop, matches in suggestions.items():
-                suggestion = f" (did you mean '{matches[0]}'?)" if matches else ""
-                error_msg += f" - '{prop}'{suggestion}\n"
-            raise ValueError(error_msg)
-    logger.debug("Property names validation completed successfully")
+    def _validate_independent_variables(self) -> None:
+        """Validate the independent_variables section."""
+        logger.debug("Validating independent variables")
+        if INDEPENDENT_VARIABLES_KEY not in self.config:
+            logger.error("Missing required field: %s", INDEPENDENT_VARIABLES_KEY)
+            raise ValueError("Missing required field: independent_variables")
+        independent_vars = self.config[INDEPENDENT_VARIABLES_KEY]
+        if not isinstance(independent_vars, dict):
+            logger.error("independent_variables must be a dictionary, got: %s", type(independent_vars))
+            raise ValueError("independent_variables must be a dictionary mapping dependency names to symbols")
+        if not independent_vars:
+            logger.error("independent_variables cannot be empty")
+            raise ValueError("independent_variables must define at least one dependency")
+        # Validate dependency names
+        for dep_name in independent_vars.keys():
+            if dep_name not in SUPPORTED_DEPENDENCY_NAMES:
+                logger.error("Unsupported dependency name: %s", dep_name)
+                raise ValueError(f"Unsupported dependency name: {dep_name}. "
+                                 f"Supported names: {sorted(SUPPORTED_DEPENDENCY_NAMES)}")
+        # Validate symbol names (must be valid Python identifiers)
+        for dep_name, symbol_name in independent_vars.items():
+            if not isinstance(symbol_name, str):
+                logger.error("Symbol name for %s must be a string, got: %s", dep_name, type(symbol_name))
+                raise ValueError(f"Symbol name for {dep_name} must be a string")
+            if not symbol_name.isidentifier():
+                logger.error("Invalid symbol name for %s: %s", dep_name, symbol_name)
+                raise ValueError(f"Invalid symbol name for {dep_name}: {symbol_name}. "
+                                 "Must be a valid Python identifier.")
+        logger.debug("Independent variables validated: %s", independent_vars)
 
-    # --- Processing Methods ---
+    def _validate_dependency_symbols(self, dependency_symbols: Dict[str, sp.Symbol]) -> None:
+        """Validate that provided dependency symbols match the configuration."""
+        logger.debug("Validating dependency symbols")
+        config_deps = set(self.config[INDEPENDENT_VARIABLES_KEY].keys())
+        provided_deps = set(dependency_symbols.keys())
+        missing_deps = config_deps - provided_deps
+        if missing_deps:
+            logger.error("Missing dependency symbols: %s", missing_deps)
+            raise ValueError(f"Missing dependency symbols: {sorted(list(missing_deps))}. "
+                             f"Required: {sorted(list(config_deps))}")
+        extra_deps = provided_deps - config_deps
+        if extra_deps:
+            logger.error("Extra dependency symbols: %s", extra_deps)
+            raise ValueError(f"Extra dependency symbols: {sorted(list(extra_deps))}. "
+                             f"Expected: {sorted(list(config_deps))}")
+        logger.debug("Dependency symbols validated successfully")
+
+    def _validate_property_names(self, properties: Dict[str, Any]) -> None:
+        """Validate property names against supported properties."""
+        logger.debug("Validating property names")
+        for prop_name in properties.keys():
+            if prop_name not in self.VALID_YAML_PROPERTIES:
+                logger.error("Invalid property name: %s", prop_name)
+                # Suggest close matches
+                suggestions = get_close_matches(prop_name, self.VALID_YAML_PROPERTIES, n=3, cutoff=0.6)
+                suggestion_text = f" Did you mean: {suggestions}?" if suggestions else ""
+                raise ValueError(f"Invalid property name: '{prop_name}'.{suggestion_text}")
+        logger.debug("All property names validated successfully")
+
     def _get_elements(self) -> List:
         """Get element objects from composition keys."""
         from materforge.data.elements.element_data import element_map

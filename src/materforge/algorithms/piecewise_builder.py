@@ -6,7 +6,7 @@ import sympy as sp
 from materforge.algorithms.interpolation import ensure_ascending_order
 from materforge.algorithms.regression_processor import RegressionProcessor
 from materforge.data.constants import ProcessingConstants
-from materforge.parsing.config.yaml_keys import CONSTANT_KEY, EXTRAPOLATE_KEY, BOUNDS_KEY, PRE_KEY
+from materforge.parsing.config.yaml_keys import DEPENDENCIES_KEY, CONSTANT_KEY, EXTRAPOLATE_KEY, BOUNDS_KEY, PRE_KEY
 from materforge.parsing.utils.utilities import ensure_sympy_compatible
 
 logger = logging.getLogger(__name__)
@@ -20,12 +20,14 @@ class PiecewiseBuilder:
                         T: sp.Symbol, config: Dict, prop_name: str) -> sp.Piecewise:
         """
         Main entry point for data-based piecewise creation.
+
         Args:
             temp_array: Temperature data points
             prop_array: Property values corresponding to temperatures
             T: Temperature symbol for the piecewise function
             config: Configuration dictionary containing bounds and regression settings
             prop_name: Name of the property (for logging and error messages)
+
         Returns:
             sp.Piecewise: Symbolic piecewise function
         """
@@ -49,8 +51,24 @@ class PiecewiseBuilder:
             original_order = "ascending" if temp_array[0] < temp_array[-1] else "descending"
             temp_array, prop_array = ensure_ascending_order(temp_array, prop_array)
             logger.debug("Data order for '%s': %s (reordered if needed)", prop_name, original_order)
-            # Extract configuration
-            lower_bound_type, upper_bound_type = config[BOUNDS_KEY]
+            # Extract configuration - handle both dictionary and list formats for bounds
+            bounds_config = config.get(BOUNDS_KEY)
+            if isinstance(bounds_config, dict):
+                # Multi-dependency format: bounds is a dictionary
+                dependencies = config.get(DEPENDENCIES_KEY, ['Unknown dependencies'])
+                primary_dependency = dependencies[0]
+                bounds_config = config[BOUNDS_KEY]
+                lower_bound_type, upper_bound_type = bounds_config[primary_dependency]
+            elif isinstance(bounds_config, list):
+                # Legacy format: bounds is a list
+                lower_bound_type, upper_bound_type = bounds_config
+                logger.debug("Legacy bounds for '%s': [%s, %s]", prop_name, lower_bound_type, upper_bound_type)
+                logger.info(f"Bounds must be a dictionary, got {type(bounds_config)}, \n"
+                                 f"config: {config}, \n"
+                                 f"config.get(BOUNDS_KEY): {bounds_config}")
+            else:
+                logger.warning("No bounds specified for '%s', using default [constant, constant]", prop_name)
+                raise ValueError("Bounds must be a dictionary or list, got {}".format(type(bounds_config)))
             logger.debug("Boundary types for '%s': lower=%s, upper=%s",
                          prop_name, lower_bound_type, upper_bound_type)
             T_standard = sp.Symbol('T')
@@ -88,12 +106,14 @@ class PiecewiseBuilder:
                             upper_bound_type: str = CONSTANT_KEY) -> sp.Piecewise:
         """
         Create piecewise from symbolic equations.
+
         Args:
             temp_points: Temperature breakpoints
             equations: List of symbolic expressions (strings or SymPy expressions)
             T: Temperature symbol
             lower_bound_type: Boundary behavior below first breakpoint
             upper_bound_type: Boundary behavior above last breakpoint
+
         Returns:
             sp.Piecewise: Symbolic piecewise function
         """
@@ -182,12 +202,14 @@ class PiecewiseBuilder:
                                   T: sp.Symbol, lower: str, upper: str) -> sp.Piecewise:
         """
         Create basic linear interpolation piecewise function.
+
         Args:
             temp_array: Temperature data points (must be sorted)
             prop_array: Property values
             T: Temperature symbol
             lower: Lower boundary behavior ('constant' or 'extrapolate')
             upper: Upper boundary behavior ('constant' or 'extrapolate')
+
         Returns:
             sp.Piecewise: Linear interpolation piecewise function
         """
@@ -241,7 +263,9 @@ class PiecewiseBuilder:
                                degree: int, segments: int) -> sp.Piecewise:
         """
         Create piecewise with regression.
+
         This delegates to RegressionProcessor but provides a unified interface.
+
         Args:
             temp_array: Temperature data points
             prop_array: Property values
@@ -250,6 +274,7 @@ class PiecewiseBuilder:
             upper: Upper boundary behavior
             degree: Polynomial degree for regression
             segments: Number of segments for regression
+
         Returns:
             sp.Piecewise: Regression-based piecewise function
         """

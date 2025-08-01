@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
-
 import sympy as sp
 
 from materforge.core.materials import Material
@@ -18,7 +17,6 @@ from materforge.parsing.processors.property_handlers import (
 from materforge.parsing.processors.post_processor import PropertyPostProcessor
 
 logger = logging.getLogger(__name__)
-
 
 class PropertyProcessor(PropertyProcessorBase):
     """
@@ -48,28 +46,33 @@ class PropertyProcessor(PropertyProcessorBase):
         self.base_dir: Optional[Path] = None
         logger.debug("PropertyProcessor initialized with %d handlers", len(self.handlers))
 
-    def process_properties(self, material: Material, dependency: Union[float, sp.Symbol],
+    def process_properties(self, material: Material,
+                           dependency_symbols: Dict[str, sp.Symbol],
                            properties: Dict[str, Any],
                            categorized_properties: Dict[PropertyType, List[Tuple[str, Any]]],
                            base_dir: Path, visualizer) -> None:
-        """Process all properties for the material."""
+        """Process all properties for the material using multi-dependency support."""
         logger.info("Starting property processing for material: %s", material.name)
         # Set processing context
-        self._initialize_processing_context(material, dependency, properties, categorized_properties, base_dir, visualizer)
+        self._initialize_processing_context(
+            material, dependency_symbols, properties, categorized_properties, base_dir, visualizer
+        )
         try:
             # Process properties by type
-            self._process_by_category(material, dependency)
+            self._process_by_category(material, dependency_symbols)
             # Post-process properties (regression, etc.)
             logger.info("Starting post-processing for material: %s", material.name)
             self.post_processor.post_process_properties(
-                material, dependency, self.properties, self.categorized_properties, self.processed_properties
+                material, dependency_symbols, self.properties,
+                self.categorized_properties, self.processed_properties
             )
             logger.info("Successfully processed all properties for material: %s", material.name)
         except Exception as e:
             logger.error("Property processing failed for material '%s': %s", material.name, e, exc_info=True)
             raise ValueError(f"Failed to process properties \n -> {str(e)}") from e
 
-    def _initialize_processing_context(self, material: Material, dependency: Union[float, sp.Symbol],
+    def _initialize_processing_context(self, material: Material,
+                                       dependency_symbols: Dict[str, sp.Symbol],
                                        properties: Dict[str, Any],
                                        categorized_properties: Dict[PropertyType, List[Tuple[str, Any]]],
                                        base_dir: Path, visualizer) -> None:
@@ -80,9 +83,12 @@ class PropertyProcessor(PropertyProcessorBase):
         self.base_dir = base_dir
         self.visualizer = visualizer
         self.processed_properties = set()
+        self.dependency_symbols = dependency_symbols
         # Set context for all handlers
         for handler_type, handler in self.handlers.items():
-            handler.set_processing_context(self.base_dir, visualizer, self.processed_properties)
+            handler.set_processing_context(
+                self.base_dir, visualizer, self.processed_properties, dependency_symbols
+            )
             logger.debug("Set processing context for handler: %s", handler_type.name)
         # Initialize dependency processor for computed properties
         computed_handler = self.handlers.get(PropertyType.COMPUTED_PROPERTY)
@@ -90,7 +96,7 @@ class PropertyProcessor(PropertyProcessorBase):
             computed_handler.set_dependency_processor(properties)
             logger.debug("Dependency processor initialized for computed properties")
 
-    def _process_by_category(self, material: Material, dependency: Union[float, sp.Symbol]) -> None:
+    def _process_by_category(self, material: Material, dependency_symbols: Dict[str, sp.Symbol]) -> None:
         """Process properties grouped by category."""
         total_properties = sum(len(prop_list) for prop_list in self.categorized_properties.values())
         active_categories = len([cat for cat, props in self.categorized_properties.items() if props])
@@ -108,7 +114,7 @@ class PropertyProcessor(PropertyProcessorBase):
             for prop_name, config in sorted_props:
                 logger.debug("Processing property: %s", prop_name)
                 try:
-                    handler.process_property(material, prop_name, config, dependency)
+                    handler.process_property(material, prop_name, config, dependency_symbols)
                     logger.debug("Successfully processed property: %s", prop_name)
                 except Exception as e:
                     logger.error("Failed to process property '%s': %s", prop_name, e, exc_info=True)

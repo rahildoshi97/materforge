@@ -1,16 +1,21 @@
 # ====================================================================================================
-# PYMATLIB MATERIAL CONFIGURATION FILE
+# PYMATLIB MATERIAL CONFIGURATION FILE - ALLOY (MULTI-DEPENDENCY)
 # ====================================================================================================
-# This file defines material properties for 1.4301 (Steel) using the new materforge format.
-# Pymatlib supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA, PIECEWISE_EQUATION, and COMPUTED_PROPERTY
+# This file defines material properties for Stainless Steel 304L using the multi-dependency format.
+# Pymatlib supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA,
+# PIECEWISE_EQUATION, and COMPUTED_PROPERTY
 #
 # IMPORTANT: All property configurations must include 'bounds' parameter (except CONSTANT properties)
 #
-# Note: T is just a placeholder in equations.
-# The final equation will depend on the symbol passed via the API.
+# Multi-dependency support: This material demonstrates pressure and strain rate dependencies
 # ====================================================================================================
 
-name: "1.4301"
+# Independent variable definitions (maps physical dependencies to mathematical symbols)
+independent_variables:
+  pressure: P        # Pressure-dependent properties use symbol 'P' in equations
+  strain_rate: S     # Strain rate-dependent properties use symbol 'S' in equations
+
+name: Stainless Steel 304L
 material_type: alloy  # Must be 'alloy' or 'pure_metal'
 
 # Composition fractions must sum to 1.0
@@ -29,139 +34,162 @@ final_boiling_temperature: 3200.    # Temperature where material is completely v
 
 properties:
 
-  # ====================================================================================================
-  # PROPERTY TYPE 1: CONSTANT_VALUE
-  # Format: property_name: numeric_value
-  # Note: Must be float, not integer (use 1.0 instead of 1)
-  # ====================================================================================================
+  # CONSTANT_VALUE EXAMPLES
+  # Constants don't require dependencies
 
   latent_heat_of_vaporization: 1.71401E5  # J/kg - Scientific notation supported
+  poisson_ratio: 0.27                     # Dimensionless
 
-  # ====================================================================================================
-  # PROPERTY TYPE 2: STEP_FUNCTION
-  # Format: Uses 'temperature' (single reference) and 'value' (list of 2 values)
-  # Supports temperature references and arithmetic expressions
-  # ====================================================================================================
-
-  # Example with temperature reference arithmetic:
-  # latent_heat_of_fusion:
-  #   temperature: solidus_temperature - 1 # Arithmetic expressions supported
-  #   value: [0.0, 171401.0]               # [before_transition, after_transition]
-  #   bounds: [constant, constant]         # Required for all non-constant properties
-
-  # ====================================================================================================
-  # PROPERTY TYPE 3: TABULAR_DATA
-  # Format: Uses 'temperature' (list/tuple) and 'value' (list) with same length
-  # Supports temperature references, explicit lists, and tuple notation
-  # ====================================================================================================
-
-  latent_heat_of_fusion:
-    dependency: [solidus_temperature - 1, liquidus_temperature + 1]  # Temperature references with arithmetic
-    value: [0, 171401.]                    # Corresponding property values
-    bounds: [constant, constant]           # Boundary behavior: 'constant' or 'extrapolate'
-
-  thermal_expansion_coefficient:
-    dependency: [300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1500, 2000, 2500, 3000]
-    value: [1.2632e-5, 1.468e-5, 1.524e-5, 1.581e-5, 1.639e-5, 1.699e-5, 1.759e-5, 1.821e-5, 1.885e-5, 2.1e-5, 2.3e-5, 2.5e-5, 2.7e-5]
-    bounds: [constant, constant]
-    regression:                            # Optional regression configuration
-      simplify: pre                        # 'pre' (before processing) or 'post' (after processing)
-      degree: 1                            # Polynomial degree for regression
-      segments: 2                          # Number of piecewise segments
-
-  # ====================================================================================================
-  # PROPERTY TYPE 4: FILE_IMPORT
-  # Format: Uses 'file_path', 'temperature_column', 'property_column'
-  # Supports .txt, .csv, .xlsx files with automatic missing value handling
-  # ====================================================================================================
-
-  heat_capacity:
-    file_path: ./1.4301.xlsx               # Relative path from YAML file location
-    dependency_column: T (K)              # Column name for temperature data
-    property_column: Specific heat (J/(Kg K)) # Column name for property data
-    bounds: [constant, constant]           # Required boundary behavior
-    regression:                            # Optional regression for data simplification
-      simplify: pre                        # Apply regression before processing
-      degree: 1                            # Linear regression
-      segments: 4                          # Divide into 4 piecewise segments
+  # SINGLE DEPENDENCY EXAMPLES (Pressure)
 
   density:
-    file_path: ./1.4301.xlsx
-    dependency_column: T (K)
-    property_column: Density (kg/(m)^3)
-    bounds: [constant, constant]
-    regression:
-      simplify: post                       # Apply regression after processing
-      degree: 2
-      segments: 3
-
-  # ====================================================================================================
-  # PROPERTY TYPE 5: PIECEWISE_EQUATION
-  # Format: Uses 'temperature' (breakpoints) and 'equation' (list of expressions)
-  # Number of equations = number of breakpoints - 1
-  # ====================================================================================================
-
-  heat_conductivity:
-    dependency: [500, 1700, 3000]         # Temperature breakpoints (K)
-    equation: [0.0124137215440647*T + 13.0532171803243, 0.0124137215440647*T + 13.0532171803243]
-    # Two equations for three breakpoints: [500-1700K] and [1700-3000K]
-    bounds: [constant, constant]           # Boundary behavior outside range
-    regression:
-      simplify: post                       # Apply regression after symbolic processing
-      degree: 1
-      segments: 2
-
-  # ====================================================================================================
-  # PROPERTY TYPE 6: COMPUTED_PROPERTY
-  # Format: Uses 'equation' (single expression) and 'temperature' (range definition)
-  # Supports dependency resolution and automatic ordering
-  # ====================================================================================================
-
-  specific_enthalpy:
-    dependency: (300, 3000, 541)          # (start, stop, num_points) - 541 evenly spaced points
-    equation: Integral(heat_capacity, T)   # Symbolic integration
-    bounds: [constant, constant]
+    dependencies: [pressure]
+    ranges:
+      pressure: (1e5, 1e10, 50)           # Pressure range: 1 bar to 1000 bar, 50 points
+    equation: 8000 * (1 + 4.5e-11 * (P - 1e5))  # Pressure compressibility
+    bounds:
+      pressure: [constant, extrapolate]
     regression:
       simplify: post
       degree: 1
       segments: 2
 
-  energy_density:
-    dependency: (300, 3000, 5.0)          # (start, stop, step) - 5K increments
-    equation: density * specific_enthalpy  # Property dependencies automatically resolved
-    bounds: [extrapolate, extrapolate]
+  bulk_modulus:
+    dependencies: [pressure]
+    ranges:
+      pressure: (1e5, 1e9, 30)            # Pressure range to 10 kbar
+    equation: 200e9 + 3.8 * P             # Pressure dependence of bulk modulus
+    bounds:
+      pressure: [constant, constant]
+
+  # SINGLE DEPENDENCY EXAMPLES (Strain Rate)
+
+  yield_strength:
+    dependencies: [strain_rate]
+    ranges:
+      strain_rate: (1e-6, 1e3, 40)        # Strain rate range: 1e-6 to 1000 s^-1, 40 points
+    equation: 350 + 120 * log(S / 1e-3)   # Strain rate sensitivity (S from mapping)
+    bounds:
+      strain_rate: [constant, extrapolate]
+    regression:
+      simplify: post
+      degree: 1
+      segments: 1
+
+  flow_stress:
+    dependencies: [strain_rate]
+    ranges:
+      strain_rate: (1e-5, 1e4, 35)        # Extended strain rate range
+    equation: 400 + 150 * log(S / 1e-3) + 25 * (log(S / 1e-3))**2  # Non-linear strain rate effect
+    bounds:
+      strain_rate: [extrapolate, extrapolate]
+    regression:
+      simplify: post
+      degree: 2
+      segments: 2
+
+  # MULTI-DEPENDENCY EXAMPLES (Pressure + Strain Rate)
+
+  ultimate_tensile_strength:
+    dependencies: [pressure]
+    ranges:
+      pressure: (1e5, 1e9, 20)            # Pressure range: 1 bar to 10 kbar, 20 points
+    equation: 580 + 0.5 * P / 1e6 + 80 * log(S / 1e-3)  # Combined pressure and strain rate effects
+    bounds:
+      pressure: [constant, constant]
+    regression:
+      simplify: post
+      degree: 1
+      segments: 1
+
+  fracture_toughness:
+    dependencies: [pressure]
+    ranges:
+      pressure: (1e5, 5e8, 15)            # Moderate pressure range
+    equation: 150 + 2.5e-6 * P - 10 * log(S / 1e-2)  # Pressure increases, strain rate decreases toughness
+    bounds:
+      pressure: [extrapolate, constant]
+
+  # STEP_FUNCTION EXAMPLES (Single Dependency)
+
+  latent_heat_of_fusion:
+    dependencies: [pressure]
+    ranges:
+      pressure: solidus_temperature - 1   # Reference-based definition
+    value: [0, 171401.]                    # Corresponding property values
+    bounds:
+      pressure: [constant, constant]      # Boundary behavior
+
+  # TABULAR_DATA EXAMPLES (Single Dependency)
+
+  hardness:
+    dependencies: [strain_rate]
+    ranges:
+      strain_rate: [1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100]  # Explicit strain rate list
+    value: [180, 185, 192, 205, 225, 250, 280]            # Hardness values (HV)
+    bounds:
+      strain_rate: [constant, constant]
     regression:
       simplify: pre
       degree: 1
-      segments: 6
+      segments: 2
 
-  thermal_diffusivity:
-    dependency: (3000, 300, -5.0)         # (start, stop, negative_step) - decreasing temperature
-    equation: heat_conductivity /(density * heat_capacity)  # Multi-property dependency
-    bounds: [constant, constant]
+  # FILE_IMPORT EXAMPLES (Multi-dependency)
+
+  creep_rate:
+    dependencies: [strain_rate]
+    file_path: ./steel_creep_data.xlsx     # Multi-dependency data file
+    columns:
+      strain_rate: "Strain_Rate_s"         # Strain rate column name
+      property: "Creep_Rate_s"              # Property column name
+    bounds:
+      strain_rate: [extrapolate, extrapolate]
+    regression:
+      simplify: pre
+      degree: 1
+      segments: 4
+
+  # PIECEWISE_EQUATION EXAMPLES (Multi-dependency)
+
+  elastic_modulus:
+    dependencies: [pressure]
+    ranges:
+      pressure: [1e5, 5e8, 1e9]           # Pressure breakpoints (Pa)
+    equation: [
+      200e9 + 0.8 * P / 1e6 - 5e9 * log(S / 1e-2),  # Low pressure, low strain rate
+      210e9 + 1.2 * P / 1e6 - 3e9 * log(S / 1e-2),  # High pressure, low strain rate
+      195e9 + 0.6 * P / 1e6 - 8e9 * log(S / 1e-2),  # Low pressure, high strain rate
+      205e9 + 1.0 * P / 1e6 - 6e9 * log(S / 1e-2)   # High pressure, high strain rate
+    ]
+    bounds:
+      pressure: [constant, constant]
     regression:
       simplify: post
       degree: 1
+      segments: 2
+
+  # COMPUTED_PROPERTY EXAMPLES (Multi-dependency)
+
+  stress_intensity_factor:
+    dependencies: [pressure]
+    ranges:
+      pressure: (1e5, 1e9, 20)
+    equation: fracture_toughness * sqrt(3.14159 * 0.001)  # Property dependencies automatically resolved
+    bounds:
+      pressure: [constant, constant]
+    regression:
+      simplify: pre
+      degree: 1
       segments: 3
 
-# ====================================================================================================
-# TEMPERATURE DEFINITION FORMATS:
-#
-# 1. Single value: 1000.0
-# 2. List: [300, 400, 500, 600]
-# 3. Temperature references: solidus_temperature, liquidus_temperature, etc.
-# 4. Arithmetic expressions: melting_temperature + 50, solidus_temperature - 10
-# 5. Tuple formats:
-#    - (start, increment): (300, 50) with n_values parameter
-#    - (start, stop, step): (300, 1000, 10.0) for 10K increments
-#    - (start, stop, points): (300, 1000, 71) for 71 evenly spaced points
-#
-# BOUNDS OPTIONS:
-# - 'constant': Use boundary values as constants outside range
-# - 'extrapolate': Linear extrapolation outside range
-#
-# REGRESSION OPTIONS:
-# - simplify: 'pre' (before symbolic processing) or 'post' (after symbolic processing)
-# - degree: Polynomial degree (1=linear, 2=quadratic, etc.)
-# - segments: Number of piecewise segments for regression
-# ====================================================================================================
+  work_hardening_rate:
+    dependencies: [strain_rate]
+    ranges:
+      strain_rate: (1e-5, 1e3, 100)
+    equation: 2000 - 200 * log(S / 1e-3)  # Decreasing work hardening with strain rate
+    bounds:
+      strain_rate: [constant, constant]
+    regression:
+      simplify: post
+      degree: 1
+      segments: 1

@@ -1,6 +1,5 @@
 import logging
 from typing import Optional, Union
-
 import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sp
@@ -16,9 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class PropertyVisualizer:
-    """Handles visualization of material properties."""
+    """Handles visualization of material properties with multi-dependency support."""
 
-    # --- Constructor ---
     def __init__(self, parser) -> None:
         self.parser = parser
         self.fig = None
@@ -59,7 +57,6 @@ class PropertyVisualizer:
         """Check if visualization is currently enabled."""
         return self.is_enabled and self.fig is not None
 
-    # --- Public API Methods ---
     def initialize_plots(self) -> None:
         """Initialize plots only if visualization is enabled."""
         if not self.is_enabled:
@@ -83,31 +80,30 @@ class PropertyVisualizer:
                      len(self.visualized_properties))
         self.visualized_properties = set()
 
-    def visualize_property(
-            self,
-            material: Material,
-            prop_name: str,
-            T: Union[float, sp.Symbol],
-            prop_type: str,
-            x_data: Optional[np.ndarray] = None,
-            y_data: Optional[np.ndarray] = None,
-            has_regression: bool = False,
-            simplify_type: Optional[str] = None,
-            degree: int = 1,
-            segments: int = 1,
-            lower_bound: Optional[float] = None,
-            upper_bound: Optional[float] = None,
-            lower_bound_type: str = CONSTANT_KEY,
-            upper_bound_type: str = CONSTANT_KEY) -> None:
-        """Visualize a single property."""
+    def visualize_property(self,
+                           material: Material,
+                           prop_name: str,
+                           primary_symbol: Union[float, sp.Symbol],
+                           prop_type: str,
+                           x_data: Optional[np.ndarray] = None,
+                           y_data: Optional[np.ndarray] = None,
+                           has_regression: bool = False,
+                           simplify_type: Optional[str] = None,
+                           degree: int = 1,
+                           segments: int = 1,
+                           lower_bound: Optional[float] = None,
+                           upper_bound: Optional[float] = None,
+                           lower_bound_type: str = CONSTANT_KEY,
+                           upper_bound_type: str = CONSTANT_KEY) -> None:
+        """Visualize a single property with multi-dependency support."""
         if prop_name in self.visualized_properties:
             logger.debug("Property '%s' already visualized, skipping", prop_name)
             return
         if not hasattr(self, 'fig') or self.fig is None:
             logger.warning("No figure available for property '%s' - visualization skipped", prop_name)
             return
-        if not isinstance(T, sp.Symbol):
-            logger.debug("Temperature is not symbolic for property '%s' - visualization skipped", prop_name)
+        if not isinstance(primary_symbol, sp.Symbol):
+            logger.debug("Primary dependency is not symbolic for property '%s' - visualization skipped", prop_name)
             return
         logger.info("Visualizing property: %s (type: %s) for material: %s",
                     prop_name, prop_type, material.name)
@@ -135,13 +131,13 @@ class PropertyVisualizer:
                 data_lower, data_upper = (ProcessingConstants.DEFAULT_TEMP_LOWER,
                                           ProcessingConstants.DEFAULT_TEMP_UPPER)
                 step = (data_upper - data_lower) / 1000
-                logger.debug("Using data temperature range: %.1f - %.1f K", data_lower, data_upper)
+            logger.debug("Using data temperature range: %.1f - %.1f K", data_lower, data_upper)
             # Set bounds with property-specific defaults
             if lower_bound is None:
                 lower_bound = data_lower
             if upper_bound is None:
                 upper_bound = data_upper
-                logger.debug("Using default temperature range: %.1f - %.1f K", data_lower, data_upper)
+            logger.debug("Using default temperature range: %.1f - %.1f K", data_lower, data_upper)
             # Create extended temperature range for visualization
             padding = (upper_bound - lower_bound) * ProcessingConstants.TEMPERATURE_PADDING_FACTOR
             ABSOLUTE_ZERO = PhysicalConstants.ABSOLUTE_ZERO
@@ -149,9 +145,10 @@ class PropertyVisualizer:
             padded_upper = upper_bound + padding
             num_points = int(np.ceil((padded_upper - padded_lower) / step)) + 1
             extended_temp = np.linspace(padded_lower, padded_upper, num_points)
-            # Title and labels
+            # Title and labels - use primary symbol name for axis
+            symbol_name = str(primary_symbol)
             ax.set_title(f"{prop_name} ({prop_type})", fontsize=14, fontweight='bold', pad=15)
-            ax.set_xlabel("Temperature", fontsize=12, fontweight='bold')
+            ax.set_xlabel(f"{symbol_name}", fontsize=12, fontweight='bold')
             ax.set_ylabel(f"{prop_name}", fontsize=12, fontweight='bold')
             # Color scheme
             colors = {
@@ -174,14 +171,14 @@ class PropertyVisualizer:
                         bbox=dict(facecolor='white', alpha=0.8, boxstyle='round,pad=0.5',
                                   edgecolor=colors['constant']))
                 ax.set_ylim(value * 0.9, value * 1.1)
-                # Add small offset to avoid overlap with horizontal line
+                # Small offset to avoid overlap with horizontal line
                 y_range = ax.get_ylim()
                 offset = (y_range[1] - y_range[0]) * 0.1
                 _y_value = value + offset
                 logger.debug("Plotted constant property '%s' with value: %g", prop_name, value)
             elif prop_type == 'STEP_FUNCTION':
                 try:
-                    f_current = sp.lambdify(T, current_prop, 'numpy')
+                    f_current = sp.lambdify(primary_symbol, current_prop, 'numpy')
                     # Always plot the extended behavior first (background)
                     y_extended = f_current(extended_temp)
                     ax.plot(extended_temp, y_extended, color=colors['extended'],
@@ -217,7 +214,7 @@ class PropertyVisualizer:
                     _y_value = 0.0
             else:  # Handle all other property types (FILE_IMPORT, TABULAR_DATA, PIECEWISE_EQUATION, COMPUTED_PROPERTY)
                 try:
-                    f_current = sp.lambdify(T, current_prop, 'numpy')
+                    f_current = sp.lambdify(primary_symbol, current_prop, 'numpy')
                     # Determine the appropriate label and color based on regression status
                     if has_regression and simplify_type == PRE_KEY:
                         main_color = colors['regression_pre']
@@ -260,11 +257,11 @@ class PropertyVisualizer:
                     if has_regression and simplify_type == POST_KEY and x_data is not None and y_data is not None:
                         try:
                             preview_pw = RegressionProcessor.process_regression(
-                                temp_array=x_data, prop_array=y_data, T=T,
+                                temp_array=x_data, prop_array=y_data, T=primary_symbol,
                                 lower_bound_type=lower_bound_type, upper_bound_type=upper_bound_type,
                                 degree=degree, segments=segments, seed=ProcessingConstants.DEFAULT_REGRESSION_SEED
                             )
-                            f_preview = sp.lambdify(T, preview_pw, 'numpy')
+                            f_preview = sp.lambdify(primary_symbol, preview_pw, 'numpy')
                             y_preview = f_preview(extended_temp)
                             ax.plot(extended_temp, y_preview, color=colors['regression_post'],
                                     linestyle='--', linewidth=2.5, label='regression (post)',
@@ -288,12 +285,12 @@ class PropertyVisualizer:
             if _y_value is None or not np.isfinite(_y_value):
                 try:
                     if hasattr(current_prop, 'subs') and hasattr(current_prop, 'evalf'):
-                        _y_value = float(current_prop.subs(T, lower_bound).evalf())
+                        _y_value = float(current_prop.subs(primary_symbol, lower_bound).evalf())
                     else:
                         _y_value = float(current_prop) if hasattr(current_prop, '__float__') else 0.0
                 except (ValueError, TypeError, AttributeError):
                     _y_value = 0.0
-                    logger.warning("Could not determine y_value for annotations for property '%s'", prop_name)
+                logger.warning("Could not determine y_value for annotations for property '%s'", prop_name)
             # Add boundary type annotations
             ax.text(lower_bound, _y_value, f' {lower_bound_type}',
                     verticalalignment='top', horizontalalignment='right',

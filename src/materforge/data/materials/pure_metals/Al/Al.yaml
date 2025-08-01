@@ -1,15 +1,20 @@
 # ====================================================================================================
-# PYMATLIB MATERIAL CONFIGURATION FILE - PURE METAL
+# PYMATLIB MATERIAL CONFIGURATION FILE - PURE METAL (MULTI-DEPENDENCY)
 # ====================================================================================================
-# This file defines material properties for pure Aluminum using the materforge format.
-# Pymatlib supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA, PIECEWISE_EQUATION, and COMPUTED_PROPERTY
+# This file defines material properties for pure Aluminum using the multi-dependency format.
+# Pymatlib supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA,
+# PIECEWISE_EQUATION, and COMPUTED_PROPERTY
 # Pure metals require 'melting_temperature' and 'boiling_temperature' instead of solidus/liquidus
 #
 # IMPORTANT: All property configurations must include 'bounds' parameter (except CONSTANT properties)
 #
-# Note: T is just a placeholder in equations.
-# The final equation will depend on the symbol passed via the API.
+# Multi-dependency support: This material demonstrates temperature and pressure dependencies
 # ====================================================================================================
+
+# Independent variable definitions (maps physical dependencies to mathematical symbols)
+independent_variables:
+  temperature: T    # Temperature-dependent properties use symbol 'T' in equations
+  pressure: P       # Pressure-dependent properties use symbol 'P' in equations
 
 name: Aluminum
 material_type: pure_metal  # Must be 'pure_metal' for single-element materials
@@ -23,125 +28,156 @@ melting_temperature: 933.47   # Temperature where solid becomes liquid (K)
 boiling_temperature: 2743.0   # Temperature where liquid becomes gas (K)
 
 properties:
-  
-  # ====================================================================================================
-  # STEP_FUNCTION EXAMPLES
-  # Step functions use a single temperature transition point with before/after values
-  # ====================================================================================================
-  
+
+  # CONSTANT_VALUE EXAMPLES
+  # Constants don't require dependencies
+
+  surface_tension: 865.0  # N/m at melting point
+
+  # SINGLE DEPENDENCY EXAMPLES (Temperature)
+
   latent_heat_of_fusion:
-    dependency: melting_temperature - 1  # Transition 1K before melting point
-    value: [0.0, 10790.0]                  # [before_transition, after_transition] in J/kg
-    bounds: [constant, constant]           # Keep constant values outside range
-  
+    dependencies: [temperature]
+    ranges:
+      temperature: melting_temperature - 1  # Transition 1K before melting point
+    value: [0.0, 10790.0]                   # [before_transition, after_transition] in J/kg
+    bounds:
+      temperature: [constant, constant]     # Keep constant values outside range
+
   latent_heat_of_vaporization:
-    dependency: 2743.0                    # Transition at boiling point
-    value: [0.0, 294000.0]                 # [before_boiling, after_boiling] in J/kg
-    bounds: [constant, constant]
-  
-  # ====================================================================================================
-  # TABULAR_DATA EXAMPLES
-  # Tabular data with explicit temperature-property relationships
-  # ====================================================================================================
-  
+    dependencies: [temperature]
+    ranges:
+      temperature: 2743.0                   # Transition at boiling point
+    value: [0.0, 294000.0]                  # [before_boiling, after_boiling] in J/kg
+    bounds:
+      temperature: [constant, constant]
+
   heat_capacity:
-    dependency: (273.15, 100.0)           # Tuple: (start=273.15K, increment=100K)
+    dependencies: [temperature]
+    ranges:
+      temperature: (273.15, 100.0)          # Tuple: (start=273.15K, increment=100K)
     # Generates: [273.15, 373.15, 473.15, 573.15, 673.15, 773.15, 873.15, 973.15]
     value: [897, 921, 950, 980, 1010, 1040, 1070, 1084]  # J/kg·K values
-    bounds: [constant, constant]
+    bounds:
+      temperature: [constant, constant]
     regression:
-      simplify: post                       # Apply linear regression after processing
-      degree: 1                            # Linear fit
-      segments: 1                          # Single segment (no breakpoints)
+      simplify: post                        # Apply linear regression after processing
+      degree: 1                             # Linear fit
+      segments: 1                           # Single segment (no breakpoints)
 
   thermal_expansion_coefficient:
-    dependency: [373.15, 473.15, 573.15, 673.15, 773.15, 873.15]  # Explicit temperature list
+    dependencies: [temperature]
+    ranges:
+      temperature: [373.15, 473.15, 573.15, 673.15, 773.15, 873.15]  # Explicit temperature list
     value: [24.56e-06, 26.54e-06, 28.51e-06, 30.49e-06, 32.47e-06, 34.45e-06]  # 1/K values
-    bounds: [constant, constant]
+    bounds:
+      temperature: [constant, constant]
     regression:
       simplify: post
       degree: 1
-      segments: 1                          # Single segment (no breakpoints)
+      segments: 1                           # Single segment (no breakpoints)
 
-  # ====================================================================================================
-  # PIECEWISE_EQUATION EXAMPLE
-  # Multiple equations for different temperature ranges
-  # ====================================================================================================
-  
   heat_conductivity:
-    dependency: [300, 1700, 3000]         # Three breakpoints define two ranges
+    dependencies: [temperature]
+    ranges:
+      temperature: [300, 1700, 3000]        # Three breakpoints define two ranges
     equation: [0.0124137215440647*T + 13.0532171803243, 0.0124137215440647*T + 13.0532171803243]
-    # Equation 1: 500-1700K, Equation 2: 1700-3000K
-    bounds: [constant, constant]
+    # Equation 1: 300-1700K, Equation 2: 1700-3000K (T symbol from independent_variables mapping)
+    bounds:
+      temperature: [constant, constant]
     regression:
       simplify: post
       degree: 1
       segments: 1
-  
-  # ====================================================================================================
-  # COMPUTED_PROPERTY EXAMPLES
-  # Properties calculated from other properties using symbolic expressions
-  # ====================================================================================================
-  
+
+  # SINGLE DEPENDENCY EXAMPLES (Pressure)
+
+  bulk_modulus:
+    dependencies: [pressure]
+    ranges:
+      pressure: (1e5, 1e9, 50)              # Pressure range from 1 bar to 10 kbar, 50 points
+    equation: 76.0e9 + 4.2 * P              # Pressure dependence of bulk modulus (Pa)
+    bounds:
+      pressure: [constant, extrapolate]
+    regression:
+      simplify: post
+      degree: 1
+      segments: 1
+
+  # MULTI-DEPENDENCY EXAMPLES (Temperature + Pressure)
+
   density:
-    dependency: (300, 3000, 541)          # (start, stop, points) - 541 evenly spaced points
-    equation: 2700 / (1 + 3 * thermal_expansion_coefficient * (T - 293.15))  # Thermal expansion model
-    bounds: [constant, constant]
+    dependencies: [temperature]
+    ranges:
+      temperature: (300, 3000, 20)          # Temperature range: 300-3000K, 20 points
+      pressure: (1e5, 1e9, 15)              # Pressure range: 1 bar to 10 kbar, 15 points
+    equation: 2700 * (1 - 3 * thermal_expansion_coefficient * (T - 293.15)) * (1 + 4.2e-11 * (T - 1e5))
+    # Combined thermal expansion and pressure compressibility
+    bounds:
+      temperature: [constant, constant]
+      pressure: [constant, extrapolate]
     regression:
       simplify: post
       degree: 1
       segments: 1
-  
+
+  kinematic_viscosity:
+    dependencies: [pressure]
+    ranges:
+      pressure: (1e5, 1e10, 25)             # Pressure range up to 100 kbar
+    equation: 933.47 + 0.0237 * (P - 1e5) / 1e6  # Clausius-Clapeyron relation (simplified)
+    bounds:
+      pressure: [constant, extrapolate]
+
+  # FILE_IMPORT EXAMPLES (Multi-dependency)
+
+  viscosity:
+    dependencies: [temperature]
+    file_path: ./Al.xlsx    # Multi-dependency data file
+    columns:
+      temperature: "T (K)"                    # Temperature column name
+      property: "Shear modulus(GPa)-TOTAL-10000.0(K/s)"            # Property column name
+    bounds:
+      temperature: [constant, constant]
+    regression:
+      simplify: pre
+      degree: 1
+      segments: 3
+
+  # COMPUTED_PROPERTY EXAMPLES (Multi-dependency)
+
   thermal_diffusivity:
-    dependency: (3000, 300, -5.)          # (start, stop, negative_step) - decreasing by 5K
+    dependencies: [temperature]
+    ranges:
+      temperature: (300, 3000, 20)
     equation: heat_conductivity / (density * heat_capacity)  # Standard thermal diffusivity formula
-    bounds: [extrapolate, extrapolate]     # Allow extrapolation outside range
+    bounds:
+      temperature: [extrapolate, extrapolate]
     regression:
       simplify: post
       degree: 2
       segments: 1
 
-  energy_density:
-    dependency: (300, 3000, 5.0)          # (start, stop, step) - 5K increments
-    equation: density * specific_enthalpy  # Property dependencies automatically resolved
-    bounds: [extrapolate, extrapolate]
-    regression:
-      simplify: pre
-      degree: 1
-      segments: 6
+  # energy_density:
+    # dependencies: [temperature]
+    # ranges:
+      # temperature: (1e5, 1e9, 20)
+    # equation: density * specific_enthalpy    # Property dependencies automatically resolved
+    # bounds:
+      # temperature: [constant, constant]
+    # regression:
+      # simplify: pre
+      # degree: 1
+      # segments: 6
 
   specific_enthalpy:
-    dependency: (300, 3000, 541)          # (start, stop, num_points) - 541 evenly spaced points
-    equation: Integral(heat_capacity, T)   # Symbolic integration
-    bounds: [ constant, constant ]
+    dependencies: [temperature]
+    ranges:
+      temperature: (300, 3000, 541)         # (start, stop, num_points) - 541 evenly spaced points
+    equation: Integral(heat_capacity, T)    # Symbolic integration (T from mapping)
+    bounds:
+      temperature: [constant, constant]
     regression:
       simplify: post
       degree: 1
       segments: 2
-
-# ====================================================================================================
-# PURE METAL SPECIFIC NOTES:
-# 
-# 1. REQUIRED FIELDS:
-#    - name, material_type: pure_metal, composition, melting_temperature, boiling_temperature
-# 
-# 2. TEMPERATURE REFERENCES:
-#    - melting_temperature, boiling_temperature (instead of solidus/liquidus for alloys)
-#    - Arithmetic expressions: melting_temperature + 50, boiling_temperature - 100
-# 
-# 3. PROPERTY DEPENDENCIES:
-#    - Properties are processed in dependency order automatically
-#    - thermal_diffusivity depends on heat_conductivity, density, heat_capacity
-#    - density depends on thermal_expansion_coefficient
-# 
-# 4. TEMPERATURE TUPLE FORMATS:
-#    - (start, increment): Requires n_values from 'value' list length
-#    - (start, stop, step): Step size (float) or number of points (integer)
-#    - Negative steps create decreasing temperature arrays
-# 
-# 5. REGRESSION BENEFITS:
-#    - Reduces memory usage and computational complexity
-#    - Smooths noisy data while preserving essential behavior
-#    - 'pre': Applied to raw data before symbolic processing
-#    - 'post': Applied after symbolic expressions are evaluated
-# ====================================================================================================

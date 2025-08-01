@@ -32,6 +32,8 @@ class ProcessingConstants:
     DEFAULT_TEMP_UPPER: Final[float] = 3000.0
     # Shared regex for temperature arithmetic
     TEMP_ARITHMETIC_REGEX: Final[str] = r'^(\w+)\s*([+-])\s*(\d+(?:\.\d+)?)$'
+    # Plotting constants
+    PLOT_POINTS = 1000  # Number of points for smooth visualization
 
 
 @dataclass(frozen=True)

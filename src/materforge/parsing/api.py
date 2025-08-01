@@ -9,7 +9,6 @@ property evaluation, and information extraction.
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Union
-
 import sympy as sp
 
 from materforge.core.materials import Material
@@ -19,7 +18,7 @@ from materforge.parsing.config.yaml_keys import (
     PURE_METAL_KEY, MELTING_TEMPERATURE_KEY, BOILING_TEMPERATURE_KEY,
     SOLIDUS_TEMPERATURE_KEY, LIQUIDUS_TEMPERATURE_KEY,
     INITIAL_BOILING_TEMPERATURE_KEY, FINAL_BOILING_TEMPERATURE_KEY,
-    ALLOY_KEY
+    ALLOY_KEY, INDEPENDENT_VARIABLES_KEY, SUPPORTED_DEPENDENCY_NAMES
 )
 
 logger = logging.getLogger(__name__)
@@ -29,21 +28,23 @@ logger = logging.getLogger(__name__)
 # CORE MATERIAL CREATION AND VALIDATION
 # ====================================================================
 
-def create_material(yaml_path: Union[str, Path], dependency: Union[float, sp.Symbol],
+def create_material(yaml_path: Union[str, Path],
+                    dependency_symbols: Dict[str, sp.Symbol],
                     enable_plotting: bool = True) -> Material:
-    """Create material instance from YAML configuration file.
+    """Create material instance from YAML configuration file with multi-dependency support.
 
     This function serves as the main entry point for creating material (pure metal or alloy)
     objects from YAML configuration files. It handles the parsing of the configuration
-    and creation of the material with the specified temperature.
+    and creation of the material with the specified dependency symbols.
 
     Parameters
     ----------
     yaml_path : Union[str, Path]
         Path to the YAML configuration file
-    dependency : Union[float, sp.Symbol]
-        Sympy symbol for property evaluation. Use a symbolic variable
-        (e.g., sp.Symbol('T') or sp.Symbol('u_C')) for symbolic temperature expressions
+    dependency_symbols : Dict[str, sp.Symbol]
+        Dictionary mapping dependency names to SymPy symbols.
+        Keys must match the dependencies defined in the YAML file's independent_variables section.
+        Example: {'temperature': sp.Symbol('T'), 'pressure': sp.Symbol('P')}
     enable_plotting : bool, optional
         Whether to generate visualization plots (default: True)
 
@@ -59,35 +60,41 @@ def create_material(yaml_path: Union[str, Path], dependency: Union[float, sp.Sym
     ValueError
         If the YAML content is invalid or material creation fails
     TypeError
-        If temperature parameter has invalid type
-
-    Notes
-    -----
-    In YAML files, always use 'T' as the temperature variable in equations.
-    The system will automatically substitute this with your provided symbol.
+        If dependency_symbols parameter has invalid type
 
     Examples
     --------
-    Create a material with symbolic temperature expressions:
+    Create a material with temperature and pressure dependencies:
 
     >>> import sympy as sp
-    >>> T = sp.Symbol('T')
-    >>> material = create_material('steel.yaml', T)
+    >>> symbols = {'temperature': sp.Symbol('T'), 'pressure': sp.Symbol('P')}
+    >>> material_steel = create_material('steel.yaml', symbols)
     >>> print(material.name)
     Steel
 
-    Create a material with a custom temperature symbol:
+    Create a material with custom symbols:
 
-    >>> u_C = sp.Symbol('u_C')
-    >>> material_copper = create_material('copper.yaml', u_C)
+    >>> symbols = {'temperature': sp.Symbol('u_C'), 'strain_rate': sp.Symbol('gamma_dot')}
+    >>> material_aluminum = create_material('aluminum.yaml', symbols)
     """
-    logger.info("Creating material from: %s with dependency=%s, plotting=%s", yaml_path, dependency, enable_plotting)
+    logger.info("Creating material from: %s with dependencies=%s, plotting=%s",
+                yaml_path, list(dependency_symbols.keys()), enable_plotting)
     try:
-        # Accept symbolic temperatures only
-        if not isinstance(dependency, sp.Symbol):
-            raise TypeError(f"Dependency '{dependency}' must be a sympy Symbol, got {type(dependency)}")
+        # Validate dependency_symbols
+        if not isinstance(dependency_symbols, dict):
+            raise TypeError(f"dependency_symbols must be a dictionary mapping dependency names to symbols, "
+                            f"got {type(dependency_symbols)}")
+        for key, symbol in dependency_symbols.items():
+            if not isinstance (key, str):
+                raise TypeError(f"Dependency name '{key}' must be a string, got {type(key)}")
+            if key not in SUPPORTED_DEPENDENCY_NAMES:
+                raise ValueError(f"Unsupported dependency name '{key}'. "
+                                 f"Supported names are: {MaterialYAMLParser.SUPPORTED_DEPENDENCY_NAMES}")
+            if not isinstance(symbol, sp.Symbol):
+                raise TypeError(f"Symbol for dependency '{key}' must be a sympy Symbol, "
+                                f"got {type(symbol)}")
         parser = MaterialYAMLParser(yaml_path=yaml_path)
-        material = parser.create_material(dependency=dependency, enable_plotting=enable_plotting)
+        material = parser.create_material(dependency_symbols=dependency_symbols, enable_plotting=enable_plotting)
         logger.info("Successfully created material: %s with %d properties",
                     material.name, len([attr for attr in dir(material)
                                         if not attr.startswith('_') and hasattr(material, attr)]))
@@ -100,13 +107,17 @@ def create_material(yaml_path: Union[str, Path], dependency: Union[float, sp.Sym
 def validate_yaml_file(yaml_path: Union[str, Path]) -> bool:
     """
     Validate a YAML file without creating the material.
+
     Args:
         yaml_path: Path to the YAML configuration file to validate
+
     Returns:
         bool: True if the file is valid
+
     Raises:
         FileNotFoundError: If the file doesn't exist
         ValueError: If the YAML content is invalid
+
     Example:
         try:
             is_valid = validate_yaml_file('steel.yaml')
@@ -137,23 +148,29 @@ def validate_yaml_file(yaml_path: Union[str, Path]) -> bool:
 def get_material_info(yaml_path: Union[str, Path]) -> Dict:
     """
     Get basic information about a material configuration without full processing.
+
     Args:
         yaml_path: Path to the YAML configuration file
+
     Returns:
         Dict: Dictionary containing material information including:
             - name: Material name
             - material_type: Type of material (pure_metal or alloy)
             - composition: Element composition dictionary
+            - independent_variables: Mapping of dependencies to symbols
             - properties: List of available property names
             - total_properties: Number of properties defined
             - property_types: Count of each property type
             - Temperature properties based on material type
+
     Raises:
         FileNotFoundError: If the YAML file doesn't exist
         ValueError: If the YAML content is invalid
+
     Example:
         info = get_material_info('steel.yaml')
         print(f"Material: {info['name']}")
+        print(f"Dependencies: {info['independent_variables']}")
         print(f"Properties: {info['total_properties']}")
         print(f"Type: {info['material_type']}")
     """
@@ -166,6 +183,7 @@ def get_material_info(yaml_path: Union[str, Path]) -> Dict:
             'name': config.get(NAME_KEY, 'Unknown'),
             'material_type': config.get(MATERIAL_TYPE_KEY, 'Unknown'),
             'composition': config.get(COMPOSITION_KEY, {}),
+            'independent_variables': config.get(INDEPENDENT_VARIABLES_KEY, {}),
         }
         # Add properties information
         properties = config.get(PROPERTIES_KEY, {})
@@ -208,16 +226,17 @@ def get_supported_properties() -> List[str]:
     List[str]
         List of strings representing valid property names that can be
         defined in YAML files
+
     Examples
     --------
     >>> props = get_supported_properties()
     >>> print(f"Supported properties: {len(props)}")
     Supported properties: 12
     >>> for prop in props[:3]:
-    ...     print(f"  - {prop}")
-      - density
-      - heat_capacity
-      - thermal_conductivity
+    ...     print(f" - {prop}")
+    - density
+    - heat_capacity
+    - thermal_conductivity
     """
     return sorted(list(MaterialYAMLParser.VALID_YAML_PROPERTIES))
 
@@ -225,26 +244,32 @@ def get_supported_properties() -> List[str]:
 def get_material_property_names(material: Material) -> List[str]:
     """
     Get list of all available property names for a material instance.
+
     Args:
         material: Material instance
+
     Returns:
         List[str]: List of property names that exist (are not None) on the material
+
     Raises:
         ValueError: If material is not a Material instance
+
     Example:
-        material = create_material('steel.yaml', dependency=sp.Symbol('T'))
+        symbols = {'temperature': sp.Symbol('T')}
+        material = create_material('steel.yaml', symbols)
         available = get_material_property_names(material)
         print(f"Available properties: {available}")
     """
     if not isinstance(material, Material):
         raise ValueError(f"Expected Material instance, got {type(material).__name__}")
     # Define all possible property names
-    property_names = [
+    """property_names = [
         'density', 'dynamic_viscosity', 'energy_density', 'heat_capacity',
         'heat_conductivity', 'kinematic_viscosity', 'latent_heat_of_fusion',
         'latent_heat_of_vaporization', 'specific_enthalpy', 'surface_tension',
         'thermal_diffusivity', 'thermal_expansion_coefficient'
-    ]
+    ]"""
+    property_names = sorted(list(MaterialYAMLParser.VALID_YAML_PROPERTIES))
     # Return only properties that exist and are not None
     return [name for name in property_names if getattr(material, name, None) is not None]
 
@@ -253,62 +278,50 @@ def get_material_property_names(material: Material) -> List[str]:
 # PROPERTY EVALUATION
 # ====================================================================
 
-def evaluate_material_properties(material: Material, temperature: Union[float, int],
+def evaluate_material_properties(material: Material,
+                                 dependency_values: Dict[str, Union[float, int]],
                                  properties: Optional[List[str]] = None,
                                  include_constants: bool = True) -> Dict[str, float]:
     """
-    Convenience function to evaluate material properties at a specific temperature.
+    Convenience function to evaluate material properties at specific dependency values.
 
-    This is a wrapper around Material.evaluate_properties_at_temperature() for
-    functional-style usage.
     Args:
         material: Material instance
-        temperature: Temperature value in Kelvin
+        dependency_values: Dictionary mapping dependency names to their values.
+                          Example: {'temperature': 500.0, 'pressure': 1e5}
         properties: List of specific property names to evaluate. If None, evaluates all.
         include_constants: Whether to include constant properties in the result
+
     Returns:
         Dict[str, float]: Dictionary mapping property names to their evaluated values
+
     Raises:
-        ValueError: If material is not a Material instance or temperature is invalid
+        ValueError: If material is not a Material instance or dependency values are invalid
+
     Examples:
-        # Evaluate all properties
-        values = evaluate_material_properties(material, 500.0)
+        # Evaluate all properties at specific conditions
+        values = evaluate_material_properties(material, {'temperature': 500.0, 'pressure': 1e5})
+
         # Evaluate specific properties
-        values = evaluate_material_properties(material, 500.0, ['density', 'heat_capacity'])
-        # Get only temperature-dependent properties
-        values = evaluate_material_properties(material, 500.0, include_constants=False)
+        values = evaluate_material_properties(material, {'temperature': 500.0},
+                                            ['density', 'heat_capacity'])
     """
     logger.info("Evaluating material properties via API function")
     if not isinstance(material, Material):
         raise ValueError(f"Expected Material instance, got {type(material).__name__}")
-    return material.evaluate_properties_at_temperature(
-        temperature=temperature,
-        properties=properties,
-        include_constants=include_constants
-    )
-
-
-# ====================================================================
-# INTERNAL/TESTING FUNCTIONS
-# ====================================================================
-
-def _test_api():
-    """
-    Internal test function for API validation.
-
-    This function is used for internal testing and should not be called
-    by end users.
-    """
-    try:
-        # Test basic validation
-        test_path = Path("example.yaml")
-        if test_path.exists():
-            assert validate_yaml_file(test_path) is True
-            logger.info("API test passed")
-        else:
-            logger.warning("Test file not found, skipping API test")
-    except (FileNotFoundError, ValueError, AssertionError) as e:
-        logger.error(f"API test failed: {e}")
+    if not isinstance(dependency_values, dict):
+        raise ValueError(f"dependency_values must be a dictionary, got {type(dependency_values)}")
+    # For now, delegate to material's method (assuming single temperature dependency)
+    # This would need to be extended for true multi-dependency evaluation
+    if 'temperature' in dependency_values:
+        temperature = dependency_values['temperature']
+        return material.evaluate_properties_at_temperature(
+            temperature=temperature,
+            properties=properties,
+            include_constants=include_constants
+        )
+    else:
+        raise ValueError("Temperature dependency required for property evaluation")
 
 
 # ====================================================================
