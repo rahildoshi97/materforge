@@ -7,7 +7,7 @@ name = "materforge"
 dynamic = ["version"]
 description = "A high-performance Python library for material simulation and analysis"
 readme = "README.md"
-license = "BSD-3-Clause"
+license = {file = "LICENSE"}
 authors = [
     {name = "Rahil Doshi", email = "rahil.doshi@fau.de"},
 ]
