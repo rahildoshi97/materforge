@@ -7,7 +7,7 @@ name = "materforge"
 dynamic = ["version"]
 description = "A high-performance Python library for material simulation and analysis"
 readme = "README.md"
-license-files = ["LICENSE"]
+license = {text = "BSD-3-Clause"}
 authors = [
     {name = "Rahil Doshi", email = "rahil.doshi@fau.de"},
 ]
@@ -19,7 +19,6 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
