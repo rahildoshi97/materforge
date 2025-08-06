@@ -34,10 +34,10 @@ bibliography: paper.bib
 MaterForge is an extensible, open-source Python library that streamlines the definition and use of 
 material properties in numerical simulations.
 The library allows users to define complex material behaviors-ranging from simple constants to experimental data 
--in human-readable YAML configuration files.
+in human-readable YAML configuration files.
 These are automatically converted into symbolic mathematical expressions for direct use in scientific computing frameworks. 
-MaterForge supports both pure metals and alloys, 
-offers six different property definition methods, 
+MaterForge supports different material types, 
+offers multiple property definition methods, 
 and intelligently manages dependencies between different material properties.
 It is designed for high-performance computing applications,
 and serves as a seamless bridge between experimental data and numerical simulation,
@@ -45,10 +45,10 @@ making sophisticated material modeling accessible to a broader scientific commun
 
 # Statement of Need
 
-Accurate numerical simulation requires accounting for material properties—such as thermal conductivity, density, and heat capacity
-—that are not constant but depend on variables like temperature, pressure, or strain rate [@lewis1996finite; @zienkiewicz2013finite]. 
+Accurate numerical simulation requires accounting for material properties such as thermal conductivity, density, and viscosity
+that are not constant but depend on variables like temperature, pressure, or strain rate [@lewis1996finite; @zienkiewicz2013finite]. 
 This challenge is compounded by the wide variation in data availability, 
-from well-characterized models for established materials to sparse experimental points for novel alloys. 
+from well-characterized models for established materials to sparse experimental points for novel materials. 
 Consequently, property definitions can range from simple constants to complex tabular datasets or sophisticated equations, 
 creating a significant integration hurdle for researchers.
 
@@ -67,8 +67,8 @@ MaterForge standardizes and simplifies the integration of realistic material beh
 
 # Key Functionality
 
-- **Flexible Input Methods**: The library supports six different property definition methods: 
-constant values, step functions, file-based data (Excel, CSV, txt), tabular data, piecewise equations, and computed properties (\autoref{fig:input_methods}). 
+- **Flexible Input Methods**: The library supports different property definition methods like 
+constant values, step functions, file-based data (xlsx, CSV, txt), tabular data, piecewise equations, and computed properties (\autoref{fig:input_methods}). 
 This versatility allows users to leverage data from diverse sources,
 with robust file processing handled using pandas [@pandas].
 
@@ -88,10 +88,14 @@ freeing users from complex dependency management.
 This simplifies complex property curves into efficient mathematical representations with configurable polynomial degrees and segments, 
 reducing computational overhead while maintaining physical accuracy (\autoref{fig:regression_options_with_boundary_behavior}).
 
-- **Configurable Boundary Behavior**: Users can define how properties behave outside their specified temperature ranges,
-choosing between constant-value or linear extrapolation to best match the physical behavior of the material.
+- **Configurable Boundary Behavior**: Users can define how properties behave outside their specified ranges,
+choosing between constant-value or extrapolation to best match the physical behavior of the material.
 The boundary behavior options work seamlessly with the regression capabilities to provide comprehensive data processing control
 (\autoref{fig:regression_options_with_boundary_behavior}).
+
+```yaml
+    bounds: [constant, extrapolate]  # Boundary behavior: 'constant' or 'extrapolate'
+```
 
 ![MaterForge's data processing capabilities: regression and data reduction showing raw experimental data (points) fitted with different polynomial degrees and segment configurations, and boundary behavior options demonstrating constant versus extrapolate settings for the same density property, illustrating how MaterForge can reduce complexity while maintaining physical accuracy and providing flexible boundary control.\label{fig:regression_options_with_boundary_behavior}](figures/regression_options_with_boundary_behavior.png)
 
@@ -102,7 +106,6 @@ With `simplify: post`, simplification is deferred until all dependent properties
 This timing control allows users to balance computational efficiency with numerical accuracy based on their specific simulation requirements.
 
 ```yaml
-    bounds: [constant, extrapolate]  # Boundary behavior: 'constant' or 'extrapolate'
     regression:      # Optional regression configuration
       simplify: pre  # 'pre' (before processing) or 'post' (after processing)
       degree: 2      # Polynomial degree for regression
@@ -110,12 +113,13 @@ This timing control allows users to balance computational efficiency with numeri
 ```
 
 - **Bidirectional Property-Variable Inversion**: The library can automatically generate inverse piecewise functions, 
-enabling the determination of independent variables from known property values (e.g., `temperature = f(property)`),
-a capability essential for energy-based numerical methods and iterative solvers[@voller1987fixed].
+enabling the determination of independent variables from known property values.
+This capability essential for energy-based numerical methods and iterative solvers[@voller1987fixed],
+where temperature is computed via the inverse function of the enthalpy.
 While currently focused on single-dependent variables like temperature, 
 the underlying architecture is designed to support multiple independent variables (e.g., pressure, shear rate) in the future.
 The inversion supports linear piecewise segments, 
-either via default linear interpolation or explicit `degree=1` regression, 
+either via default linear interpolation or explicit regression, 
 ensuring robust mathematical invertibility.
 
 - **Built-in Validation Framework**: A comprehensive validation framework checks YAML configurations for correctness,
@@ -133,7 +137,7 @@ The following example demonstrate an alloy configuration, followed by the Python
 
 ## YAML Configuration Example: Alloy (`steel.yaml`)
 ```yaml
-name: Steel
+name: Steel 1.4301
 material_type: alloy
 
 # Composition fractions must sum to 1.0
@@ -161,7 +165,7 @@ properties:
       degree: 2      # Use quadratic regression for simplification
       segments: 3    # Fit with 3 segments for piecewise linear approximation
 ```
-Complete YAML configurations for pure metals and alloys are provided in the MaterForge [documentation](https://github.com/rahildoshi97/pymatlib/blob/master/docs/how-to/define_materials.md). 
+Complete YAML configurations for different materials are provided in the MaterForge [documentation](https://github.com/rahildoshi97/pymatlib/blob/master/docs/how-to/define_materials.md). 
 
 ## Python Integration
 The primary entry point is the create_material function, which parses the YAML file and returns a fully configured material object.
@@ -221,7 +225,6 @@ The source code, comprehensive documentation, and example configurations are ava
 
 # Acknowledgements
 
-The development of MaterForge was supported by the Friedrich-Alexander-Universität Erlangen-Nürnberg.
 Funded by the European Union. 
 This work has received funding from the European High Performance Computing Joint Undertaking and 
 Poland, Germany, Spain, Hungary, France and Greece under grant agreement number: 101093457. 
