@@ -5,7 +5,16 @@ All notable changes to MaterForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.0] - 2025-07-30
+## [0.5.6] - 2025-08-06
+
+### Changed
+- Updated README.md with improved installation instructions and usage examples
+- Improved material definition guide in `docs/how-to/define_materials.md`
+- Updated API documentation in `docs/reference/api/material.md`
+- Refined YAML schema documentation in `docs/reference/yaml_schema.md`
+- Enhanced getting started tutorial with clearer examples
+
+## [0.5.5] - 2025-07-30
 
 ### Added
 - Complete rebranding from PyMatLib to MaterForge

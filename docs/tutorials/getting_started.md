@@ -32,10 +32,10 @@ pip install -e .
 
 MaterForge organizes material data around these key concepts:
 
-1. **Materials**: Pure metals and alloys with temperature-dependent properties
+1. **Materials**: Materials with variable-dependent properties
 2. **Property Types**: Six different ways to define material properties
 3. **Symbolic Processing**: SymPy-based symbolic mathematics for property relationships
-4. **Temperature Dependencies**: Automatic handling of temperature-dependent evaluations
+4. **Dependencies**: Automatic handling of variable-dependent evaluations
 
 ## Your First Material
 
@@ -56,22 +56,22 @@ final_boiling_temperature: 3100
 
 properties:
     density:
-        temperature: [300, 800, 1300, 1800]
+        dependency: [300, 800, 1300, 1800]
         value: [7850, 7800, 7750, 7700]
         bounds: [constant, constant]
 
     heat_conductivity:
-        temperature: [300, 800, 1300, 1800]
+        dependency: [300, 800, 1300, 1800]
         value: [18.5, 25, 32, 36.5]
         bounds: [constant, constant]
 
     heat_capacity:
-        temperature: [300, 800, 1300, 1800]
+        dependency: [300, 800, 1300, 1800]
         value: [450, 500, 550, 600]
         bounds: [constant, constant]
 
     thermal_diffusivity:
-        temperature: (300, 3000, 5.0)
+        dependency: (300, 3000, 5.0)
         equation: heat_conductivity / (density * heat_capacity)
         bounds: [extrapolate, extrapolate]
 ```
@@ -96,13 +96,13 @@ print(f"Temperature range: {material.solidus_temperature}K - {material.liquidus_
 temperature = 500 # Kelvin
 density = material.density.evalf(T, temperature)
 conductivity = material.heat_conductivity.evalf(T, temperature)
-capacity = material.heat_capacity.evalf(T, temperature)
+heat_capacity = material.heat_capacity.evalf(T, temperature)
 diffusivity = material.thermal_diffusivity.evalf(T, temperature)
 
 print(f"At {temperature}K:")
 print(f" Density: {density:.2f} kg/m³")
 print(f" Thermal Conductivity: {conductivity:.2f} W/(m·K)")
-print(f" Heat Capacity: {capacity:.2f} J/(kg·K)")
+print(f" Heat Capacity: {heat_capacity:.2f} J/(kg·K)")
 print(f" Thermal Diffusivity: {diffusivity:.2e} m²/s")
 ```
 

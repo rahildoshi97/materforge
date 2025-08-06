@@ -339,18 +339,12 @@ class Material:
             # Exclude constants
             values = material.evaluate_properties_at_temperature(500.0, include_constants=False)
         """
-        import sympy as sp
-        from typing import Dict, List, Optional, Union
-
         logger.info("Evaluating properties at T=%.1f K for material: %s", temperature, self.name)
-
         # Validate temperature
         if not isinstance(temperature, (int, float)):
             raise ValueError(f"Temperature must be numeric, got {type(temperature).__name__}")
-
         if temperature <= 0:
             raise ValueError(f"Temperature must be positive, got {temperature}")
-
         # Get all property attributes
         all_properties = {
             'density': self.density,
@@ -366,46 +360,36 @@ class Material:
             'thermal_diffusivity': self.thermal_diffusivity,
             'thermal_expansion_coefficient': self.thermal_expansion_coefficient
         }
-
         # Filter to only properties that exist (not None)
         existing_properties = {name: prop for name, prop in all_properties.items() if prop is not None}
-
         # Filter to requested properties if specified
         if properties is not None:
             if not isinstance(properties, list):
                 raise ValueError("Properties must be a list of strings")
-
             invalid_props = set(properties) - set(existing_properties.keys())
             if invalid_props:
                 available = list(existing_properties.keys())
                 raise ValueError(f"Invalid properties: {invalid_props}. Available: {available}")
-
             existing_properties = {name: prop for name, prop in existing_properties.items()
                                    if name in properties}
-
         logger.debug("Evaluating %d properties: %s", len(existing_properties), list(existing_properties.keys()))
-
         results = {}
-
         # Find the temperature symbol used in this material
         temp_symbol = None
         for prop_name, prop_value in existing_properties.items():
             if hasattr(prop_value, 'free_symbols') and prop_value.free_symbols:
                 temp_symbol = list(prop_value.free_symbols)[0]
                 break
-
         if temp_symbol is None:
             logger.debug("No symbolic temperature found, assuming all properties are constants")
         else:
             logger.debug("Using temperature symbol: %s", temp_symbol)
-
         for prop_name, prop_value in existing_properties.items():
             try:
                 if hasattr(prop_value, 'free_symbols') and prop_value.free_symbols:
                     # Symbolic property - substitute and evaluate
                     if temp_symbol:
                         evaluated = prop_value.subs(temp_symbol, temperature)
-
                         # Handle any remaining symbolic expressions
                         if hasattr(evaluated, 'evalf'):
                             result = float(evaluated.evalf())
@@ -413,29 +397,22 @@ class Material:
                             result = float(evaluated)
                     else:
                         result = float(prop_value)
-
                     results[prop_name] = result
-
                 elif isinstance(prop_value, (sp.Float, sp.Integer)):
                     # SymPy numeric constant
                     if include_constants:
                         results[prop_name] = float(prop_value)
-
                 elif isinstance(prop_value, (int, float)):
                     # Python numeric constant
                     if include_constants:
                         results[prop_name] = float(prop_value)
-
                 else:
                     logger.warning("Unknown property type for '%s': %s", prop_name, type(prop_value))
-
             except Exception as e:
                 logger.error("Failed to evaluate property '%s': %s", prop_name, e)
                 # Continue with other properties instead of failing completely
                 results[prop_name] = None
-
         # Remove None values
         results = {k: v for k, v in results.items() if v is not None}
-
         logger.info("Successfully evaluated %d properties at T=%.1f K", len(results), temperature)
         return results

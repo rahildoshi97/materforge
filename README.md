@@ -40,9 +40,9 @@ A high-performance Python library for material simulation and analysis. MaterFor
 - Python 3.10 or higher
 - Required dependencies: `numpy`, `sympy`, `matplotlib`, `pandas`, `ruamel.yaml`
 
-### Install from Git Repository
+### Install using pip
 ```
-pip install "git+https://i10git.cs.fau.de/rahil.doshi/materforge.git"
+pip install materforge
 ```
 ### Development Installation
 ```bash
@@ -62,20 +62,13 @@ from materforge.parsing.api import create_material
 T = sp.Symbol('T')
 material_T = create_material('path/to/material.yaml', T)
 
-# Create a material at specific temperature
-material_500 = create_material('path/to/material.yaml', 500.0)
-
 # Access properties
 print(f"Heat capacity: {material_T.heat_capacity}")
-print(f"Density: {material_500.density}")
 
 # Evaluate at specific temperature
 temp_value = 1500.0  # Kelvin
-density_at_temp = float(material_T.density.subs(T, temp_value))
+density_at_temp = material_T.evaluate_properties_at_temperature(temp_value)
 print(f"Density at {temp_value}K: {density_at_temp:.2f} kg/m³")
-
-# For numerical evaluation (no plots generated)
-material_800 = create_material('aluminum.yaml', 800.0)
 
 # For symbolic expressions with automatic plotting
 material_with_plot = create_material('steel.yaml', T, enable_plotting=True)

@@ -21,7 +21,7 @@ For properties that change abruptly at phase transitions:
 ```YAML
 properties:
     latent_heat_of_fusion:
-        temperature: solidus_temperature
+        dependency: solidus_temperature
         value: [0.0, 171401.0]
         bounds: [constant, constant]
 ```
@@ -35,21 +35,21 @@ properties:
     # Excel file import
     density:
         file_path: ./1.4301_data.xlsx
-        temperature_column: T (K)
+        dependency_column: T (K)
         property_column: Density (kg/(m)^3)
         bounds: [constant, constant]
     
     # CSV file import
     heat_capacity:
         file_path: ./heat_capacity_data.csv
-        temperature_column: Temperature
+        dependency_column: Temperature
         property_column: Cp
         bounds: [constant, constant]
     
     # Text file import (space/tab separated)
     thermal_conductivity:
         file_path: ./conductivity_data.txt
-        temperature_column: 0  # Column index for headerless files
+        dependency_column: 0  # Column index for headerless files
         property_column: 1
         bounds: [constant, constant]
 ```
@@ -63,25 +63,25 @@ For properties that vary with temperature:
 properties:
     # Using explicit temperature list
     heat_conductivity:
-        temperature: [1200, 1800, 2200, 2400]  # Temperatures in Kelvin
+        dependency: [1200, 1800, 2200, 2400]  # Temperatures in Kelvin
         value: [25, 30, 33, 35]  # Property values
         bounds: [constant, constant]
     
     # Using references to defined temperatures
     latent_heat_of_fusion:
-        temperature: [solidus_temperature, liquidus_temperature]
+        dependency: [solidus_temperature, liquidus_temperature]
         value: [171401]
         bounds: [constant, constant]
     
     # Using tuple for temperature generation
     heat_capacity:
-        temperature: (1000, 200)  # Start at 1000K and increment by 200K for each value
+        dependency: (1000, 200)  # Start at 1000K and increment by 200K for each value
         value:
         bounds: [constant, constant]
     
     # Using tuple with negative increment
     density:
-        temperature: (1735.00, -5)  # Start at 1735.00K and decrement by 5K for each value
+        dependency: (1735.00, -5)  # Start at 1735.00K and decrement by 5K for each value
         value: [7037.470, 7060.150, 7088.800, 7110.460, 7127.680, 7141.620, 7156.800, 7172.590, 7184.010, 7192.780]
         bounds: [constant, constant]
 ```
@@ -92,7 +92,7 @@ For properties with different equations in different temperature ranges:
 ```yaml
 properties:
     heat_conductivity:
-        temperature: [1700][3000]
+        dependency: [1700][3000]
         equation: ["0.012T + 13", "0.015T + 5"]
         bounds: [constant, constant]
 ```
@@ -105,37 +105,37 @@ For properties that can be derived from others:
 properties:
     # Thermal diffusivity computation
     thermal_diffusivity:
-        temperature: (300, 3000, 5.0)
+        dependency: (300, 3000, 5.0)
         equation: heat_conductivity / (density * heat_capacity)
         bounds: [extrapolate, extrapolate]
     
     # Energy density with different models
     energy_density:
-        temperature: (300, 3000, 541)  # 541 evenly spaced points
+        dependency: (300, 3000, 541)  # 541 evenly spaced points
         equation: density * specific_enthalpy
         bounds: [extrapolate, extrapolate]
 ```
 
-## Temperature Definition Formats
+## Dependency Definition Formats
 
 ### Explicit Lists
 ```yaml
-temperature: # Explicit values
+dependency: # Explicit values
 ```
 
 ### Tuple Formats
 ```yaml
 # (start, increment) - requires matching value list length
-temperature: (300, 50) # 300, 350, 400, ... (length from values)
+dependency: (300, 50) # 300, 350, 400, ... (length from values)
 
 # (start, stop, step) - step size
-temperature: (300, 1000, 10.0) # From 300K to 3000K in steps of 10K
+dependency: (300, 1000, 10.0) # From 300K to 3000K in steps of 10K
 
 # (start, stop, points) - number of points
-temperature: (300, 1000, 71) # 71 evenly spaced points
+dependency: (300, 1000, 71) # 71 evenly spaced points
 
 # Decreasing temperature
-temperature: (1000, 300, -5.0) # 1000, 995, 990, ..., 300
+dependency: (1000, 300, -5.0) # 1000, 995, 990, ..., 300
 ```
 
 ### Temperature References
@@ -156,7 +156,7 @@ Control data simplification and memory usage:
 ```yaml
 properties:
     heat_conductivity:
-        temperature: [1200, 1800, 2200, 2400]  # Temperatures in Kelvin
+        dependency: [1200, 1800, 2200, 2400]  # Temperature values in Kelvin
         value: [25, 30, 33, 35]  # Property values
         bounds: [constant, constant]
         regression:
@@ -178,10 +178,10 @@ bounds: [constant, extrapolate]
 Here's a complete example for Aluminum (Pure metal):
 ```yaml
 # ====================================================================================================
-# PYMATLIB MATERIAL CONFIGURATION FILE - PURE METAL
+# MATERFORGE MATERIAL CONFIGURATION FILE - PURE METAL
 # ====================================================================================================
 # This file defines material properties for pure Aluminum using the materforge format.
-# Pymatlib supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA, PIECEWISE_EQUATION, and COMPUTED_PROPERTY
+# MaterForge supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA, PIECEWISE_EQUATION, and COMPUTED_PROPERTY
 # Pure metals require 'melting_temperature' and 'boiling_temperature' instead of solidus/liquidus
 # ====================================================================================================
 
@@ -200,26 +200,26 @@ properties:
   
   # ====================================================================================================
   # STEP_FUNCTION EXAMPLES
-  # Step functions use a single temperature transition point with before/after values
+  # Step functions use a single dependency transition point with before/after values
   # ====================================================================================================
   
   latent_heat_of_fusion:
-    temperature: melting_temperature - 1  # Transition 1K before melting point
+    dependency: melting_temperature - 1    # Transition 1K before melting point
     value: [0.0, 10790.0]                  # [before_transition, after_transition] in J/kg
     bounds: [constant, constant]           # Keep constant values outside range
   
   latent_heat_of_vaporization:
-    temperature: boiling_temperature       # Transition at boiling point
+    dependency: boiling_temperature        # Transition at boiling point
     value: [0.0, 294000.0]                 # [before_boiling, after_boiling] in J/kg
     bounds: [constant, constant]
   
   # ====================================================================================================
   # TABULAR_DATA EXAMPLES
-  # Tabular data pairs with explicit temperature-property relationships
+  # Tabular data pairs with explicit dependency-property relationships
   # ====================================================================================================
   
   heat_capacity:
-    temperature: (273.15, 100.0)           # Tuple: (start=273.15K, increment=100K)
+    dependency: (273.15, 100.0)            # Tuple: (start=273.15K, increment=100K)
     # Generates: [273.15, 373.15, 473.15, 573.15, 673.15, 773.15, 873.15, 973.15]
     value: [897, 921, 950, 980, 1010, 1040, 1070, 1084]  # J/kg·K values
     bounds: [constant, constant]
@@ -229,7 +229,7 @@ properties:
       segments: 1                          # Single segment (no breakpoints)
 
   thermal_expansion_coefficient:
-    temperature: [373.15, 473.15, 573.15, 673.15, 773.15, 873.15]  # Explicit temperature list
+    dependency: [373.15, 473.15, 573.15, 673.15, 773.15, 873.15]  # Explicit temperature list
     value: [24.56e-06, 26.54e-06, 28.51e-06, 30.49e-06, 32.47e-06, 34.45e-06]  # 1/K values
     bounds: [constant, constant]
     regression:
@@ -239,7 +239,7 @@ properties:
 
   # ====================================================================================================
   # PIECEWISE_EQUATION EXAMPLE
-  # Multiple equations for different temperature ranges
+  # Multiple equations for different dependency ranges
   # ====================================================================================================
   
   heat_conductivity:
@@ -258,7 +258,7 @@ properties:
   # ====================================================================================================
   
   density:
-    temperature: (300, 3000, 541)          # (start, stop, points) - 541 evenly spaced points
+    dependency: (300, 3000, 541)           # (start, stop, points) - 541 evenly spaced points
     equation: 2700 / (1 + 3 * thermal_expansion_coefficient * (T - 293.15))  # Thermal expansion model
     bounds: [constant, constant]
     regression:
@@ -267,7 +267,7 @@ properties:
       segments: 1
   
   thermal_diffusivity:
-    temperature: (3000, 300, -5.)          # (start, stop, negative_step) - decreasing by 5K
+    dependency: (3000, 300, -5.)           # (start, stop, negative_step) - decreasing by 5K
     equation: heat_conductivity / (density * heat_capacity)  # Standard thermal diffusivity formula
     bounds: [extrapolate, extrapolate]     # Allow extrapolation outside range
     regression:
@@ -276,7 +276,7 @@ properties:
       segments: 1
 
   energy_density:
-    temperature: (300, 3000, 5.0)          # (start, stop, step) - 5K increments
+    dependency: (300, 3000, 5.0)           # (start, stop, step) - 5K increments
     equation: density * specific_enthalpy  # Property dependencies automatically resolved
     bounds: [extrapolate, extrapolate]
     regression:
@@ -285,7 +285,7 @@ properties:
       segments: 6
 
   specific_enthalpy:
-    temperature: (300, 3000, 541)          # (start, stop, num_points) - 541 evenly spaced points
+    dependency: (300, 3000, 541)           # (start, stop, num_points) - 541 evenly spaced points
     equation: Integral(heat_capacity, T)   # Symbolic integration
     bounds: [ constant, constant ]
     regression:
@@ -308,7 +308,7 @@ properties:
 #    - thermal_diffusivity depends on heat_conductivity, density, heat_capacity
 #    - density depends on thermal_expansion_coefficient
 # 
-# 4. TEMPERATURE TUPLE FORMATS:
+# 4. DEPENDENCY TUPLE FORMATS:
 #    - (start, increment): Requires n_values from 'value' list length
 #    - (start, stop, step): Step size (float) or number of points (integer)
 #    - Negative steps create decreasing temperature arrays
@@ -325,10 +325,10 @@ Here's a complete example for 1.4301 (Alloy):
 
 ```yaml
 # ====================================================================================================
-# PYMATLIB MATERIAL CONFIGURATION FILE
+# MATERFORGE MATERIAL CONFIGURATION FILE
 # ====================================================================================================
 # This file defines material properties for 1.4301 (Steel) using the new materforge format.
-# Pymatlib supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA, PIECEWISE_EQUATION, and COMPUTED_PROPERTY
+# MaterForge supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA, PIECEWISE_EQUATION, and COMPUTED_PROPERTY
 #
 # IMPORTANT: All property configurations must include 'bounds' parameter (except CONSTANT properties)
 # ====================================================================================================
@@ -362,29 +362,29 @@ properties:
 
   # ====================================================================================================
   # PROPERTY TYPE 2: STEP_FUNCTION
-  # Format: Uses 'temperature' (single reference) and 'value' (list of 2 values)
+  # Format: Uses 'dependency' (single reference) and 'value' (list of 2 values)
   # Supports temperature references and arithmetic expressions
   # ====================================================================================================
 
   # Example with temperature reference arithmetic:
   # latent_heat_of_fusion:
-  #   temperature: solidus_temperature - 1 # Arithmetic expressions supported
+  #   dependency: solidus_temperature - 1  # Arithmetic expressions supported
   #   value: [0.0, 171401.0]               # [before_transition, after_transition]
   #   bounds: [constant, constant]         # Required for all non-constant properties
 
   # ====================================================================================================
   # PROPERTY TYPE 3: TABULAR_DATA
-  # Format: Uses 'temperature' (list/tuple) and 'value' (list) with same length
+  # Format: Uses 'dependency' (list/tuple) and 'value' (list) with same length
   # Supports temperature references, explicit lists, and tuple notation
   # ====================================================================================================
 
   latent_heat_of_fusion:
-    temperature: [solidus_temperature - 1, liquidus_temperature + 1]  # Temperature references with arithmetic
+    dependency: [solidus_temperature - 1, liquidus_temperature + 1]  # Temperature references with arithmetic
     value: [0, 171401.]                    # Corresponding property values
     bounds: [constant, constant]           # Boundary behavior: 'constant' or 'extrapolate'
 
   thermal_expansion_coefficient:
-    temperature: [300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1500, 2000, 2500, 3000]
+    dependency: [300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1500, 2000, 2500, 3000]
     value: [1.2632e-5, 1.468e-5, 1.524e-5, 1.581e-5, 1.639e-5, 1.699e-5, 1.759e-5, 1.821e-5, 1.885e-5, 2.1e-5, 2.3e-5, 2.5e-5, 2.7e-5]
     bounds: [constant, constant]
     regression:                            # Optional regression configuration
@@ -394,13 +394,13 @@ properties:
 
   # ====================================================================================================
   # PROPERTY TYPE 4: FILE_IMPORT
-  # Format: Uses 'file_path', 'temperature_column', 'property_column'
+  # Format: Uses 'file_path', 'dependency_column', 'property_column'
   # Supports .txt, .csv, .xlsx files with automatic missing value handling
   # ====================================================================================================
 
   heat_capacity:
     file_path: ./1.4301.xlsx               # Relative path from YAML file location
-    temperature_column: T (K)              # Column name for temperature data
+    dependency_column: T (K)               # Column name for temperature data
     property_column: Specific heat (J/(Kg K)) # Column name for property data
     bounds: [constant, constant]           # Required boundary behavior
     regression:                            # Optional regression for data simplification
@@ -410,7 +410,7 @@ properties:
 
   density:
     file_path: ./1.4301.xlsx
-    temperature_column: T (K)
+    dependency_column: T (K)
     property_column: Density (kg/(m)^3)
     bounds: [constant, constant]
     regression:
@@ -420,7 +420,7 @@ properties:
 
   # ====================================================================================================
   # PROPERTY TYPE 5: PIECEWISE_EQUATION
-  # Format: Uses 'temperature' (breakpoints) and 'equation' (list of expressions)
+  # Format: Uses 'dependency' (breakpoints) and 'equation' (list of expressions)
   # Number of equations = number of breakpoints - 1
   # ====================================================================================================
 
@@ -436,12 +436,12 @@ properties:
 
   # ====================================================================================================
   # PROPERTY TYPE 6: COMPUTE
-  # Format: Uses 'equation' (single expression) and 'temperature' (range definition)
+  # Format: Uses 'equation' (single expression) and 'dependency' (range definition)
   # Supports dependency resolution and automatic ordering
   # ====================================================================================================
 
   specific_enthalpy:
-    temperature: (300, 3000, 541)          # (start, stop, num_points) - 541 evenly spaced points
+    dependency: (300, 3000, 541)           # (start, stop, num_points) - 541 evenly spaced points
     equation: Integral(heat_capacity, T)   # Symbolic integration
     bounds: [constant, constant]
     regression:
@@ -450,7 +450,7 @@ properties:
       segments: 2
 
   energy_density:
-    temperature: (300, 3000, 5.0)          # (start, stop, step) - 5K increments
+    dependency: (300, 3000, 5.0)           # (start, stop, step) - 5K increments
     equation: density * specific_enthalpy  # Property dependencies automatically resolved
     bounds: [extrapolate, extrapolate]
     regression:
@@ -459,7 +459,7 @@ properties:
       segments: 6
 
   thermal_diffusivity:
-    temperature: (3000, 300, -5.0)         # (start, stop, negative_step) - decreasing temperature
+    dependency: (3000, 300, -5.0)          # (start, stop, negative_step) - decreasing temperature
     equation: heat_conductivity /(density * heat_capacity)  # Multi-property dependency
     bounds: [constant, constant]
     regression:
@@ -468,7 +468,7 @@ properties:
       segments: 3
 
 # ====================================================================================================
-# TEMPERATURE DEFINITION FORMATS:
+# DEPENDENCY/TEMPERATURE DEFINITION FORMATS:
 #
 # 1. Single value: 1000.0
 # 2. List: [300, 400, 500, 600]

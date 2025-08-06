@@ -72,7 +72,7 @@ print(f"Composition: {dict(zip([e.name for e in material.elements], material.com
 
 # Access temperature-dependent properties
 if hasattr(material, 'density'):
-    density_at_500K = material.density.evalf(T, 500)
+    density_at_500K = material.evaluate_properties_at_temperature(500.0)
     print(f"Density at 500K: {density_at_500K} kg/m³")
 
 # For alloys, get solidification interval
@@ -135,9 +135,6 @@ def create_material(yaml_path: Union[str, Path],
 ```python
 import sympy as sp
 from materforge.parsing.api import create_material
-
-# Create material at specific temperature
-material = create_material('aluminum.yaml', 500.0)
 
 # Create material with symbolic temperature
 T = sp.Symbol('T')
