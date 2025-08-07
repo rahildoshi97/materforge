@@ -225,12 +225,11 @@ The source code, comprehensive documentation, and example configurations are ava
 
 # Acknowledgements
 
-Funded by the European Union. 
-This work has received funding from the European High Performance Computing Joint Undertaking and 
+This work was funded by the European High Performance Computing Joint Undertaking and 
 Poland, Germany, Spain, Hungary, France and Greece under grant agreement number: 101093457. 
-This publication expresses the opinions of the authors and not necessarily those of the EuroHPC JU and Associated Countries 
-which are not responsible for any use of the information contained in this publication.
-We acknowledge the support of the Deutsche Forschungsgemeinschaft (DFG) via project 434946896 - FOR 5134.
-We also thank Carola Forster for providing the material data for steel 1.4301 using JMatPro.
+Additional funding was provided by the Deutsche Forschungsgemeinschaft e.V. (DFG, German Research Foundation) 
+and carried out within the framework of Research Unit FOR-5134, “Solidification Cracks during Laser Beam Welding: 
+High Performance Computing for High Performance Processing”, (Grant No. 434946896). 
+We thank Carola Forster for providing the material data for steel 1.4301 using JMatPro.
 
 # References
