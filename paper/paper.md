@@ -1,6 +1,6 @@
 ---
-title: 'MaterForge: A Python Engine for Materials Property Formulation'
-# MaterForge: Materials Formulation Engine with Python
+title: 'MaterForge: Materials Formulation Engine with Python'
+# MaterForge: A Python Engine for Materials Property Formulation
 tags:
   - Python
   - materials science
