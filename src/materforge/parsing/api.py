@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # CORE MATERIAL CREATION AND VALIDATION
 # ====================================================================
 
-def create_material(yaml_path: Union[str, Path], dependency: Union[float, sp.Symbol],
+def create_material(yaml_path: Union[str, Path], dependency: sp.Symbol,
                     enable_plotting: bool = True) -> Material:
     """Create material instance from YAML configuration file.
 
