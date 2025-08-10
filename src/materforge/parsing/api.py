@@ -33,7 +33,7 @@ def create_material(yaml_path: Union[str, Path], dependency: sp.Symbol,
                     enable_plotting: bool = True) -> Material:
     """Create material instance from YAML configuration file.
 
-    This function serves as the main entry point for creating material (pure metal or alloy)
+    This function serves as the main entry point for creating material
     objects from YAML configuration files. It handles the parsing of the configuration
     and creation of the material with the specified temperature.
 
