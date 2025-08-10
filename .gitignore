@@ -146,7 +146,7 @@ materforge_plots/
 
 # Report outputs
 materforge_reports/
-*.pdf
+# *.pdf
 
 # Data files (unless specifically needed)
 # *.xlsx

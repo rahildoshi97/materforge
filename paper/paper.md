@@ -88,7 +88,6 @@ MaterForge standardizes and simplifies the integration of realistic material beh
   choosing between constant-value or extrapolation to best match the physical behavior of the material.
   The boundary behavior options work seamlessly with the regression capabilities to provide comprehensive data processing control
   (\autoref{fig:regression_options_with_boundary_behavior_new}).
-
 ```yaml
     bounds: [constant, extrapolate]  # 'constant' or 'extrapolate'
 ```
@@ -96,7 +95,6 @@ MaterForge standardizes and simplifies the integration of realistic material beh
 - **Regression and Data Reduction**: The library integrates pwlf [@pwlf] to perform piecewise regression for large datasets.
   This simplifies complex property curves into efficient mathematical representations with configurable polynomial degrees and segments,
   reducing computational overhead while maintaining physical accuracy (\autoref{fig:regression_options_with_boundary_behavior_new}).
-
 ```yaml
     regression:      # Optional regression configuration
       simplify: pre  # 'pre' (before processing) or 'post' (after processing)
