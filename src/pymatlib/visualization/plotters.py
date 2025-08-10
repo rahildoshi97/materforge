@@ -42,7 +42,7 @@ class PropertyVisualizer:
             'xtick.labelsize': 9,
             'ytick.labelsize': 9,
             'legend.fontsize': 9,
-            'figure.titlesize': 14,
+            'figure.titlesize': 16,
             'axes.grid': True,
             'grid.alpha': 0.3,
             'grid.linestyle': '--',
@@ -71,7 +71,7 @@ class PropertyVisualizer:
         property_count = sum(len(props) for props in self.parser.categorized_properties.values())
         logger.info("Initializing visualization for %d properties", property_count)
         fig_width = 12  # 10 for input_types.png, 12 for boundary_behavior.png
-        fig_height = max(4 * property_count, 4)  # Minimum height for readability (5.6 for thermal_diffusivity or 6 for input_types.png in general)
+        fig_height = max(5 * property_count, 5)  # Minimum height for readability (5.6 for thermal_diffusivity or 6 for input_types.png in general)
         self.fig = plt.figure(figsize=(fig_width, fig_height))
         self.gs = GridSpec(property_count, 1, figure=self.fig, )
         # self.gs = GridSpec(property_count, ncols=2, figure=self.fig, width_ratios=[1, 1], wspace=0.2)
@@ -226,7 +226,7 @@ class PropertyVisualizer:
             ax = self.fig.add_subplot(self.gs[self.current_subplot, 0])
             # RIGHT PANEL: Property Plot
             # ax = self.fig.add_subplot(self.gs[self.current_subplot, 0])
-            ax.tick_params(axis='both', which='major', labelsize=16)
+            # ax.tick_params(axis='both', which='major', labelsize=16)
             self.current_subplot += 1
             ax.set_aspect('auto')
             # Grid and border styling
@@ -262,9 +262,9 @@ class PropertyVisualizer:
             num_points = int(np.ceil((padded_upper - padded_lower) / step)) + 1
             extended_temp = np.linspace(padded_lower, padded_upper, num_points)
             # Title and labels
-            ax.set_title(f"{prop_name} ({prop_type})", fontweight='bold', pad=10)  # fontsize=24 for input_types.png
-            ax.set_xlabel("Temperature", fontweight='bold')  # fontsize=22 for input_types.png
-            ax.set_ylabel(f"{prop_name}",fontweight='bold')  # fontsize=22 for input_types.png
+            ax.set_title(f"{prop_name} ({prop_type})", fontsize=16, fontweight='bold', pad=10)  # fontsize=24 for input_types.png
+            ax.set_xlabel("Temperature", fontsize=14, fontweight='bold')  # fontsize=22 for input_types.png
+            ax.set_ylabel(f"{prop_name}", fontsize=14, fontweight='bold')  # fontsize=22 for input_types.png
             # Color scheme
             colors = {
                 'constant': '#1f77b4',  # blue
