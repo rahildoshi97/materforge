@@ -70,8 +70,8 @@ class PropertyVisualizer:
             raise ValueError("No properties to plot.")
         property_count = sum(len(props) for props in self.parser.categorized_properties.values())
         logger.info("Initializing visualization for %d properties", property_count)
-        fig_width = 10
-        fig_height = max(6 * property_count, 6)  # Minimum height for readability (5.6 for thermal_diffusivity)
+        fig_width = 12  # 10 for input_types.png, 12 for boundary_behavior.png
+        fig_height = max(4 * property_count, 4)  # Minimum height for readability (5.6 for thermal_diffusivity or 6 for input_types.png in general)
         self.fig = plt.figure(figsize=(fig_width, fig_height))
         self.gs = GridSpec(property_count, 1, figure=self.fig, )
         # self.gs = GridSpec(property_count, ncols=2, figure=self.fig, width_ratios=[1, 1], wspace=0.2)
@@ -156,9 +156,11 @@ class PropertyVisualizer:
         """Visualize a single property."""
         if prop_name == 'heat_conductivity':
             return
-        if prop_name == 'density':
-            return
+        # if prop_name == 'density':
+        #     return
         if prop_name == 'heat_capacity':
+            return
+        if prop_name == 'thermal_diffusivity':
             return
         if prop_name in self.visualized_properties:
             logger.debug("Property '%s' already visualized, skipping", prop_name)
@@ -260,9 +262,9 @@ class PropertyVisualizer:
             num_points = int(np.ceil((padded_upper - padded_lower) / step)) + 1
             extended_temp = np.linspace(padded_lower, padded_upper, num_points)
             # Title and labels
-            ax.set_title(f"{prop_name} ({prop_type})", fontsize=24, fontweight='bold', pad=10)
-            ax.set_xlabel("Temperature", fontsize=22, fontweight='bold')
-            ax.set_ylabel(f"{prop_name}", fontsize=22,fontweight='bold')
+            ax.set_title(f"{prop_name} ({prop_type})", fontweight='bold', pad=10)  # fontsize=24 for input_types.png
+            ax.set_xlabel("Temperature", fontweight='bold')  # fontsize=22 for input_types.png
+            ax.set_ylabel(f"{prop_name}",fontweight='bold')  # fontsize=22 for input_types.png
             # Color scheme
             colors = {
                 'constant': '#1f77b4',  # blue
@@ -402,10 +404,10 @@ class PropertyVisualizer:
                             bbox=dict(facecolor='red', alpha=0.2))
                     _y_value = 0.0
             # Add boundary lines and annotations
-            """ax.axvline(x=lower_bound, color=colors['bounds'], linestyle='--',
-                       alpha=0.6, linewidth=1.5, label='_nolegend_')
+            ax.axvline(x=lower_bound, color=colors['bounds'], linestyle='--',
+                       alpha=0.6, linewidth=1.5, label='_nolegend_')  #
             ax.axvline(x=upper_bound, color=colors['bounds'], linestyle='--',
-                       alpha=0.6, linewidth=1.5, label='_nolegend_')"""
+                       alpha=0.6, linewidth=1.5, label='_nolegend_')  #
             # Ensure _y_value is valid for annotations
             if _y_value is None or not np.isfinite(_y_value):
                 try:
@@ -417,16 +419,16 @@ class PropertyVisualizer:
                     _y_value = 0.0
                     logger.warning("Could not determine y_value for annotations for property '%s'", prop_name)
             # Add boundary type annotations
-            '''ax.text(lower_bound, _y_value, f' {lower_bound_type}',
+            ax.text(lower_bound, _y_value, f' {lower_bound_type}',
                     verticalalignment='top', horizontalalignment='right',
                     fontweight='bold',
                     bbox=dict(facecolor='white', alpha=0.8, boxstyle='round,pad=0.3',
-                              edgecolor=colors['bounds']))
+                              edgecolor=colors['bounds']))  #
             ax.text(upper_bound, _y_value, f' {upper_bound_type}',
                     verticalalignment='top', horizontalalignment='left',
                     fontweight='bold',
                     bbox=dict(facecolor='white', alpha=0.8, boxstyle='round,pad=0.3',
-                              edgecolor=colors['bounds']))'''
+                              edgecolor=colors['bounds']))  #
             # Add regression info
             """if has_regression and degree is not None:
                 ax.text(0.5, 0.98, f"Simplify: {simplify_type} | Degree: {degree} | Segments: {segments}",
@@ -434,9 +436,9 @@ class PropertyVisualizer:
                         fontweight='bold',
                         bbox=dict(facecolor='lightblue', alpha=0.8, boxstyle='round,pad=0.3'))"""  #
             # Add legend
-            '''legend = ax.legend(loc='best', framealpha=0.9, fancybox=True,
-                               shadow=True, edgecolor='gray')
-            legend.get_frame().set_linewidth(1.2)'''
+            legend = ax.legend(loc='best', framealpha=0.9, fancybox=True,
+                               shadow=True, edgecolor='gray')  #
+            legend.get_frame().set_linewidth(1.2)  #
             # Add property to visualized set
             self.visualized_properties.add(prop_name)
             logger.info("Successfully visualized property: %s", prop_name)
@@ -453,7 +455,7 @@ class PropertyVisualizer:
             if hasattr(self, 'fig') and self.fig is not None:
                 material_type = self.parser.config[MATERIAL_TYPE_KEY]
                 title = f"Material Properties: {self.parser.config[NAME_KEY]} ({material_type})"
-                #self.fig.suptitle(title, fontsize=16, fontweight='bold', y=0.98)
+                self.fig.suptitle(title, fontweight='bold', y=0.98)  #
                 try:
                     plt.tight_layout(rect=[0, 0.01, 1, 0.98], pad=1.0)
                 except Exception as e:

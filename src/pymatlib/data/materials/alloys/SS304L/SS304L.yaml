@@ -7,7 +7,7 @@
 # IMPORTANT: All property configurations must include 'bounds' parameter (except CONSTANT properties)
 # ====================================================================================================
 
-name: Stainless Steel 304L
+name: Steel 1.4301
 material_type: alloy  # Must be 'alloy' or 'pure_metal'
 
 # Composition fractions must sum to 1.0
