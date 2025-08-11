@@ -155,8 +155,8 @@ final_boiling_temperature: 3200.    # Material is completely vaporized (K)
 properties:
   density:
     file_path: ./1.4301.xlsx
-    temperature_header: Temperature (K)
-    value_header: Density (kg/(m)^3)
+    dependency_column: T (K)
+    property_column: rho (kg/(m)^3)
     bounds: [constant, extrapolate]
     regression:      # Optional regression configuration
       simplify: pre  # Simplify before processing
