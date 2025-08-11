@@ -25,7 +25,7 @@ affiliations:
     index: 2
   - name: Erlangen National High Performance Computing Center (NHR@FAU), Erlangen, Germany
     index: 3
-date: 28 July 2025
+date: 11 August 2025
 bibliography: paper.bib
 ---
 
@@ -33,13 +33,13 @@ bibliography: paper.bib
 
 MaterForge is an extensible, open-source Python library that streamlines the definition and use of
 material properties in numerical simulations.
-The library allows users to define complex material behaviors-ranging from simple constants to experimental data
+The library allows users to define complex material behaviors, ranging from simple constants to experimental data
 in human-readable YAML configuration files.
 These are automatically converted into symbolic mathematical expressions for direct use in scientific computing frameworks.
 MaterForge supports different material types,
 offers multiple property definition methods,
 and intelligently manages dependencies between different material properties.
-It is designed for high-performance computing applications,
+It is designed for high-performance computing applications
 and serves as a seamless bridge between experimental data and numerical simulation,
 making sophisticated material modeling accessible to a broader scientific community.
 
@@ -54,12 +54,12 @@ creating a significant integration hurdle for researchers.
 
 To manage this complexity, researchers often resort to manual interpolation, custom scripting, or proprietary software,
 which compromises reproducibility and standardization [@ashby2013materials].
-While valuable resources like the NIST WebBook [@nist_webbook] and libraries such as CoolProp [@coolprop] exist,
+While valuable resources like the NIST WebBook [@nist_webbook] and libraries such as CoolProp [@coolprop] exist;
 they typically provide raw data without the integrated processing needed to unify these varied formats.
 Similarly, specialized CALPHAD databases [@calphad] are powerful but often require proprietary software
 and do not easily integrate with general-purpose simulation codes.
 
-This gap forces the development of ad-hoc solutions, hindering workflow efficiency and the adoption of FAIR data principles [@wilkinson2016fair].
+This gap forces the development of ad hoc solutions, hindering workflow efficiency and the adoption of FAIR data principles [@wilkinson2016fair].
 MaterForge was created to bridge this gap by providing a unified, open-source framework that leverages
 symbolic mathematics, automatic regression, and dependency resolution to handle these disparate data sources.
 By combining a user-friendly YAML configuration with powerful backend processing,
@@ -67,7 +67,7 @@ MaterForge standardizes and simplifies the integration of realistic material beh
 
 # Key Functionality
 
-- **Flexible Input Methods**: The library supports different property definition methods like
+- **Flexible Input Methods**: The library supports various property definition methods such as
   constant values, step functions, file-based data (xlsx, CSV, txt), tabular data, piecewise equations, and computed properties (\autoref{fig:input_methods}).
   This versatility allows users to leverage data from diverse sources,
   with robust file processing handled using pandas [@pandas].
@@ -75,7 +75,7 @@ MaterForge standardizes and simplifies the integration of realistic material beh
 ![MaterForge's property definition methods with corresponding examples and plots.\label{fig:input_methods}](figures/input_methods.png)
 
 - **Universal Material Support**: The framework is designed with an extensible architecture to support any material type.
-  It is currently implemented and thoroughly tested for pure metals and alloys through it's unified interface,
+  It is currently implemented and thoroughly tested for pure metals and alloys through its unified interface,
   with a modular design that allows for straightforward extension to other material classes such as
   ceramics, polymers or composites.
 
@@ -93,7 +93,7 @@ MaterForge standardizes and simplifies the integration of realistic material beh
 ```
 
 - **Regression and Data Reduction**: The library integrates pwlf [@pwlf] to perform piecewise regression for large datasets.
-  This simplifies complex property curves into efficient mathematical representations with configurable polynomial degrees and segments,
+  This simplifies complex property curves into efficient mathematical representations with configurable polynomial degrees and number of segments,
   reducing computational overhead while maintaining physical accuracy (\autoref{fig:regression_options_with_boundary_behavior_new}).
 ```yaml
     regression:      # Optional regression configuration
@@ -112,9 +112,9 @@ MaterForge standardizes and simplifies the integration of realistic material beh
 
 - **Bidirectional Property-Variable Inversion**: The library can automatically generate inverse piecewise functions,
   enabling the determination of independent variables from known property values.
-  This capability essential for energy-based numerical methods and iterative solvers[@voller1987fixed],
+  This capability essential for energy-based numerical methods and iterative solvers [@voller1987fixed],
   where temperature is computed via the inverse function of the enthalpy.
-  While currently focused on single-dependent variables like temperature,
+  While currently focused on single dependent variables like temperature,
   the underlying architecture is designed to support multiple independent variables (e.g., pressure, shear rate) in the future.
   The inversion supports linear piecewise segments,
   either via default linear interpolation or explicit regression,
@@ -131,7 +131,7 @@ MaterForge standardizes and simplifies the integration of realistic material beh
 # Usage
 
 A material is defined in a YAML file and loaded with a single function call.
-The following example demonstrate an alloy configuration, followed by the Python code to load and use the material.
+The following example demonstrates an alloy configuration, followed by the Python code to load and use the material.
 
 ## YAML Configuration Example: Alloy (`steel.yaml`)
 ```yaml
@@ -182,28 +182,28 @@ The primary entry point is the create_material function, which parses the YAML f
     #                   (2085.03338770863, True))
 
     # Evaluate properties at a specific temperature
-    property_at_500 = steel.evaluate_properties_at_temperature(500.0, ['density'])
-    print(f"At 500 K: {property_at_500:.2f}")
-    # Output: At 500 K: {'density': 2634.48}
+    property_at_500 = steel.evaluate_properties_at_temperature(500.0)
+    print(f"Density at 500 K: {property_at_500['density']:.2f} kg/m^3^")
+    # Output: Density at 500 K: 2634.48 kg/m^3^
 ```
 
 # Comparison with Existing Tools
 
-| Feature                  | **MaterForge**      | **CoolProp** | **NIST WebBook** | **CALPHAD** |
-|:-------------------------|:------------------|:-------------|:-----------------|:------------|
-| **Core Capabilities**    |                   |              |                  |             |
-| Symbolic Integration     | Yes               | No           | No               | No          |
-| Dependency Resolution    | Yes (Automatic)   | No           | No               | No          |
-| Multiple Input Methods   | Yes (6 types)     | No           | No               | No          |
-|                          |                   |              |                  |             |
-| **Material Support**     |                   |              |                  |             |
-| Solid Materials          | Yes               | Limited      | Yes              | Yes         |
-| Custom Properties        | Yes (Any)         | No           | No               | Limited     |
-| Temperature Dependencies | Yes               | Yes          | Yes              | Yes         |
-|                          |                   |              |                  |             |
-| **Accessibility**        |                   |              |                  |             |
-| Open Source              | Yes               | Yes          | No               | No          |
-| Python Integration       | Native            | Yes          | API only         | No          |
+| Feature                  | **MaterForge**  | **CoolProp** | **NIST WebBook** | **CALPHAD** |
+|:-------------------------|:----------------|:-------------|:-----------------|:------------|
+| **Core Capabilities**    |                 |              |                  |             |
+| Symbolic Integration     | Yes             | No           | No               | No          |
+| Dependency Resolution    | Yes (automatic) | No           | No               | No          |
+| Multiple Input Methods   | Yes (6 types)   | No           | No               | No          |
+|                          |                 |              |                  |             |
+| **Material Support**     |                 |              |                  |             |
+| Solid Materials          | Yes             | Limited      | Yes              | Yes         |
+| Custom Properties        | Yes (any)       | No           | No               | Limited     |
+| Temperature Dependencies | Yes             | Yes          | Yes              | Yes         |
+|                          |                 |              |                  |             |
+| **Accessibility**        |                 |              |                  |             |
+| Open Source              | Yes             | Yes          | No               | No          |
+| Python Integration       | Native          | Yes          | API only         | No          |
 
 **Key Advantage**: MaterForge's unique combination of native symbolic mathematics via SymPy [@sympy],
 automatic dependency resolution, and multiple input methods provides a level of flexibility and integration
@@ -213,7 +213,7 @@ not found in existing tools, enabling more reproducible and sophisticated scient
 
 MaterForge is applicable to a wide range of research areas, including alloy design and optimization [@callister2018materials],
 finite element analysis [@hughes2012finite], multiscale modeling [@tadmor2011modeling],
-computational fluid dynamics and heat transfer.
+computational fluid dynamics, and heat transfer.
 Its architecture promotes reproducible science and is well-suited for high-performance computing environments,
 with demonstrated integrations into frameworks like pystencils [@pystencils] and waLBerla [@walberla].
 
@@ -228,6 +228,6 @@ Poland, Germany, Spain, Hungary, France and Greece under grant agreement number:
 Additional funding was provided by the Deutsche Forschungsgemeinschaft e.V. (DFG, German Research Foundation)
 and carried out within the framework of Research Unit FOR-5134, “Solidification Cracks during Laser Beam Welding:
 High Performance Computing for High Performance Processing”, (Grant No. 434946896).
-We thank Carola Forster for providing the material data for steel 1.4301 using JMatPro.
+We thank Carola Forster for providing the material data for Steel 1.4301 using JMatPro.
 
 # References
