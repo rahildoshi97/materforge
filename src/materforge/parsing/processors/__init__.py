@@ -18,7 +18,7 @@ from .property_handlers import (
 )
 from .dependency_processor import DependencyProcessor
 from .post_processor import PropertyPostProcessor
-from .temperature_resolver import TemperatureResolver
+from .dependency_resolver import DependencyResolver
 
 __all__ = [
     'PropertyProcessor',
@@ -31,5 +31,5 @@ __all__ = [
     'ComputedPropertyHandler',
     'DependencyProcessor',
     'PropertyPostProcessor',
-    'TemperatureResolver'
+    'DependencyResolver'
 ]

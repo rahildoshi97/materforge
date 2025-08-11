@@ -5,7 +5,7 @@ import numpy as np
 import sympy as sp
 import sys
 import importlib
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 from materforge.parsing.processors.post_processor import PropertyPostProcessor
 from materforge.parsing.validation.property_type_detector import PropertyType
 from materforge.core.materials import Material
@@ -219,7 +219,7 @@ class TestPropertyPostProcessor:
             }
         }
         # Mock to return string array
-        with patch('materforge.parsing.processors.post_processor.TemperatureResolver.extract_from_config') as mock_extract:
+        with patch('materforge.parsing.processors.post_processor.DependencyResolver.extract_from_config') as mock_extract:
             mock_extract.return_value = np.array(['300', '400', '500'], dtype='U10')  # String dtype
             # Should handle dtype conversion
             post_processor._apply_post_regression(sample_material, 'test_prop', prop_config, T)

@@ -5,7 +5,7 @@ import sympy as sp
 
 from materforge.core.materials import Material
 from materforge.parsing.processors.property_processor_base import PropertyProcessorBase
-from materforge.parsing.processors.temperature_resolver import TemperatureResolver
+from materforge.parsing.processors.dependency_resolver import DependencyResolver
 from materforge.parsing.io.data_handler import load_property_data
 from materforge.parsing.utils.utilities import create_step_visualization_data
 from materforge.parsing.validation.property_validator import validate_monotonic_energy_density
@@ -64,7 +64,7 @@ class StepFunctionPropertyHandler(BasePropertyHandler):
         try:
             temp_key = prop_config[DEPENDENCY_KEY]
             val_array = prop_config[VALUE_KEY]
-            transition_temp = TemperatureResolver.resolve_temperature_reference(temp_key, material)
+            transition_temp = DependencyResolver.resolve_dependency_reference(temp_key, material)
             T_standard = sp.Symbol('T')
             step_function = sp.Piecewise((val_array[0], T_standard < transition_temp), (val_array[1], True))
             if str(T) != 'T':
@@ -117,7 +117,7 @@ class TabularDataPropertyHandler(BasePropertyHandler):
         try:
             temp_def = prop_config[DEPENDENCY_KEY]
             val_array = prop_config[VALUE_KEY]
-            key_array = TemperatureResolver.resolve_temperature_definition(temp_def, len(val_array), material)
+            key_array = DependencyResolver.resolve_dependency_definition(temp_def, len(val_array), material)
             if len(key_array) != len(val_array):
                 raise ValueError(f"Length mismatch in {prop_name}: key and val arrays must have same length")
             key_array, val_array = ensure_ascending_order(key_array, val_array)
@@ -138,7 +138,7 @@ class PiecewiseEquationPropertyHandler(BasePropertyHandler):
         try:
             eqn_strings = prop_config[EQUATION_KEY]
             temp_def = prop_config[DEPENDENCY_KEY]
-            temp_points = TemperatureResolver.resolve_temperature_definition(temp_def, len(eqn_strings) + 1)
+            temp_points = DependencyResolver.resolve_dependency_definition(temp_def, len(eqn_strings) + 1)
             # Validate equations
             for eqn in eqn_strings:
                 expr = sp.sympify(eqn)

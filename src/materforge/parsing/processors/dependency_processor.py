@@ -6,7 +6,7 @@ import sympy as sp
 
 from materforge.core.materials import Material
 from materforge.core.symbol_registry import SymbolRegistry
-from materforge.parsing.processors.temperature_resolver import TemperatureResolver
+from materforge.parsing.processors.dependency_resolver import DependencyResolver
 from materforge.parsing.validation.property_validator import validate_monotonic_energy_density
 from materforge.parsing.validation.errors import DependencyError, CircularDependencyError
 from materforge.parsing.config.yaml_keys import EQUATION_KEY, DEPENDENCY_KEY
@@ -40,7 +40,7 @@ class DependencyProcessor:
             if not isinstance(prop_config, dict) or EQUATION_KEY not in prop_config:
                 raise ValueError(f"Invalid COMPUTE property configuration for {prop_name}")
             temp_def = prop_config[DEPENDENCY_KEY]
-            temp_array = TemperatureResolver.resolve_temperature_definition(temp_def, material=material)
+            temp_array = DependencyResolver.resolve_dependency_definition(temp_def, material=material)
             expression = prop_config[EQUATION_KEY]
             logger.debug(f"Computing property '{prop_name}' with expression: {expression}")
             try:
