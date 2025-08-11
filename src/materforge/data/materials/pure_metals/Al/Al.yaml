@@ -41,7 +41,7 @@ properties:
   
   # ====================================================================================================
   # TABULAR_DATA EXAMPLES
-  # Tabular data with explicit temperature-property relationships
+  # Tabular data with explicit dependency-value relationships
   # ====================================================================================================
   
   heat_capacity:
@@ -134,10 +134,10 @@ properties:
 #    - thermal_diffusivity depends on heat_conductivity, density, heat_capacity
 #    - density depends on thermal_expansion_coefficient
 # 
-# 4. TEMPERATURE TUPLE FORMATS:
+# 4. DEPENDENCY TUPLE FORMATS:
 #    - (start, increment): Requires n_values from 'value' list length
 #    - (start, stop, step): Step size (float) or number of points (integer)
-#    - Negative steps create decreasing temperature arrays
+#    - Negative steps create decreasing data arrays
 # 
 # 5. REGRESSION BENEFITS:
 #    - Reduces memory usage and computational complexity
