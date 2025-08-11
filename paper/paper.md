@@ -183,8 +183,8 @@ The primary entry point is the create_material function, which parses the YAML f
 
     # Evaluate properties at a specific temperature
     property_at_500 = steel.evaluate_properties_at_temperature(500.0)
-    print(f"Density at 500 K: {property_at_500['density']:.2f} kg/m^3^")
-    # Output: Density at 500 K: 2634.48 kg/m^3^
+    print(f"Density at 500 K: {property_at_500['density']:.2f} kg/m^3")
+    # Output: Density at 500 K: 2634.48 kg/m^3
 ```
 
 # Comparison with Existing Tools
