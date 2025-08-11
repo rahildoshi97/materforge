@@ -16,9 +16,9 @@ from .property_handlers import (
     PiecewiseEquationPropertyHandler,
     ComputedPropertyHandler
 )
-from .dependency_processor import DependencyProcessor
+from .computed_property_processor import ComputedPropertyProcessor
 from .post_processor import PropertyPostProcessor
-from .temperature_resolver import TemperatureResolver
+from .dependency_resolver import DependencyResolver
 
 __all__ = [
     'PropertyProcessor',
@@ -29,7 +29,7 @@ __all__ = [
     'TabularDataPropertyHandler',
     'PiecewiseEquationPropertyHandler',
     'ComputedPropertyHandler',
-    'DependencyProcessor',
+    'ComputedPropertyProcessor',
     'PropertyPostProcessor',
-    'TemperatureResolver'
+    'DependencyResolver'
 ]

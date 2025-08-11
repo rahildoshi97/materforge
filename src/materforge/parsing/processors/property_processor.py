@@ -87,7 +87,7 @@ class PropertyProcessor(PropertyProcessorBase):
         # Initialize dependency processor for computed properties
         computed_handler = self.handlers.get(PropertyType.COMPUTED_PROPERTY)
         if computed_handler:
-            computed_handler.set_dependency_processor(properties)
+            computed_handler.set_computed_property_processor(properties)
             logger.debug("Dependency processor initialized for computed properties")
 
     def _process_by_category(self, material: Material, dependency: Union[float, sp.Symbol]) -> None:

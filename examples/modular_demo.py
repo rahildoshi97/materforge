@@ -202,7 +202,7 @@ class MaterialPropertyDemonstrator:
             if yaml_path.exists():
                 try:
                     T_symbol = symbol_mapping.get(name, sp.Symbol(f'T_{name}'))
-                    mat = create_material(yaml_path=yaml_path, dependency=T_symbol, enable_plotting=False)
+                    mat = create_material(yaml_path=yaml_path, dependency=T_symbol, enable_plotting=True)
                     self.materials.append(mat)
                     self.material_symbols[mat.name] = T_symbol
                     print(f"✓ Successfully created: {mat.name} (using symbol {T_symbol})")

@@ -5,7 +5,7 @@ import sympy as sp
 
 from materforge.core.materials import Material
 from materforge.parsing.processors.property_processor_base import PropertyProcessorBase
-from materforge.parsing.processors.temperature_resolver import TemperatureResolver
+from materforge.parsing.processors.dependency_resolver import DependencyResolver
 from materforge.parsing.io.data_handler import load_property_data
 from materforge.parsing.utils.utilities import create_step_visualization_data
 from materforge.parsing.validation.property_validator import validate_monotonic_energy_density
@@ -64,7 +64,7 @@ class StepFunctionPropertyHandler(BasePropertyHandler):
         try:
             temp_key = prop_config[DEPENDENCY_KEY]
             val_array = prop_config[VALUE_KEY]
-            transition_temp = TemperatureResolver.resolve_temperature_reference(temp_key, material)
+            transition_temp = DependencyResolver.resolve_dependency_reference(temp_key, material)
             T_standard = sp.Symbol('T')
             step_function = sp.Piecewise((val_array[0], T_standard < transition_temp), (val_array[1], True))
             if str(T) != 'T':
@@ -117,7 +117,7 @@ class TabularDataPropertyHandler(BasePropertyHandler):
         try:
             temp_def = prop_config[DEPENDENCY_KEY]
             val_array = prop_config[VALUE_KEY]
-            key_array = TemperatureResolver.resolve_temperature_definition(temp_def, len(val_array), material)
+            key_array = DependencyResolver.resolve_dependency_definition(temp_def, len(val_array), material)
             if len(key_array) != len(val_array):
                 raise ValueError(f"Length mismatch in {prop_name}: key and val arrays must have same length")
             key_array, val_array = ensure_ascending_order(key_array, val_array)
@@ -138,7 +138,7 @@ class PiecewiseEquationPropertyHandler(BasePropertyHandler):
         try:
             eqn_strings = prop_config[EQUATION_KEY]
             temp_def = prop_config[DEPENDENCY_KEY]
-            temp_points = TemperatureResolver.resolve_temperature_definition(temp_def, len(eqn_strings) + 1)
+            temp_points = DependencyResolver.resolve_dependency_definition(temp_def, len(eqn_strings) + 1)
             # Validate equations
             for eqn in eqn_strings:
                 expr = sp.sympify(eqn)
@@ -178,22 +178,22 @@ class ComputedPropertyHandler(BasePropertyHandler):
 
     def __init__(self):
         super().__init__()
-        self.dependency_processor = None
+        self.computed_property_processor = None
 
-    def set_dependency_processor(self, properties: Dict[str, Any]):
-        """Set the dependency processor with access to all properties."""
-        from materforge.parsing.processors.dependency_processor import DependencyProcessor
-        self.dependency_processor = DependencyProcessor(properties, self.processed_properties)
+    def set_computed_property_processor(self, properties: Dict[str, Any]):
+        """Set the computed property processor with access to all properties."""
+        from materforge.parsing.processors.computed_property_processor import ComputedPropertyProcessor
+        self.computed_property_processor = ComputedPropertyProcessor(properties, self.processed_properties)
         # Pass reference to this handler for finalization
-        self.dependency_processor.set_property_handler(self)
+        self.computed_property_processor.set_property_handler(self)
 
     def process_property(self, material: Material, prop_name: str,
                          config: Dict[str, Any], T: Union[float, sp.Symbol]) -> None:
         """Process computed properties using dependency processor."""
-        if self.dependency_processor is None:
+        if self.computed_property_processor is None:
             raise ValueError("Dependency processor not initialized")
         # Pass the config to the dependency processor if needed, or ignore it
-        self.dependency_processor.process_computed_property(material, prop_name, T)
+        self.computed_property_processor.process_computed_property(material, prop_name, T)
 
     def finalize_computed_property(self, material: Material, prop_name: str,
                                    temp_array: np.ndarray, prop_array: np.ndarray,
@@ -202,7 +202,7 @@ class ComputedPropertyHandler(BasePropertyHandler):
         Public method to finalize computed property processing.
 
         This method provides a public interface to the protected _finalize_property_processing
-        method, allowing the DependencyProcessor to properly finalize computed properties
+        method, allowing the ComputedPropertyProcessor to properly finalize computed properties
         while maintaining consistency with other property handlers.
         """
         # Use data array finalization

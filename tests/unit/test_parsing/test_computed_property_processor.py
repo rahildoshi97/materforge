@@ -1,41 +1,41 @@
-"""Unit tests for DependencyProcessor."""
+"""Unit tests for ComputedPropertyProcessor."""
 
 import pytest
 import sympy as sp
-from materforge.parsing.processors.dependency_processor import DependencyProcessor
+from materforge.parsing.processors.computed_property_processor import ComputedPropertyProcessor
 from materforge.parsing.validation.errors import DependencyError, CircularDependencyError
 
-class TestDependencyProcessor:
-    """Test cases for DependencyProcessor."""
-    def test_dependency_processor_initialization(self):
-        """Test dependency processor initialization."""
+class TestComputedPropertyProcessor:
+    """Test cases for ComputedPropertyProcessor."""
+    def test_computed_property_processor_initialization(self):
+        """Test computed property processor initialization."""
         properties = {
             'density': 2700.0,
             'heat_capacity': {'temperature': [300, 400], 'value': [900, 950]}
         }
         processed_properties = set()
-        processor = DependencyProcessor(properties, processed_properties)
+        processor = ComputedPropertyProcessor(properties, processed_properties)
         assert processor.properties == properties
         assert processor.processed_properties == processed_properties
 
     def test_extract_equation_dependencies_simple(self):
         """Test extracting dependencies from simple equations."""
         equation = "density * heat_capacity"
-        dependencies = DependencyProcessor._extract_equation_dependencies(equation)
+        dependencies = ComputedPropertyProcessor._extract_equation_dependencies(equation)
         expected = ['density', 'heat_capacity']
         assert set(dependencies) == set(expected)
 
     def test_extract_equation_dependencies_complex(self):
         """Test extracting dependencies from complex equations."""
         equation = "density * heat_capacity + thermal_conductivity / viscosity"
-        dependencies = DependencyProcessor._extract_equation_dependencies(equation)
+        dependencies = ComputedPropertyProcessor._extract_equation_dependencies(equation)
         expected = ['density', 'heat_capacity', 'thermal_conductivity', 'viscosity']
         assert set(dependencies) == set(expected)
 
     def test_extract_equation_dependencies_with_temperature(self):
         """Test that temperature symbol is excluded from dependencies."""
         equation = "density * T + heat_capacity"
-        dependencies = DependencyProcessor._extract_equation_dependencies(equation)
+        dependencies = ComputedPropertyProcessor._extract_equation_dependencies(equation)
         # T should be excluded, only other symbols included
         expected = ['density', 'heat_capacity']
         assert set(dependencies) == set(expected)
@@ -48,7 +48,7 @@ class TestDependencyProcessor:
             'mass': 1000.0
         }
         processed_properties = set()
-        processor = DependencyProcessor(properties, processed_properties)
+        processor = ComputedPropertyProcessor(properties, processed_properties)
         # Should not raise any exception
         processor._validate_circular_dependencies('volume', ['mass', 'density'], set())
 
@@ -60,7 +60,7 @@ class TestDependencyProcessor:
             'prop_c': {'equation': 'prop_a / 3'}  # Creates cycle: a -> b -> c -> a
         }
         processed_properties = set()
-        processor = DependencyProcessor(properties, processed_properties)
+        processor = ComputedPropertyProcessor(properties, processed_properties)
         with pytest.raises(CircularDependencyError):
             processor._validate_circular_dependencies('prop_a', ['prop_b'], set())
 
@@ -70,7 +70,7 @@ class TestDependencyProcessor:
             'recursive_prop': {'equation': 'recursive_prop + 1'}
         }
         processed_properties = set()
-        processor = DependencyProcessor(properties, processed_properties)
+        processor = ComputedPropertyProcessor(properties, processed_properties)
         with pytest.raises(CircularDependencyError):
             processor._validate_circular_dependencies('recursive_prop', ['recursive_prop'], set())
 
@@ -98,7 +98,7 @@ class TestDependencyProcessor:
             }
         }
         processed_properties = {'density', 'volume'}
-        processor = DependencyProcessor(properties, processed_properties)
+        processor = ComputedPropertyProcessor(properties, processed_properties)
         T = sp.Symbol('T')
         processor.process_computed_property(material, 'mass', T)
         assert hasattr(material, 'mass')
@@ -122,7 +122,7 @@ class TestDependencyProcessor:
             }
         }
         processed_properties = set()
-        processor = DependencyProcessor(properties, processed_properties)
+        processor = ComputedPropertyProcessor(properties, processed_properties)
         T = sp.Symbol('T')
         with pytest.raises(ValueError, match="Missing dependencies in expression"):
             processor.process_computed_property(material, 'mass', T)
@@ -152,7 +152,7 @@ class TestDependencyProcessor:
             }
         }
         processed_properties = {'density'}
-        processor = DependencyProcessor(properties, processed_properties)
+        processor = ComputedPropertyProcessor(properties, processed_properties)
         T = sp.Symbol('T')
         # Process the dependent property
         processor.process_computed_property(material, 'normalized_volume', T)
@@ -184,7 +184,7 @@ class TestDependencyProcessor:
             }
         }
         processed_properties = {'density', 'heat_capacity'}
-        processor = DependencyProcessor(properties, processed_properties)
+        processor = ComputedPropertyProcessor(properties, processed_properties)
         T = sp.Symbol('T')
         # Test the expression parsing method directly
         expression = "density * heat_capacity"
@@ -209,7 +209,7 @@ class TestDependencyProcessor:
             }
         }
         processed_properties = set()
-        processor = DependencyProcessor(properties, processed_properties)
+        processor = ComputedPropertyProcessor(properties, processed_properties)
         T = sp.Symbol('T')
         # This should work since melting_temperature is available on the material
         processor.process_computed_property(material, 'test_property', T)

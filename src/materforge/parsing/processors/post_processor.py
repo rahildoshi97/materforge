@@ -5,7 +5,7 @@ import numpy as np
 import sympy as sp
 
 from materforge.core.materials import Material
-from materforge.parsing.processors.temperature_resolver import TemperatureResolver
+from materforge.parsing.processors.dependency_resolver import DependencyResolver
 from materforge.parsing.validation.property_validator import validate_monotonic_energy_density
 from materforge.algorithms.interpolation import ensure_ascending_order
 from materforge.algorithms.piecewise_builder import PiecewiseBuilder
@@ -44,7 +44,7 @@ class PropertyPostProcessor:
             try:
                 if not isinstance(prop_config, dict) or REGRESSION_KEY not in prop_config:
                     continue
-                temp_array = TemperatureResolver.extract_from_config(prop_config, material)
+                temp_array = DependencyResolver.extract_from_config(prop_config, material)
                 has_regression, simplify_type, degree, segments = RegressionProcessor.process_regression_params(
                     prop_config, prop_name, len(temp_array)
                 )
@@ -80,7 +80,7 @@ class PropertyPostProcessor:
         logger.debug(f"Applying post-regression to property: {prop_name}")
         prop_value = getattr(material, prop_name)
         try:
-            temp_array = TemperatureResolver.extract_from_config(prop_config, material)
+            temp_array = DependencyResolver.extract_from_config(prop_config, material)
         except Exception as e:
             logger.error(f"Failed to extract dependency array for {prop_name}: {e}", exc_info=True)
             raise ValueError(f"Failed to extract dependency array for {prop_name}: {str(e)}") from e
