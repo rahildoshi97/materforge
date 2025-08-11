@@ -178,22 +178,22 @@ class ComputedPropertyHandler(BasePropertyHandler):
 
     def __init__(self):
         super().__init__()
-        self.dependency_processor = None
+        self.computed_property_processor = None
 
     def set_dependency_processor(self, properties: Dict[str, Any]):
         """Set the dependency processor with access to all properties."""
-        from materforge.parsing.processors.dependency_processor import DependencyProcessor
-        self.dependency_processor = DependencyProcessor(properties, self.processed_properties)
+        from materforge.parsing.processors.computed_property_processor import ComputedPropertyProcessor
+        self.computed_property_processor = ComputedPropertyProcessor(properties, self.processed_properties)
         # Pass reference to this handler for finalization
-        self.dependency_processor.set_property_handler(self)
+        self.computed_property_processor.set_property_handler(self)
 
     def process_property(self, material: Material, prop_name: str,
                          config: Dict[str, Any], T: Union[float, sp.Symbol]) -> None:
         """Process computed properties using dependency processor."""
-        if self.dependency_processor is None:
+        if self.computed_property_processor is None:
             raise ValueError("Dependency processor not initialized")
         # Pass the config to the dependency processor if needed, or ignore it
-        self.dependency_processor.process_computed_property(material, prop_name, T)
+        self.computed_property_processor.process_computed_property(material, prop_name, T)
 
     def finalize_computed_property(self, material: Material, prop_name: str,
                                    temp_array: np.ndarray, prop_array: np.ndarray,

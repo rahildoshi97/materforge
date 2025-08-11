@@ -15,7 +15,7 @@ from materforge.parsing.utils.utilities import handle_numeric_temperature
 logger = logging.getLogger(__name__)
 
 
-class DependencyProcessor:
+class ComputedPropertyProcessor:
     """Handles dependency resolution and computed property processing."""
 
     def __init__(self, properties: Dict[str, Any], processed_properties: Set[str]):
