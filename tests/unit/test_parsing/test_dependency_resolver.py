@@ -1,4 +1,4 @@
-"""Unit tests for TemperatureResolver."""
+"""Unit tests for DependencyResolver."""
 
 import pytest
 import numpy as np

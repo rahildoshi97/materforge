@@ -7,8 +7,8 @@ from materforge.parsing.validation.errors import DependencyError, CircularDepend
 
 class TestComputedPropertyProcessor:
     """Test cases for ComputedPropertyProcessor."""
-    def test_dependency_processor_initialization(self):
-        """Test dependency processor initialization."""
+    def test_computed_property_processor_initialization(self):
+        """Test computed property processor initialization."""
         properties = {
             'density': 2700.0,
             'heat_capacity': {'temperature': [300, 400], 'value': [900, 950]}

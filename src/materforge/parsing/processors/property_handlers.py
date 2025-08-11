@@ -180,8 +180,8 @@ class ComputedPropertyHandler(BasePropertyHandler):
         super().__init__()
         self.computed_property_processor = None
 
-    def set_dependency_processor(self, properties: Dict[str, Any]):
-        """Set the dependency processor with access to all properties."""
+    def set_computed_property_processor(self, properties: Dict[str, Any]):
+        """Set the computed property processor with access to all properties."""
         from materforge.parsing.processors.computed_property_processor import ComputedPropertyProcessor
         self.computed_property_processor = ComputedPropertyProcessor(properties, self.processed_properties)
         # Pass reference to this handler for finalization
@@ -202,7 +202,7 @@ class ComputedPropertyHandler(BasePropertyHandler):
         Public method to finalize computed property processing.
 
         This method provides a public interface to the protected _finalize_property_processing
-        method, allowing the DependencyProcessor to properly finalize computed properties
+        method, allowing the ComputedPropertyProcessor to properly finalize computed properties
         while maintaining consistency with other property handlers.
         """
         # Use data array finalization

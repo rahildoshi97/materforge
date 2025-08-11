@@ -122,7 +122,7 @@ Symbolic expressions that reference other material properties with automatic dep
 
 ## Temperature Processing
 
-MaterForge provides sophisticated temperature definition processing through `TemperatureResolver`:
+MaterForge provides sophisticated dependency definition processing through `DependencyResolver`:
 
 ### Temperature Definition Formats
 
@@ -135,7 +135,7 @@ MaterForge provides sophisticated temperature definition processing through `Tem
 
 ### Temperature Resolution
 
-The `TemperatureResolver` class handles:
+The `DependencyResolver` class handles:
 - Reference resolution to material properties
 - Arithmetic expression evaluation
 - Validation of temperature ranges

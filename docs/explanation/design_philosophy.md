@@ -25,7 +25,7 @@ MaterForge follows a layered architecture to separate concerns clearly:
 
 - **Configuration Processing**: Handles YAML parsing and validation through `MaterialConfigParser`
 - **Property Type Detection**: Automatically determines property definition types using `PropertyConfigAnalyzer`
-- **Temperature Resolution**: Processes various temperature definition formats via `TemperatureResolver`
+- **Dependency Resolution**: Processes various dependency definition formats via `DependencyResolver`
 - **Data Handling**: Manages file I/O for external data sources through `read_data_from_file`
 
 ### 3. Symbolic Representation Layer (SymPy)
@@ -61,13 +61,13 @@ MaterForge's architecture is organized into distinct modules:
 ### Core Module (`materforge.core`)
 - **Material**: Fundamental material representation with composition validation
 - **ChemicalElement**: Element data and properties from periodic table
-- **Interfaces**: Abstract base classes for extensibility (`PropertyProcessor`, `TemperatureResolver`, etc.)
+- **Interfaces**: Abstract base classes for extensibility (`PropertyProcessor`, `DependencyResolver`, etc.)
 - **Symbol Registry**: SymPy symbol management to ensure uniqueness
 
 ### Parsing Module (`materforge.parsing`)
 - **API**: Main entry points (`create_material`, `validate_yaml_file`, `get_supported_properties`)
 - **Configuration**: YAML parsing and validation through `MaterialConfigParser`
-- **Processors**: Property and temperature processing (`PropertyManager`, `TemperatureResolver`)
+- **Processors**: Property and dependency processing (`PropertyManager`, `DependencyResolver`)
 - **I/O**: File handling for external data (`read_data_from_file`)
 - **Validation**: Type detection and error handling (`PropertyConfigAnalyzer`)
 
@@ -150,7 +150,7 @@ MaterForge is designed for extensibility through abstract interfaces:
 
 ### Abstract Interfaces
 - `PropertyProcessor`: For custom property processing logic
-- `TemperatureResolver`: For custom temperature handling
+- `DependencyResolver`: For custom dependency handling
 - `DataHandler`: For custom file formats
 - `Visualizer`: For custom visualization approaches
 
