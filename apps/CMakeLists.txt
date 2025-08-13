@@ -12,11 +12,10 @@ SET(WALBERLA_BUILD_TOOLS OFF CACHE BOOL "")
 SET(WALBERLA_BUILD_TUTORIALS OFF CACHE BOOL "")
 SET(WALBERLA_BUILD_SHOWCASES OFF CACHE BOOL "")
 SET(WALBERLA_BUILD_DOC OFF CACHE BOOL "")
-
 SET(WALBERLA_BUILD_WITH_PYTHON OFF CACHE BOOL "")
 SET(WALBERLA_BUILD_WITH_CODEGEN OFF CACHE BOOL "")
 SET(WALBERLA_BUILD_WITH_OPENMP ON CACHE BOOL "")
-SET(WALBERLA_BUILD_WITH_MPI OFF CACHE BOOL "")
+SET(WALBERLA_BUILD_WITH_MPI ON CACHE BOOL "")
 
 # Conditional GPU support
 option(ENABLE_GPU_SUPPORT "Enable GPU support" ON)
@@ -33,7 +32,6 @@ if(ENABLE_GPU_SUPPORT OR CUDA_REQUESTED)
     # Check if CUDA is available
     include(CheckLanguage)
     check_language(CUDA)
-
     if(CMAKE_CUDA_COMPILER)
         enable_language(CUDA)
         find_package(CUDAToolkit QUIET)
@@ -92,26 +90,48 @@ walberla_generate_sources(HeatEquationWithMaterialCPU
         SCRIPTS HeatEquationKernelWithMaterialCPU.py
         FILE_EXTENSIONS .cpp .hpp)
 
-# GPU executable (conditionally built)
+add_executable(CodegenHeatEquationCPUScaling)
+target_sources(CodegenHeatEquationCPUScaling PRIVATE CodegenHeatEquationCPUScaling.cpp)
+target_link_libraries(CodegenHeatEquationCPUScaling PRIVATE
+        walberla::blockforest walberla::core walberla::field
+        walberla::stencil walberla::timeloop walberla::vtk walberla::pde)
+
+walberla_generate_sources(CodegenHeatEquationCPUScaling
+        SCRIPTS HeatEquationKernelWithMaterialCPU.py
+        FILE_EXTENSIONS .cpp .hpp)
+
+# GPU executables (conditionally built)
 if(GPU_AVAILABLE)
     add_executable(HeatEquationWithMaterialGPU)
     target_sources(HeatEquationWithMaterialGPU PRIVATE CodegenHeatEquationWithMaterialGPU.cpp)
     target_link_libraries(HeatEquationWithMaterialGPU PRIVATE
             walberla::blockforest walberla::core walberla::gpu walberla::field
             walberla::stencil walberla::timeloop walberla::vtk walberla::pde)
-
     # Set CUDA properties
     set_property(TARGET HeatEquationWithMaterialGPU PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-
     walberla_generate_sources(HeatEquationWithMaterialGPU
             SCRIPTS HeatEquationKernelWithMaterialGPU.py
             FILE_EXTENSIONS .cu .hpp)
-
     set_source_files_properties(
             ${CMAKE_CURRENT_BINARY_DIR}/_gen/HeatEquationWithMaterialGPU/gen/HeatEquationKernelWithMaterialGPU.cu
             PROPERTIES LANGUAGE CUDA)
 
-    message(STATUS "GPU executable HeatEquationWithMaterialGPU will be built")
+    # GPU Scaling executable
+    add_executable(CodegenHeatEquationGPUScaling)
+    target_sources(CodegenHeatEquationGPUScaling PRIVATE CodegenHeatEquationGPUScaling.cpp)
+    target_link_libraries(CodegenHeatEquationGPUScaling PRIVATE
+            walberla::blockforest walberla::core walberla::gpu walberla::field
+            walberla::stencil walberla::timeloop walberla::vtk walberla::pde)
+    # Set CUDA properties for scaling executable
+    set_property(TARGET CodegenHeatEquationGPUScaling PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+    walberla_generate_sources(CodegenHeatEquationGPUScaling
+            SCRIPTS HeatEquationKernelWithMaterialGPU.py
+            FILE_EXTENSIONS .cu .hpp)
+    set_source_files_properties(
+            ${CMAKE_CURRENT_BINARY_DIR}/_gen/CodegenHeatEquationGPUScaling/gen/HeatEquationKernelWithMaterialGPU.cu
+            PROPERTIES LANGUAGE CUDA)
+
+    message(STATUS "GPU executables will be built: HeatEquationWithMaterialGPU, CodegenHeatEquationGPUScaling")
 else()
-    message(STATUS "GPU executable HeatEquationWithMaterialGPU will NOT be built (CUDA not available)")
+    message(STATUS "GPU executables will NOT be built (CUDA not available)")
 endif()
