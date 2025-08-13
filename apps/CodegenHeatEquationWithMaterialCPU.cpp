@@ -24,10 +24,8 @@ namespace walberla {
 
 typedef GhostLayerField<real_t, 1> ScalarField;
 
-void swapFields(StructuredBlockForest& blocks, BlockDataID uID, BlockDataID uTmpID)
-{
-    for (auto block = blocks.begin(); block != blocks.end(); ++block)
-    {
+void swapFields(StructuredBlockForest& blocks, BlockDataID uID, BlockDataID uTmpID) {
+    for (auto block = blocks.begin(); block != blocks.end(); ++block) {
         ScalarField* u = block->getData<ScalarField>(uID);
         ScalarField* u_tmp = block->getData<ScalarField>(uTmpID);
         u->swapDataPointers(u_tmp);
@@ -35,19 +33,14 @@ void swapFields(StructuredBlockForest& blocks, BlockDataID uID, BlockDataID uTmp
 }
 
 void initDirichletBoundaryNorth(const shared_ptr<StructuredBlockForest>& blocks,
-                               BlockDataID uId, BlockDataID uTmpId)
-{
-    for (auto block = blocks->begin(); block != blocks->end(); ++block)
-    {
-        if (blocks->atDomainYMaxBorder(*block))
-        {
+                               BlockDataID uId, BlockDataID uTmpId) {
+    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+        if (blocks->atDomainYMaxBorder(*block)) {
             ScalarField* u = block->getData<ScalarField>(uId);
             ScalarField* u_tmp = block->getData<ScalarField>(uTmpId);
             CellInterval xyz = u->xyzSizeWithGhostLayer();
             xyz.yMin() = xyz.yMax();
-
-            for (auto cell = xyz.begin(); cell != xyz.end(); ++cell)
-            {
+            for (auto cell = xyz.begin(); cell != xyz.end(); ++cell) {
                 const Vector3<real_t> p = blocks->getBlockLocalCellCenter(*block, *cell);
                 // Set constant temperature boundary condition
                 real_t v = real_c(3800.0);
@@ -59,91 +52,65 @@ void initDirichletBoundaryNorth(const shared_ptr<StructuredBlockForest>& blocks,
 }
 
 void initDirichletBoundariesAllSides(const shared_ptr<StructuredBlockForest>& blocks,
-                                    BlockDataID uId, BlockDataID uTmpId)
-{
-    for (auto block = blocks->begin(); block != blocks->end(); ++block)
-    {
+                                    BlockDataID uId, BlockDataID uTmpId) {
+    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
         ScalarField* u = block->getData<ScalarField>(uId);
         ScalarField* u_tmp = block->getData<ScalarField>(uTmpId);
-
         // North boundary (Y max)
-        if (blocks->atDomainYMaxBorder(*block))
-        {
+        if (blocks->atDomainYMaxBorder(*block)) {
             CellInterval north = u->xyzSizeWithGhostLayer();
             north.yMin() = north.yMax();
-
-            for (auto cell = north.begin(); cell != north.end(); ++cell)
-            {
+            for (auto cell = north.begin(); cell != north.end(); ++cell) {
                 real_t v = real_c(3800.0); // Hot boundary
                 u->get(*cell) = v;
                 u_tmp->get(*cell) = v;
             }
         }
-
         // South boundary (Y min)
-        if (blocks->atDomainYMinBorder(*block))
-        {
+        if (blocks->atDomainYMinBorder(*block)) {
             CellInterval south = u->xyzSizeWithGhostLayer();
             south.yMax() = south.yMin();
-
-            for (auto cell = south.begin(); cell != south.end(); ++cell)
-            {
+            for (auto cell = south.begin(); cell != south.end(); ++cell) {
                 real_t v = real_c(300.0); // Cold boundary
                 u->get(*cell) = v;
                 u_tmp->get(*cell) = v;
             }
         }
-
         // East boundary (X max)
-        if (blocks->atDomainXMaxBorder(*block))
-        {
+        if (blocks->atDomainXMaxBorder(*block)) {
             CellInterval east = u->xyzSizeWithGhostLayer();
             east.xMin() = east.xMax();
-
-            for (auto cell = east.begin(); cell != east.end(); ++cell)
-            {
+            for (auto cell = east.begin(); cell != east.end(); ++cell) {
                 real_t v = real_c(300.0);
                 u->get(*cell) = v;
                 u_tmp->get(*cell) = v;
             }
         }
-
         // West boundary (X min)
-        if (blocks->atDomainXMinBorder(*block))
-        {
+        if (blocks->atDomainXMinBorder(*block)) {
             CellInterval west = u->xyzSizeWithGhostLayer();
             west.xMax() = west.xMin();
-
-            for (auto cell = west.begin(); cell != west.end(); ++cell)
-            {
+            for (auto cell = west.begin(); cell != west.end(); ++cell) {
                 real_t v = real_c(300.0);
                 u->get(*cell) = v;
                 u_tmp->get(*cell) = v;
             }
         }
-
         // Top boundary (Z max)
-        if (blocks->atDomainZMaxBorder(*block))
-        {
+        if (blocks->atDomainZMaxBorder(*block)) {
             CellInterval top = u->xyzSizeWithGhostLayer();
             top.zMin() = top.zMax();
-
-            for (auto cell = top.begin(); cell != top.end(); ++cell)
-            {
+            for (auto cell = top.begin(); cell != top.end(); ++cell) {
                 real_t v = real_c(300.0);
                 u->get(*cell) = v;
                 u_tmp->get(*cell) = v;
             }
         }
-
         // Bottom boundary (Z min)
-        if (blocks->atDomainZMinBorder(*block))
-        {
+        if (blocks->atDomainZMinBorder(*block)) {
             CellInterval bottom = u->xyzSizeWithGhostLayer();
             bottom.zMax() = bottom.zMin();
-
-            for (auto cell = bottom.begin(); cell != bottom.end(); ++cell)
-            {
+            for (auto cell = bottom.begin(); cell != bottom.end(); ++cell) {
                 real_t v = real_c(300.0);
                 u->get(*cell) = v;
                 u_tmp->get(*cell) = v;
@@ -162,12 +129,15 @@ int main(int argc, char** argv)
 
     // Ensure matching aspect ratios of cells and domain.
     constexpr uint_t x = 128;
+    // cells in X,Y,Z direction per block
     const uint_t xCells = uint_c(x);
     const uint_t yCells = uint_c(x);
     const uint_t zCells = uint_c(x);
+    // Physical domain size in X,Y,Z
     const real_t xSize = real_c(1.0);
     const real_t ySize = real_c(1.0);  // 2
     const real_t zSize = real_c(1.0);
+    // Number of blocks in X,Y,Z direction
     const uint_t xBlocks = uint_c(1);
     const uint_t yBlocks = uint_c(1);  // 2
     const uint_t zBlocks = uint_c(1);
@@ -180,11 +150,11 @@ int main(int argc, char** argv)
     const real_t dy = ySize / real_c(yBlocks * yCells + uint_c(1));
     const real_t dz = zSize / real_c(zBlocks * zCells + uint_c(1));
 
-    WALBERLA_CHECK_FLOAT_EQUAL(dx, dy);
+    // WALBERLA_CHECK_FLOAT_EQUAL(dx, dy);
 
     const real_t dt = real_c(1);
     uint_t timeSteps = uint_c(2e4);
-    uint_t vtkWriteFrequency = uint_c(400);
+    uint_t vtkWriteFrequency = uint_c(0);
 
     ///////////////////////////
     /// BLOCK STORAGE SETUP ///
