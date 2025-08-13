@@ -18,38 +18,39 @@ final_boiling_temperature: 3200.
 
 properties:
 
-  thermal_diffusivity: # COMPUTED_PROPERTY
-    dependency: (3000, 300, -5.0)
-    equation: heat_conductivity /(density * heat_capacity)
-    bounds: [ extrapolate, extrapolate ]
-    regression:
-      simplify: post
-      degree: 1
-      segments: 3
-
-  ##################################################
-
-  energy_density:  # COMPUTED_PROPERTY
-    dependency: (300, 3000, 5.0)
-    equation: density * specific_enthalpy
-    bounds: [ extrapolate, extrapolate ]
-    regression:
+  _comment: |
+    thermal_diffusivity: # COMPUTED_PROPERTY
+      dependency: (3000, 300, -5.0)
+      equation: heat_conductivity /(density * heat_capacity)
+      bounds: [ extrapolate, extrapolate ]
+      regression:
         simplify: post
         degree: 1
-        segments: 6
-
-  ##################################################
-
-  specific_enthalpy:  # COMPUTED_PROPERTY
-    dependency: (3000, 300, 541)
-    equation: Integral(heat_capacity, T)
-    bounds: [ constant, constant ]
-    regression:
-      simplify: post
-      degree: 2
-      segments: 4
-
-  ##################################################
+        segments: 3
+  
+    ##################################################
+  
+    energy_density:  # COMPUTED_PROPERTY
+      dependency: (300, 3000, 5.0)
+      equation: density * specific_enthalpy
+      bounds: [ extrapolate, extrapolate ]
+      regression:
+          simplify: post
+          degree: 1
+          segments: 6
+  
+    ##################################################
+  
+    specific_enthalpy:  # COMPUTED_PROPERTY
+      dependency: (3000, 300, 541)
+      equation: Integral(heat_capacity, T)
+      bounds: [ constant, constant ]
+      regression:
+        simplify: post
+        degree: 2
+        segments: 4
+  
+    ##################################################
 
   heat_capacity:  # FILE_IMPORT
     file_path: ./1.4301_HeatEquationKernelWithMaterial.xlsx
@@ -57,9 +58,9 @@ properties:
     property_column: Specific heat (J/(Kg K))
     bounds: [extrapolate, extrapolate]
     regression:
-      simplify: pre  # TODO: 'post' causes errors: <lambdifygenerated-8>:2: RuntimeWarning: divide by zero encountered in reciprocal
-      degree: 1
-      segments: 4
+      simplify: post  # TODO: 'post' causes errors: <lambdifygenerated-8>:2: RuntimeWarning: divide by zero encountered in reciprocal
+      degree: 3  # 1
+      segments: 6  # 4
 
   ##################################################
 
@@ -70,7 +71,7 @@ properties:
     bounds: [extrapolate, extrapolate]
     regression:
       simplify: post
-      degree: 1
+      degree: 2  # 1
       segments: 3
 
   ##################################################
@@ -82,5 +83,5 @@ properties:
     bounds: [extrapolate, extrapolate]
     regression:
       simplify: post
-      degree: 1  # 2
-      segments: 3  # 4
+      degree: 2  # 1
+      segments: 3
