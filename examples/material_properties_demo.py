@@ -191,7 +191,7 @@ def demonstrate_material_properties():
             try:
                 prop_value = getattr(mat, prop_name)
                 if isinstance(prop_value, sp.Expr):
-                    numerical_value = prop_value.subs(T_mat, test_temp).evalf()
+                    numerical_value = prop_value.subs(T_mat, test_temp).evalf() # type: ignore
                     print(f"{prop_name:<30}: {numerical_value} (symbolic)")
                 else:
                     print(f"{prop_name:<30}: {prop_value} (constant)")
@@ -218,7 +218,7 @@ def demonstrate_material_properties():
         print(f"\nMethod 3: evaluate_material_properties()")
         try:
             all_values_func = evaluate_material_properties(mat, test_temp)
-            print(f"Functional API results match: {all_values == all_values_func}")
+            print(f"Functional API results match: {all_values == all_values_func}") # type: ignore
         except Exception as e:
             print(f"Error: {e}")
 
