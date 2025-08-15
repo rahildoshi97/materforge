@@ -1,5 +1,5 @@
 """
-Main API module for PyMatLib material property library.
+Main API module for MaterForge material property library.
 
 This module provides the primary interface for creating and working with material objects
 from YAML configuration files. It includes functions for material creation, validation,
