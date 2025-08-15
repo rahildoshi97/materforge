@@ -2,7 +2,7 @@
 Base processor class for material property processing with common finalization logic.
 
 This module provides the PropertyProcessorBase class that serves as a foundation
-for all property processors in the PyMatLib library, ensuring consistent
+for all property processors in the MaterForge library, ensuring consistent
 processing patterns and reducing code duplication.
 """
 
@@ -25,7 +25,7 @@ class PropertyProcessorBase:
 
     This class provides shared functionality for processing material properties,
     including piecewise function creation, visualization, and property assignment.
-    It serves as the foundation for all property handlers in the PyMatLib library.
+    It serves as the foundation for all property handlers in the MaterForge library.
     Attributes:
         processed_properties (set): Set of property names that have been processed
         base_dir (Path): Base directory for file operations

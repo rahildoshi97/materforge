@@ -72,7 +72,7 @@ MaterForge standardizes and simplifies the integration of realistic material beh
   This versatility allows users to leverage data from diverse sources,
   with robust file processing handled using pandas [@pandas].
 
-![MaterForge's six property definition methods with corresponding YAML examples and automatically generated validation plots, demonstrating the library's ability to handle diverse data sources from simple constants to complex experimental datasets.\label{fig:input_methods}](figures/input_methods.png)
+![MaterForge's six property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods}](figures/input_methods.png)
 
 - **Universal Material Support**: The framework is designed with an extensible architecture to support any material type.
   It is currently implemented and thoroughly tested for pure metals and alloys through its unified interface,
@@ -154,7 +154,7 @@ final_boiling_temperature: 3200.0    # Material is completely vaporized (K)
 
 properties:
   density:
-    file_path: ./1.4301.xlsx. # Supports xlsx, CSV and txt
+    file_path: ./1.4301.xlsx. # Supports xlsx, CSV and txt formats
     dependency_column: T (K)
     property_column: rho (kg/(m)^3)
     bounds: [constant, extrapolate]
