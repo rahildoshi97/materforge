@@ -76,7 +76,7 @@ MaterForge standardizes and simplifies the integration of realistic material beh
 
 - **Extensible Material Support**: The framework is designed with an extensible architecture to support any material type.
   It is currently implemented and thoroughly tested for pure metals and alloys through its unified interface,
-  with a modular design that allows for straightforward extension to other material classes such as
+  with a modular design that allows for straightforward extension to other materials such as
   ceramics, polymers or composites.
 
 - **Automatic Dependency Resolution**: For properties that depend on others (e.g., thermal diffusivity calculated from thermal conductivity, density, and heat capacity),
