@@ -74,7 +74,7 @@ MaterForge standardizes and simplifies the integration of realistic material beh
 
 ![MaterForge's six property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods}](figures/input_methods.png)
 
-- **Universal Material Support**: The framework is designed with an extensible architecture to support any material type.
+- **Extensible Material Support**: The framework is designed with an extensible architecture to support any material type.
   It is currently implemented and thoroughly tested for pure metals and alloys through its unified interface,
   with a modular design that allows for straightforward extension to other material classes such as
   ceramics, polymers or composites.
@@ -199,7 +199,7 @@ The primary entry point is the create_material function, which parses the YAML f
 | **Material Support**     |                 |              |                  |             |
 | Solid Materials          | Yes             | Limited      | Yes              | Yes         |
 | Custom Properties        | Yes (any)       | No           | No               | Limited     |
-| Variable Dependencies    | Yes (any)       | Limited (T,P) | No (fixed data) | Yes (T,P,composition) |
+| Variable Dependencies    | Yes (any)       | Limited (T, P) | No (fixed data) | Yes (T, P, composition) |
 |                          |                 |              |                  |             |
 | **Accessibility**        |                 |              |                  |             |
 | Open Source              | Yes             | Yes          | No               | No          |
