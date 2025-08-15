@@ -68,11 +68,11 @@ MaterForge standardizes and simplifies the integration of realistic material beh
 # Key Functionality
 
 - **Flexible Input Methods**: The library supports various property definition methods such as
-  constant values, step functions, file-based data (xlsx, CSV, txt), tabular data, piecewise equations, and computed properties (\autoref{fig:input_methods}).
+  constant values, step functions, file-based data (xlsx, CSV, txt), tabular data, piecewise equations, and computed properties (\autoref{fig:input_methods_new}).
   This versatility allows users to leverage data from diverse sources,
   with robust file processing handled using pandas [@pandas].
 
-![MaterForge's property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods}](figures/input_methods.png)
+![MaterForge's property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods_new}](figures/input_methods_new.jpg)
 
 - **Extensible Material Support**: The framework is designed with an extensible architecture to support any material type.
   It is currently implemented and thoroughly tested for pure metals and alloys through its unified interface,

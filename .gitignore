@@ -139,7 +139,7 @@ src/materforge/_version.py
 # Plot outputs
 materforge_plots/
 # *.png
-*.jpg
+# *.jpg
 *.jpeg
 *.gif
 *.svg
