@@ -55,7 +55,7 @@ creating a significant integration hurdle for researchers.
 To manage this complexity, researchers often resort to manual interpolation, custom scripting to handle different data formats, or proprietary software,
 which compromises reproducibility and standardization [@ashby2013materials].
 While valuable resources like the NIST WebBook [@nist_webbook] and libraries such as CoolProp [@coolprop] exist;
-they typically provide raw data without the integrated processing needed to unify these varied formats.
+they primarily provide raw data without the integrated processing needed to unify these varied formats.
 Similarly, specialized CALPHAD databases [@calphad] are powerful but often require proprietary software
 and do not easily integrate with general-purpose simulation codes.
 
