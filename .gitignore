@@ -215,7 +215,7 @@ test_yaml_config.cpp
 test_yaml_config.hpp
 
 # VTK output
-vtk_out/
+vtk*
 
 # Generated code
 _gen/
