@@ -25,7 +25,7 @@ affiliations:
     index: 2
   - name: Erlangen National High Performance Computing Center (NHR@FAU), Erlangen, Germany
     index: 3
-date: 11 August 2025
+date: 15 August 2025
 bibliography: paper.bib
 ---
 
