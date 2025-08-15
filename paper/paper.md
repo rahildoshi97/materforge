@@ -4,10 +4,10 @@ title: 'MaterForge: Materials Formulation Engine with Python'
 tags:
   - Python
   - materials science
-  - computational physics
-  - thermodynamics
-  - finite element analysis
-  - material properties
+  - symbolic computation
+  - scientific computing
+  - YAML configuration
+  - high-performance computing
 authors:
   - name: Rahil Miten Doshi
     orcid: 0009-0008-3570-9841
@@ -34,11 +34,11 @@ bibliography: paper.bib
 MaterForge is an extensible, open-source Python library that streamlines the definition and use of
 material properties in numerical simulations.
 The library allows users to define complex material behaviors, ranging from simple constants to experimental data
-in human-readable YAML configuration files.
-These are automatically converted into symbolic mathematical expressions for direct use in scientific computing frameworks.
+in user-friendly YAML configuration files.
+These are internally converted into symbolic mathematical expressions for direct use in scientific computing frameworks.
 MaterForge supports different material types,
 offers multiple property definition methods,
-and intelligently manages dependencies between different material properties.
+and automatically resolves dependency order for derived properties, with cycle detection and explicit error messages.
 It is designed for high-performance computing applications
 and serves as a seamless bridge between experimental data and numerical simulation,
 making sophisticated material modeling accessible to a broader scientific community.
@@ -110,9 +110,9 @@ MaterForge standardizes and simplifies the integration of realistic material beh
   With `simplify: post`, simplification is deferred until all dependent properties have been computed, maximizing numerical accuracy.
   This timing control allows users to balance computational efficiency with numerical accuracy based on their specific simulation requirements.
 
-- **Bidirectional Property-Variable Inversion**: The library can automatically generate inverse piecewise functions,
+- **Inverse Property Computation**: The library can generate inverse piecewise functions,
   enabling the determination of independent variables from known property values.
-  This capability essential for energy-based numerical methods and iterative solvers [@voller1987fixed],
+  This capability is essential for energy-based numerical methods and iterative solvers [@voller1987fixed],
   where temperature is computed via the inverse function of the enthalpy.
   While currently focused on single dependent variables like temperature,
   the underlying architecture is designed to support multiple independent variables (e.g., pressure, shear rate) in the future.
@@ -163,7 +163,7 @@ properties:
       degree: 2      # Use quadratic regression for simplification
       segments: 3    # Fit with 3 segments for piecewise linear approximation
 ```
-Complete YAML configurations for different materials are provided in the MaterForge [documentation](https://github.com/rahildoshi97/pymatlib/blob/master/docs/how-to/define_materials.md).
+Complete YAML configurations for different materials are provided in the MaterForge [documentation](https://github.com/rahildoshi97/materforge/blob/master/docs/how-to/define_materials.md).
 
 ## Python Integration
 The primary entry point is the create_material function, which parses the YAML file and returns a fully configured material object.
@@ -199,7 +199,7 @@ The primary entry point is the create_material function, which parses the YAML f
 | **Material Support**     |                 |              |                  |             |
 | Solid Materials          | Yes             | Limited      | Yes              | Yes         |
 | Custom Properties        | Yes (any)       | No           | No               | Limited     |
-| Temperature Dependencies | Yes             | Yes          | Yes              | Yes         |
+| Variable Dependencies    | Yes (any)       | Limited (T,P only) | No (fixed data) | Yes (T,P,composition) |
 |                          |                 |              |                  |             |
 | **Accessibility**        |                 |              |                  |             |
 | Open Source              | Yes             | Yes          | No               | No          |
@@ -209,7 +209,7 @@ The primary entry point is the create_material function, which parses the YAML f
 automatic dependency resolution, and multiple input methods provides a level of flexibility and integration
 not found in existing tools, enabling more reproducible and sophisticated scientific simulations.
 
-# Research Applications and Availability
+# Research Applications
 
 MaterForge is applicable to a wide range of research areas, including alloy design and optimization [@callister2018materials],
 finite element analysis [@hughes2012finite], multiscale modeling [@tadmor2011modeling],
@@ -217,9 +217,11 @@ computational fluid dynamics, and heat transfer.
 Its architecture promotes reproducible science and is well-suited for high-performance computing environments,
 with demonstrated integrations into frameworks like pystencils [@pystencils] and waLBerla [@walberla].
 
-MaterForge is an open-source software distributed under the [BSD-3-Clause License](https://github.com/rahildoshi97/pymatlib/blob/master/LICENSE).
-The source code, comprehensive documentation, and example configurations are available on
-[GitHub](https://github.com/rahildoshi97/pymatlib/tree/master).
+# Availability
+
+MaterForge is an open-source software distributed under the [BSD-3-Clause License](https://github.com/rahildoshi97/materforge/blob/master/LICENSE). 
+The source code, comprehensive documentation, and example configurations are available at https://github.com/rahildoshi97/materforge. 
+The software can be installed via PyPI using `pip install materforge`.
 
 # Acknowledgements
 
