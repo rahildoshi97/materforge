@@ -72,7 +72,7 @@ MaterForge standardizes and simplifies the integration of realistic material beh
   This versatility allows users to leverage data from diverse sources,
   with robust file processing handled using pandas [@pandas].
 
-![MaterForge's six property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods}](figures/input_methods.png)
+![MaterForge's property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods}](figures/input_methods.png)
 
 - **Extensible Material Support**: The framework is designed with an extensible architecture to support any material type.
   It is currently implemented and thoroughly tested for pure metals and alloys through its unified interface,
