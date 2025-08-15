@@ -115,7 +115,7 @@ MaterForge standardizes and simplifies the integration of realistic material beh
   This capability is essential for energy-based numerical methods and iterative solvers [@voller1987fixed],
   where temperature is computed via the inverse function of the enthalpy.
   While currently focused on single dependent variables like temperature,
-  the underlying architecture is designed to support multiple independent variables (e.g., pressure, shear rate) in the future.
+  the underlying architecture is designed to be extensible toward multiple independent variables (e.g., pressure, shear rate) in the future.
   The inversion supports linear piecewise segments,
   either via default linear interpolation or explicit regression,
   ensuring robust mathematical invertibility.
@@ -154,9 +154,9 @@ final_boiling_temperature: 3200.0    # Material is completely vaporized (K)
 
 properties:
   density:
-    file_path: ./1.4301.xlsx. # Supports xlsx, CSV and txt formats
+    file_path: ./1.4301.xlsx  # Supports xlsx, CSV and txt formats
     dependency_column: T (K)
-    property_column: rho (kg/(m)^3)
+    property_column: rho (kg/m^3)
     bounds: [constant, extrapolate]
     regression:      # Optional regression configuration
       simplify: pre  # Simplify before processing
