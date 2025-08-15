@@ -36,9 +36,9 @@ material properties in numerical simulations.
 The library allows users to define complex material behaviors, ranging from simple constants to experimental data
 in user-friendly YAML configuration files.
 These are internally converted into symbolic mathematical expressions for direct use in scientific computing frameworks.
-MaterForge supports different material types,
-offers multiple property definition methods,
-and automatically resolves dependency order for derived properties, with cycle detection and explicit error messages.
+MaterForge supports different material types and
+offers multiple property definition methods.
+It automatically resolves dependency order for derived properties, detecting cycles and providing explicit error messages.
 It is designed for high-performance computing applications
 and serves as a seamless bridge between experimental data and numerical simulation,
 making sophisticated material modeling accessible to a broader scientific community.
@@ -52,7 +52,7 @@ from well-characterized models for established materials to sparse experimental 
 Consequently, property definitions can range from simple constants to complex tabular datasets or sophisticated equations,
 creating a significant integration hurdle for researchers.
 
-To manage this complexity, researchers often resort to manual interpolation, custom scripting, or proprietary software,
+To manage this complexity, researchers often resort to manual interpolation, custom scripting to handle different data formats, or proprietary software,
 which compromises reproducibility and standardization [@ashby2013materials].
 While valuable resources like the NIST WebBook [@nist_webbook] and libraries such as CoolProp [@coolprop] exist;
 they typically provide raw data without the integrated processing needed to unify these varied formats.
@@ -72,7 +72,7 @@ MaterForge standardizes and simplifies the integration of realistic material beh
   This versatility allows users to leverage data from diverse sources,
   with robust file processing handled using pandas [@pandas].
 
-![MaterForge's property definition methods with corresponding examples and plots.\label{fig:input_methods}](figures/input_methods.png)
+![MaterForge's six property definition methods with corresponding YAML examples and automatically generated validation plots, demonstrating the library's ability to handle diverse data sources from simple constants to complex experimental datasets.\label{fig:input_methods}](figures/input_methods.png)
 
 - **Universal Material Support**: The framework is designed with an extensible architecture to support any material type.
   It is currently implemented and thoroughly tested for pure metals and alloys through its unified interface,
@@ -147,14 +147,14 @@ composition:
   Mn: 0.010  # Manganese
 
 # Required temperature properties for alloys
-solidus_temperature: 1605.          # Melting begins (K)
-liquidus_temperature: 1735.         # Material is completely melted (K)
-initial_boiling_temperature: 3090.  # Boiling begins (K)
-final_boiling_temperature: 3200.    # Material is completely vaporized (K)
+solidus_temperature: 1605.0          # Melting begins (K)
+liquidus_temperature: 1735.0         # Material is completely melted (K)
+initial_boiling_temperature: 3090.0  # Boiling begins (K)
+final_boiling_temperature: 3200.0    # Material is completely vaporized (K)
 
 properties:
   density:
-    file_path: ./1.4301.xlsx
+    file_path: ./1.4301.xlsx. # Supports xlsx, CSV and txt
     dependency_column: T (K)
     property_column: rho (kg/(m)^3)
     bounds: [constant, extrapolate]
@@ -169,7 +169,7 @@ Complete YAML configurations for different materials are provided in the MaterFo
 The primary entry point is the create_material function, which parses the YAML file and returns a fully configured material object.
 ```python
     import sympy as sp
-    from MaterForge.parsing.api import create_material
+    from materforge.parsing.api import create_material
 
     # Create a material with a symbolic temperature variable
     T = sp.Symbol('T')
@@ -192,14 +192,14 @@ The primary entry point is the create_material function, which parses the YAML f
 | Feature                  | **MaterForge**  | **CoolProp** | **NIST WebBook** | **CALPHAD** |
 |:-------------------------|:----------------|:-------------|:-----------------|:------------|
 | **Core Capabilities**    |                 |              |                  |             |
-| Symbolic Integration     | Yes             | No           | No               | No          |
+| Symbolic Integration     | Yes             | No           | No               | Not typical |
 | Dependency Resolution    | Yes (automatic) | No           | No               | No          |
 | Multiple Input Methods   | Yes (6 types)   | No           | No               | No          |
 |                          |                 |              |                  |             |
 | **Material Support**     |                 |              |                  |             |
 | Solid Materials          | Yes             | Limited      | Yes              | Yes         |
 | Custom Properties        | Yes (any)       | No           | No               | Limited     |
-| Variable Dependencies    | Yes (any)       | Limited (T,P only) | No (fixed data) | Yes (T,P,composition) |
+| Variable Dependencies    | Yes (any)       | Limited (T,P) | No (fixed data) | Yes (T,P,composition) |
 |                          |                 |              |                  |             |
 | **Accessibility**        |                 |              |                  |             |
 | Open Source              | Yes             | Yes          | No               | No          |
