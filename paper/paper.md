@@ -160,7 +160,7 @@ properties:
     bounds: [constant, extrapolate]
     regression:      # Optional regression configuration
       simplify: pre  # Simplify before processing
-      degree: 2      # Use quadratic regression for simplification
+      degree: 1      # Use linear regression for simplification
       segments: 3    # Fit with 3 segments for piecewise linear approximation
 ```
 Complete YAML configurations for different materials are provided in the MaterForge [documentation](https://github.com/rahildoshi97/materforge/blob/master/docs/how-to/define_materials.md).
