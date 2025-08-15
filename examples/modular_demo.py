@@ -45,7 +45,7 @@ class TestConfig:
 
     # Test parameters
     single_test_temperature: float = 500.15  # Kelvin
-    batch_temperatures: List[float] = None
+    batch_temperatures: List[float] = None # type: ignore
     sweep_temp_range: Tuple[int, int, int] = (300, 3001, 100)  # start, stop, step
 
     def __post_init__(self):
