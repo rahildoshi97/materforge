@@ -211,7 +211,7 @@ not found in existing tools, enabling more reproducible and sophisticated scient
 MaterForge is applicable to a wide range of research areas, including alloy design and optimization [@callister2018materials],
 finite element analysis [@hughes2012finite], multiscale modeling [@tadmor2011modeling],
 computational fluid dynamics, and heat transfer.
-Its architecture promotes reproducible science and is well-suited for high-performance computing environments,
+Its architecture promotes reproducible science and is well-suited for HPC environments,
 with demonstrated integrations into frameworks like pystencils [@pystencils] and waLBerla [@walberla].
 
 # Availability
