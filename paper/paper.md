@@ -116,9 +116,6 @@ MaterForge standardizes and simplifies the integration of realistic material beh
   where temperature is computed via the inverse function of the enthalpy.
   While currently focused on single dependent variables like temperature,
   the underlying architecture is designed to be extensible toward multiple independent variables (e.g., pressure, shear rate) in the future.
-  // The inversion supports linear piecewise segments,
-  // either via default linear interpolation or explicit regression,
-  // ensuring robust mathematical invertibility.
 
 - **Built-in Validation Framework**: A comprehensive validation framework checks YAML configurations for correctness,
   including composition sums, required fields for pure metals versus alloys, and valid property names.
