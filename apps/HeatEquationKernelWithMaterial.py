@@ -26,19 +26,19 @@ with SourceFileGenerator() as sfg:
     thermal_diffusivity_field = ps.fields(f"thermal_diffusivity_field: {data_type}[2D]", layout='fzyx')
     dx, dt = sp.Symbol("dx"), sp.Symbol("dt")
 
-    heat_pde = ps.fd.transient(u) - thermal_diffusivity_symbol * (ps.fd.diff(u, 0, 0) + ps.fd.diff(u, 1, 1))
+    heat_pde = ps.fd.transient(u) - thermal_diffusivity_symbol * (ps.fd.diff(u, 0, 0) + ps.fd.diff(u, 1, 1)) # type: ignore
 
     discretize = ps.fd.Discretization2ndOrder(dx=dx, dt=dt)
     heat_pde_discretized = discretize(heat_pde)
-    heat_pde_discretized = heat_pde_discretized.args[1] + heat_pde_discretized.args[0].simplify()
+    heat_pde_discretized = heat_pde_discretized.args[1] + heat_pde_discretized.args[0].simplify() # type: ignore
 
     yaml_path = Path(__file__).parent / '1.4301_HeatEquationKernelWithMaterial.yaml'
     yaml_path_Al = Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
     yaml_path_SS304L = Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
 
-    mat = create_material(yaml_path=yaml_path, dependency=u.center(), enable_plotting=True)
-    mat_Al = create_material(yaml_path=yaml_path_Al, dependency=u.center(), enable_plotting=True)
-    mat_SS304L = create_material(yaml_path=yaml_path_SS304L, dependency=u.center(), enable_plotting=True)
+    mat = create_material(yaml_path=yaml_path, dependency=u.center(), enable_plotting=True) # type: ignore
+    mat_Al = create_material(yaml_path=yaml_path_Al, dependency=u.center(), enable_plotting=True) # type: ignore
+    mat_SS304L = create_material(yaml_path=yaml_path_SS304L, dependency=u.center(), enable_plotting=True) # type: ignore
 
     print(f"Energy density function: {mat.energy_density}")
     print(f"Type: {type(mat.energy_density)}")
@@ -90,9 +90,9 @@ with SourceFileGenerator() as sfg:
             for temp in test_temperatures:
                 try:
                     # Forward: T -> E
-                    energy_val = float(mat.energy_density.subs(u.center(), temp).evalf())
+                    energy_val = float(mat.energy_density.subs(u.center(), temp).evalf()) # type: ignore
                     # Backward: E -> T
-                    recovered_temp = float(inverse_energy_density.subs(E, energy_val))
+                    recovered_temp = float(inverse_energy_density.subs(E, energy_val)) # type: ignore
                     error = abs(temp - recovered_temp)
                     method1_errors.append(error)
 
@@ -132,7 +132,7 @@ with SourceFileGenerator() as sfg:
     if hasattr(mat, 'energy_density'):
         try:
             # Extract the temperature symbol from the energy density function
-            energy_symbols = mat.energy_density.free_symbols
+            energy_symbols = mat.energy_density.free_symbols # type: ignore
             if len(energy_symbols) != 1:
                 raise ValueError(f"Energy density function must have exactly one symbol, found: {energy_symbols}")
 
@@ -140,7 +140,7 @@ with SourceFileGenerator() as sfg:
             E_symbol = sp.Symbol('E')
 
             # Create inverter with custom tolerance
-            inverse_func = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol, E_symbol)
+            inverse_func = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol, E_symbol) # type: ignore
 
             print(f"✓ Method 2 inverse created successfully!")
             print(f"Temperature symbol used: {temp_symbol}")
@@ -155,9 +155,9 @@ with SourceFileGenerator() as sfg:
             for temp in test_temperatures:
                 try:
                     # Forward: T -> E
-                    energy_val = float(mat.energy_density.subs(temp_symbol, temp).evalf())
+                    energy_val = float(mat.energy_density.subs(temp_symbol, temp).evalf()) # type: ignore
                     # Backward: E -> T
-                    recovered_temp = float(inverse_func.subs(E_symbol, energy_val))
+                    recovered_temp = float(inverse_func.subs(E_symbol, energy_val)) # type: ignore
                     error = abs(temp - recovered_temp)
                     method2_errors.append(error)
 
@@ -207,12 +207,12 @@ with SourceFileGenerator() as sfg:
     print(f"Method 1 (Convenience function):")
     print(f"  Success rate: {method1_passed}/{len(test_temperatures)} ({100*method1_passed/len(test_temperatures):.1f}%)")
     if 'max_error_method1' in locals():
-        print(f"  Max error: {max_error_method1:.2e}")
+        print(f"  Max error: {max_error_method1:.2e}") # type: ignore
 
     print(f"\nMethod 2 (Direct PiecewiseInverter):")
     print(f"  Success rate: {method2_passed}/{len(test_temperatures)} ({100*method2_passed/len(test_temperatures):.1f}%)")
     if 'max_error_method2' in locals():
-        print(f"  Max error: {max_error_method2:.2e}")
+        print(f"  Max error: {max_error_method2:.2e}") # type: ignore
 
     # Determine which method performed better
     if method1_passed > method2_passed:
@@ -231,8 +231,8 @@ with SourceFileGenerator() as sfg:
     ac = ps.AssignmentCollection(
         subexpressions=subexp,
         main_assignments=[
-            ps.Assignment(u_tmp.center(), heat_pde_discretized),
-            ps.Assignment(thermal_diffusivity_field.center(), thermal_diffusivity_symbol)
+            ps.Assignment(u_tmp.center(), heat_pde_discretized), # type: ignore
+            ps.Assignment(thermal_diffusivity_field.center(), thermal_diffusivity_symbol) # type: ignore
         ])
 
     print(f"ac\n{ac}, type = {type(ac)}")
