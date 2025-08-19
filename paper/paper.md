@@ -24,7 +24,7 @@ affiliations:
     index: 2
   - name: Erlangen National High Performance Computing Center (NHR@FAU), Erlangen, Germany
     index: 3
-date: 19 August 2025
+date: 20 August 2025
 bibliography: paper.bib
 ---
 
@@ -89,7 +89,7 @@ MaterForge standardizes and simplifies the integration of realistic material beh
   The boundary behavior options work seamlessly with the regression capabilities to provide comprehensive data processing control
   (\autoref{fig:regression_options_with_boundary_behavior_new}).
 ```yaml
-    bounds: [constant, extrapolate]  # Defines behavior for [lower, upper] bounds
+    bounds: [constant, extrapolate] # Defines behavior for [lower, upper] bounds
 ```
 
 - **Regression and Data Reduction**: The library integrates pwlf [@pwlf] to perform piecewise regression for large datasets.
@@ -151,7 +151,7 @@ final_boiling_temperature: 3200.0    # Material is completely vaporized (K)
 
 properties:
   density:
-    file_path: ./1.4301.xlsx  # Supports xlsx, CSV and txt formats
+    file_path: ./1.4301.xlsx  # Supports .xlsx, .csv, and .txt formats
     dependency_column: T (K)
     property_column: rho (kg/m^3)
     bounds: [constant, extrapolate]
@@ -160,10 +160,10 @@ properties:
       degree: 1      # Use linear regression for simplification
       segments: 3    # Fit with 3 segments for piecewise linear approximation
 ```
-Complete YAML configurations for different materials are provided in the MaterForge [documentation](https://github.com/rahildoshi97/materforge/blob/master/docs/how-to/define_materials.md).
+Complete YAML configuration files for different materials are provided in the MaterForge [documentation](https://github.com/rahildoshi97/materforge/blob/master/docs/how-to/define_materials.md).
 
 ## Python Integration
-The primary entry point is the create_material function, which parses the YAML file and returns a fully configured material object.
+The primary entry point is the `create_material` function, which parses the YAML file and returns a fully configured material object.
 ```python
     import sympy as sp
     from materforge.parsing.api import create_material
@@ -204,12 +204,7 @@ The primary entry point is the create_material function, which parses the YAML f
 
 **Key Advantage**: MaterForge's unique combination of native symbolic mathematics via SymPy [@sympy],
 automatic dependency resolution, and multiple input methods provides a level of flexibility and integration
-not found in existing tools[^1].
-
-[^1]: While CALPHAD [@calphad] refers to a powerful thermodynamic modeling method, it is typically accessed via specialized, 
-often proprietary, software and databases. 
-MaterForge, in contrast, offers a fully open-source and natively integrated Python solution, 
-enabling more reproducible and sophisticated scientific simulations.
+not found in existing tools, enabling more reproducible and sophisticated scientific simulations.
 
 # Research Applications
 
