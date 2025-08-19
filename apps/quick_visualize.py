@@ -106,7 +106,7 @@ def test_inverse_with_working_material():
                     # Test evaluation
                     test_temp = 300.0
                     energy_val = float(mat.energy_density.subs(temp_symbol, test_temp))
-                    recovered_temp = float(inverse_func.subs(E_symbol, energy_val))
+                    recovered_temp = float(inverse_func.subs(E_symbol, energy_val)) # type: ignore
                     error = abs(test_temp - recovered_temp)
                     print(
                         f"✓ Round-trip test: T={test_temp} -> E={energy_val:.2e} -> T={recovered_temp:.1f}, Error={error:.2e}")
@@ -139,7 +139,7 @@ def test_heat_equation_workflow():
 
     if yaml_path.exists():
         try:
-            mat = create_material(yaml_path=yaml_path, dependency=u.center(), enable_plotting=False)
+            mat = create_material(yaml_path=yaml_path, dependency=u.center(), enable_plotting=True) # type: ignore
             print(f"✓ Created material: {mat.name}")
 
             if hasattr(mat, 'energy_density') and mat.energy_density is not None:

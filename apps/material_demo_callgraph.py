@@ -64,7 +64,7 @@ def create_robust_inverse_visualization():
         for yaml_path in yaml_paths:
             if yaml_path.exists():
                 try:
-                    mat = create_material(yaml_path=yaml_path, dependency=T, enable_plotting=False)
+                    mat = create_material(yaml_path=yaml_path, dependency=T, enable_plotting=True)
                     print(f"Created material: {mat.name}")
 
                     if hasattr(mat, 'energy_density'):
@@ -78,11 +78,11 @@ def create_robust_inverse_visualization():
 
                         # Method 2: Try direct approach (more likely to work)
                         try:
-                            energy_symbols = mat.energy_density.free_symbols
+                            energy_symbols = mat.energy_density.free_symbols # type: ignore
                             if len(energy_symbols) == 1:
                                 temp_symbol = list(energy_symbols)[0]
                                 E_symbol = sp.Symbol('E')
-                                inverse_func2 = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol,
+                                inverse_func2 = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol, # type: ignore
                                                                                  E_symbol)
                                 print(f"Method 2 succeeded for {mat.name}")
 
@@ -90,8 +90,8 @@ def create_robust_inverse_visualization():
                                 test_temps = [300, 500, 1000]
                                 for temp in test_temps:
                                     try:
-                                        energy_val = float(mat.energy_density.subs(temp_symbol, temp))
-                                        recovered_temp = float(inverse_func2.subs(E_symbol, energy_val))
+                                        energy_val = float(mat.energy_density.subs(temp_symbol, temp)) # type: ignore
+                                        recovered_temp = float(inverse_func2.subs(E_symbol, energy_val)) # type: ignore
                                         print(f"T={temp} -> E={energy_val:.2e} -> T={recovered_temp:.1f}")
                                     except:
                                         pass
@@ -152,17 +152,17 @@ def create_heat_equation_workflow_visualization():
 
         if yaml_path.exists():
             try:
-                mat = create_material(yaml_path=yaml_path, dependency=u.center(), enable_plotting=False)
+                mat = create_material(yaml_path=yaml_path, dependency=u.center(), enable_plotting=True) # type: ignore
                 print(f"Created material for heat equation: {mat.name}")
 
                 # Test inverse function creation (Method 2)
                 if hasattr(mat, 'energy_density'):
                     try:
-                        energy_symbols = mat.energy_density.free_symbols
+                        energy_symbols = mat.energy_density.free_symbols # type: ignore
                         if len(energy_symbols) == 1:
                             temp_symbol = list(energy_symbols)[0]
                             E_symbol = sp.Symbol('E')
-                            inverse_func = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol, E_symbol)
+                            inverse_func = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol, E_symbol) # type: ignore
                             print("Inverse function created for heat equation")
                     except Exception as e:
                         print(f"Inverse creation failed: {e}")

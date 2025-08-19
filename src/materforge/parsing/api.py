@@ -41,7 +41,7 @@ def create_material(yaml_path: Union[str, Path], dependency: sp.Symbol,
     ----------
     yaml_path : Union[str, Path]
         Path to the YAML configuration file
-    dependency : Union[float, sp.Symbol]
+    dependency : sp.Symbol
         Sympy symbol for property evaluation. Use a symbolic variable
         (e.g., sp.Symbol('T') or sp.Symbol('u_C')) for symbolic temperature expressions
     enable_plotting : bool, optional

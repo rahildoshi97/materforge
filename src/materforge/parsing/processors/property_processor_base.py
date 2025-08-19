@@ -35,7 +35,7 @@ class PropertyProcessorBase:
     def __init__(self):
         """Initialize the base processor with empty state."""
         self.processed_properties = set()
-        self.base_dir: Path = None
+        self.base_dir: Path = None # type: ignore
         self.visualizer = None
         logger.debug("PropertyProcessorBase initialized")
 

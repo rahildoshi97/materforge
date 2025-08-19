@@ -164,4 +164,9 @@ int main(int argc, char** argv)
 }
 }
 
-int main(int argc, char** argv) { walberla::main(argc, argv); }
+int main(int argc, char** argv) { 
+   std::cout << "Running Heat Equation with Material Codegen Example" << std::endl;
+   walberla::main(argc, argv); 
+   std::cout << "Finished Heat Equation with Material Codegen Example" << std::endl;
+   return 0;
+}
