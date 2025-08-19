@@ -217,7 +217,7 @@ with demonstrated integrations into frameworks like pystencils [@pystencils] and
 # Availability
 
 MaterForge is an open-source software distributed under the [BSD-3-Clause License](https://github.com/rahildoshi97/materforge/blob/master/LICENSE). 
-The source code, comprehensive documentation, and example configurations are available at https://github.com/rahildoshi97/materforge. 
+The source code, comprehensive documentation, and example configurations are available at [https://github.com/rahildoshi97/materforge](https://github.com/rahildoshi97/materforge). 
 The software can be installed via [PyPI](https://pypi.org/project/materforge/) using `pip install materforge`.
 
 # Acknowledgements
