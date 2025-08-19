@@ -1,6 +1,5 @@
 ---
 title: 'MaterForge: Materials Formulation Engine with Python'
-# MaterForge: A Python Engine for Materials Property Formulation
 tags:
   - Python
   - materials science
@@ -25,7 +24,7 @@ affiliations:
     index: 2
   - name: Erlangen National High Performance Computing Center (NHR@FAU), Erlangen, Germany
     index: 3
-date: 15 August 2025
+date: 19 August 2025
 bibliography: paper.bib
 ---
 
@@ -39,8 +38,8 @@ These are internally converted into symbolic mathematical expressions for direct
 MaterForge supports different material types and
 offers multiple property definition methods.
 It automatically resolves dependency order for derived properties, detecting cycles and providing explicit error messages.
-It is designed for high-performance computing applications
-and serves as a seamless bridge between experimental data and numerical simulation,
+It is designed for high-performance computing (HPC) applications
+and serves as a streamlined bridge between experimental data and numerical simulation,
 making sophisticated material modeling accessible to a broader scientific community.
 
 # Statement of Need
@@ -54,12 +53,12 @@ creating a significant integration hurdle for researchers.
 
 To manage this complexity, researchers often resort to manual interpolation, custom scripting to handle different data formats, or proprietary software,
 which compromises reproducibility and standardization [@ashby2013materials].
-While valuable resources like the NIST WebBook [@nist_webbook] and libraries such as CoolProp [@coolprop] exist;
+While valuable resources like the NIST WebBook [@nist_webbook] and libraries such as CoolProp [@coolprop] exist,
 they primarily provide raw data without the integrated processing needed to unify these varied formats.
 Similarly, specialized CALPHAD databases [@calphad] are powerful but often require proprietary software
 and do not easily integrate with general-purpose simulation codes.
 
-This gap forces the development of ad hoc solutions, hindering workflow efficiency and the adoption of FAIR data principles [@wilkinson2016fair].
+This gap often leads to the development of ad hoc solutions, hindering workflow efficiency and the adoption of FAIR data principles [@wilkinson2016fair].
 MaterForge was created to bridge this gap by providing a unified, open-source framework that leverages
 symbolic mathematics, automatic regression, and dependency resolution to handle these disparate data sources.
 By combining a user-friendly YAML configuration with powerful backend processing,
@@ -68,7 +67,8 @@ MaterForge standardizes and simplifies the integration of realistic material beh
 # Key Functionality
 
 - **Flexible Input Methods**: The library supports various property definition methods such as
-  constant values, step functions, file-based data (xlsx, CSV, txt), tabular data, piecewise equations, and computed properties (\autoref{fig:input_methods_new}).
+  constant values, step functions, file-based data (.xlsx, .csv, .txt), tabular data, piecewise equations, and computed properties 
+  (\autoref{fig:input_methods_new}).
   This versatility allows users to leverage data from diverse sources,
   with robust file processing handled using pandas [@pandas].
 
@@ -89,7 +89,7 @@ MaterForge standardizes and simplifies the integration of realistic material beh
   The boundary behavior options work seamlessly with the regression capabilities to provide comprehensive data processing control
   (\autoref{fig:regression_options_with_boundary_behavior_new}).
 ```yaml
-    bounds: [constant, extrapolate]  # 'constant' or 'extrapolate'
+    bounds: [constant, extrapolate]  # Defines behavior for [lower, upper] bounds
 ```
 
 - **Regression and Data Reduction**: The library integrates pwlf [@pwlf] to perform piecewise regression for large datasets.
@@ -110,15 +110,15 @@ MaterForge standardizes and simplifies the integration of realistic material beh
   With `simplify: post`, simplification is deferred until all dependent properties have been computed, maximizing numerical accuracy.
   This timing control allows users to balance computational efficiency with numerical accuracy based on their specific simulation requirements.
 
-- **Inverse Property Computation**: The library can generate inverse piecewise functions,
+- **Inverse Property Computation**: The library can generate inverse piecewise-linear functions,
   enabling the determination of independent variables from known property values.
   This capability is essential for energy-based numerical methods and iterative solvers [@voller1987fixed],
   where temperature is computed via the inverse function of the enthalpy.
   While currently focused on single dependent variables like temperature,
   the underlying architecture is designed to be extensible toward multiple independent variables (e.g., pressure, shear rate) in the future.
-  The inversion supports linear piecewise segments,
-  either via default linear interpolation or explicit regression,
-  ensuring robust mathematical invertibility.
+  // The inversion supports linear piecewise segments,
+  // either via default linear interpolation or explicit regression,
+  // ensuring robust mathematical invertibility.
 
 - **Built-in Validation Framework**: A comprehensive validation framework checks YAML configurations for correctness,
   including composition sums, required fields for pure metals versus alloys, and valid property names.
@@ -189,25 +189,30 @@ The primary entry point is the create_material function, which parses the YAML f
 
 # Comparison with Existing Tools
 
-| Feature                  | **MaterForge**  | **CoolProp** | **NIST WebBook** | **CALPHAD** |
-|:-------------------------|:----------------|:-------------|:-----------------|:------------|
-| **Core Capabilities**    |                 |              |                  |             |
-| Symbolic Integration     | Yes             | No           | No               | Not typical |
-| Dependency Resolution    | Yes (automatic) | No           | No               | No          |
-| Multiple Input Methods   | Yes (6 types)   | No           | No               | No          |
-|                          |                 |              |                  |             |
-| **Material Support**     |                 |              |                  |             |
-| Solid Materials          | Yes             | Limited      | Yes              | Yes         |
-| Custom Properties        | Yes (any)       | No           | No               | Limited     |
+| Feature                  | **MaterForge**  | **CoolProp** | **NIST WebBook** | **CALPHAD Tools[^1]** |
+|:-------------------------|:----------------|:-------------|:-----------------|:----------------------|
+| **Core Capabilities**    |                 |              |                  |                       |
+| Symbolic Integration     | Yes             | No           | No               | Not typical           |
+| Dependency Resolution    | Yes (automatic) | No           | No               | No                    |
+| Multiple Input Methods   | Yes (6 types)   | No           | No               | No                    |
+|                          |                 |              |                  |                       |
+| **Material Support**     |                 |              |                  |                       |
+| Solid Materials          | Yes             | Limited      | Yes              | Yes                   |
+| Custom Properties        | Yes (any)       | No           | No               | Limited               |
 | Variable Dependencies    | Yes (any)       | Limited (T, P) | No (fixed data) | Yes (T, P, composition) |
-|                          |                 |              |                  |             |
-| **Accessibility**        |                 |              |                  |             |
-| Open Source              | Yes             | Yes          | No               | No          |
-| Python Integration       | Native          | Yes          | API only         | No          |
+|                          |                 |              |                  |                       |
+| **Accessibility**        |                 |              |                  |                       |
+| Open Source              | Yes             | Yes          | No               | No                    |
+| Python Integration       | Native          | Yes          | API only         | No                    |
 
 **Key Advantage**: MaterForge's unique combination of native symbolic mathematics via SymPy [@sympy],
 automatic dependency resolution, and multiple input methods provides a level of flexibility and integration
-not found in existing tools, enabling more reproducible and sophisticated scientific simulations.
+not found in existing tools.
+
+[^1]: While CALPHAD [@calphad] refers to a powerful thermodynamic modeling method, it is typically accessed via specialized, 
+often proprietary, software and databases. 
+MaterForge, in contrast, offers a fully open-source and natively integrated Python solution, 
+enabling more reproducible and sophisticated scientific simulations.
 
 # Research Applications
 
