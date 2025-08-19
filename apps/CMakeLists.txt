@@ -20,12 +20,12 @@ SET ( WALBERLA_BUILD_WITH_MPI OFF CACHE BOOL "" )
 
 
 add_subdirectory(walberla)
-add_subdirectory(sfg-walberla)
+# add_subdirectory(sfg-walberla)
 
-walberla_codegen_venv_require(
+sweepgen_venv_require(
         -e ${CMAKE_SOURCE_DIR}/..
 )
-walberla_codegen_venv_populate()
+sweepgen_venv_populate()
 
 add_executable ( HeatEquationWithMaterial )
 target_sources( HeatEquationWithMaterial PRIVATE CodegenHeatEquationWithMaterial.cpp )

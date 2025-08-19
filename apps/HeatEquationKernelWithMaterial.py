@@ -3,7 +3,7 @@ import sympy as sp
 import pystencils as ps
 from pathlib import Path
 from pystencilssfg import SourceFileGenerator
-from walberla.codegen import Sweep
+from sweepgen import Sweep
 
 from materforge.parsing.api import create_material
 from materforge.algorithms.piecewise_inverter import PiecewiseInverter
