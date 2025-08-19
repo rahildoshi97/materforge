@@ -1,8 +1,9 @@
 include LICENSE
 include README.md
 include AUTHORS.txt
+include CHANGELOG.md
+include CITATION.cff
 include pyproject.toml
-include requirements.txt
 
 # Include all source code and data files
 graft src
@@ -13,8 +14,15 @@ graft docs
 # Exclude applications directory - not part of the library
 prune apps
 
+# Exclude examples directory - not part of the library  
+prune examples
+
 # Exclude tests directory - not needed in distribution
 prune tests
+
+# Exclude specific files
+exclude sync-repos.sh
+exclude update-docs.sh
 
 # Global exclusions - bytecode and cache files
 global-exclude *.py[co]
@@ -36,3 +44,11 @@ global-exclude .idea
 global-exclude *.swp
 global-exclude *.swo
 global-exclude *~
+
+# Exclude virtual environment directory
+prune venv
+prune env
+prune .venv
+
+# Exclude output directories
+prune vtk*

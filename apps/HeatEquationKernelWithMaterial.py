@@ -30,7 +30,7 @@ with SourceFileGenerator() as sfg:
 
     discretize = ps.fd.Discretization2ndOrder(dx=s_dx, dt=s_dt)
     heat_pde_discretized = discretize(heat_pde)
-    heat_pde_discretized = heat_pde_discretized.args[1] + heat_pde_discretized.args[0].simplify()
+    heat_pde_discretized = heat_pde_discretized.args[1] + heat_pde_discretized.args[0].simplify() # type: ignore
 
     yaml_path = Path(__file__).parent / '1.4301_HeatEquationKernelWithMaterialBM.yaml'
     yaml_path_Al = Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
