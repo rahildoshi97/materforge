@@ -160,7 +160,7 @@ properties:
       degree: 1
       segments: 3
 ```
-Complete YAML configuration files for different materials are provided in the MaterForge [documentation](https://github.com/rahildoshi97/materforge/blob/master/docs/how-to/define_materials.md).
+Complete YAML configuration files for different materials are provided in the [documentation](https://github.com/rahildoshi97/materforge/blob/master/docs/how-to/define_materials.md).
 
 ## Python Integration
 The primary entry point is the `create_material` function, which parses the YAML file and returns a fully configured material object.
