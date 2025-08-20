@@ -48,7 +48,7 @@ class PropertyProcessor(PropertyProcessorBase):
         self.base_dir: Optional[Path] = None
         logger.debug("PropertyProcessor initialized with %d handlers", len(self.handlers))
 
-    def process_properties(self, material: Material, dependency: Union[float, sp.Symbol],
+    def process_properties(self, material: Material, dependency: sp.Symbol,
                            properties: Dict[str, Any],
                            categorized_properties: Dict[PropertyType, List[Tuple[str, Any]]],
                            base_dir: Path, visualizer) -> None:
@@ -69,7 +69,7 @@ class PropertyProcessor(PropertyProcessorBase):
             logger.error("Property processing failed for material '%s': %s", material.name, e, exc_info=True)
             raise ValueError(f"Failed to process properties \n -> {str(e)}") from e
 
-    def _initialize_processing_context(self, material: Material, dependency: Union[float, sp.Symbol],
+    def _initialize_processing_context(self, material: Material, dependency: sp.Symbol,
                                        properties: Dict[str, Any],
                                        categorized_properties: Dict[PropertyType, List[Tuple[str, Any]]],
                                        base_dir: Path, visualizer) -> None:
@@ -90,7 +90,7 @@ class PropertyProcessor(PropertyProcessorBase):
             computed_handler.set_computed_property_processor(properties)
             logger.debug("Dependency processor initialized for computed properties")
 
-    def _process_by_category(self, material: Material, dependency: Union[float, sp.Symbol]) -> None:
+    def _process_by_category(self, material: Material, dependency: sp.Symbol) -> None:
         """Process properties grouped by category."""
         total_properties = sum(len(prop_list) for prop_list in self.categorized_properties.values())
         active_categories = len([cat for cat, props in self.categorized_properties.items() if props])

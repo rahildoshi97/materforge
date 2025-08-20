@@ -101,7 +101,7 @@ class MaterialYAMLParser(YAMLFileParser):
                     len(self.categorized_properties))
 
     # --- Public API ---
-    def create_material(self, dependency: Union[float, sp.Symbol], enable_plotting: bool = True) -> Material:
+    def create_material(self, dependency: sp.Symbol, enable_plotting: bool = True) -> Material:
         """Create a Material instance from the parsed configuration and temperature."""
         logger.info("Creating material from configuration: %s", self.config_path)
         try:
