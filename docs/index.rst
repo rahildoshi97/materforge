@@ -23,8 +23,6 @@ Or install from source:
 Quick Start
 ===========
 
-Here's a simple example to get you started:
-
 .. code-block:: python
 
    import sympy as sp
