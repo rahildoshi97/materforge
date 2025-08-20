@@ -82,7 +82,7 @@ MaterForge standardizes and simplifies the integration of realistic material beh
   (e.g., thermal diffusivity calculated from thermal conductivity, density, and heat capacity),
   MaterForge automatically determines the correct processing order and resolves mathematical dependencies.
   The library detects circular dependencies and provides clear error messages for invalid configurations,
-  // freeing users from complex dependency management.
+  freeing users from complex dependency management.
 
 - **Configurable Boundary Behavior**: Users can define how properties behave outside their specified ranges,
   choosing between constant-value or extrapolation to best match the physical behavior of the material.
@@ -108,7 +108,7 @@ MaterForge standardizes and simplifies the integration of realistic material beh
   in the dependency chain via the `simplify` parameter.
   `simplify: pre` optimizes performance by simplifying properties before they are used in dependent calculations,
   while `simplify: post` defers simplification until all dependent properties have been computed, maximizing numerical accuracy.
-  This timing control allows users to balance computational efficiency with numerical accuracy based on their specific simulation requirements.
+  This allows users to balance computational efficiency with numerical accuracy based on their specific simulation requirements.
 
 - **Inverse Property Computation**: The library can generate inverse piecewise-linear functions,
   enabling the determination of independent variables from known property values.
