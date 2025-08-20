@@ -114,16 +114,23 @@ int main(int argc, char** argv) {
 
     // Calculate domain decomposition
     uint_t procs_x = 1, procs_y = 1, procs_z = 1;
-    if (numProcesses == 8) {
+    if (numProcesses == 1) {
+        procs_x = 1; procs_y = 1; procs_z = 1;
+    } else if (numProcesses == 2) {
+        procs_x = 2; procs_y = 1; procs_z = 1;
+    } else if (numProcesses == 4) {
+        procs_x = 2; procs_y = 2; procs_z = 1;
+    } else if (numProcesses == 8) {
         procs_x = 2; procs_y = 2; procs_z = 2;
-    } else if (numProcesses == 64) {
-        procs_x = 4; procs_y = 4; procs_z = 4;
     } else if (numProcesses == 16) {
         procs_x = 2; procs_y = 2; procs_z = 4;
     } else if (numProcesses == 32) {
         procs_x = 2; procs_y = 4; procs_z = 4;
+    } else if (numProcesses == 64) {
+        procs_x = 4; procs_y = 4; procs_z = 4;
+    } else {
+        WALBERLA_ABORT("Unsupported number of processes: " << numProcesses);
     }
-    // Add more decompositions as needed
 
     uint_t xCells, yCells, zCells;
     real_t xSize, ySize, zSize;
@@ -134,12 +141,12 @@ int main(int argc, char** argv) {
         yCells = baseCells;
         zCells = baseCells;
         // Domain size scales with process count
-        xSize = real_c(procs_x * 1.0);
+        xSize = real_c(procs_x * 1.0);  // or gpus_x for GPU
         ySize = real_c(procs_y * 1.0);
         zSize = real_c(procs_z * 1.0);
     } else {
         // Strong scaling: fixed total domain size
-        const uint_t totalSize = baseCells * 4;  // e.g., 1024 for base 256
+        const uint_t totalSize = baseCells;
         xCells = totalSize / procs_x;
         yCells = totalSize / procs_y;
         zCells = totalSize / procs_z;
@@ -165,7 +172,7 @@ int main(int argc, char** argv) {
     const real_t dx = xSize / real_c(xBlocks * xCells + uint_c(1));
     const real_t dt = real_c(1);
     const uint_t timeSteps = uint_c(2e4);
-    const uint_t vtkWriteFrequency = uint_c(0);
+    const uint_t vtkWriteFrequency = uint_c(400);
 
     // Block storage setup
     auto aabb = math::AABB(real_c(0.5) * dx, real_c(0.5) * dx, real_c(0.5) * dx,
@@ -193,7 +200,12 @@ int main(int argc, char** argv) {
                    << AfterFunction([blocks, uFieldId, uTmpFieldId]() {swapFields(*blocks, uFieldId, uTmpFieldId);}, "Swap");
 
     if (vtkWriteFrequency > 0) {
-        auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, "vtkCPU", vtkWriteFrequency, 0, false, "vtk_out_cpu",
+        std::string scalingType = weakScaling ? "weak" : "strong";
+        std::string vtkFilename = "vtk_CPU_" + scalingType + "_" + std::to_string(baseCells) + 
+                                "cells_" + std::to_string(numProcesses) + "proc(s)";
+        std::string vtkDirectory = "vtk_out_cpu_" + scalingType + "_" + std::to_string(baseCells) + 
+                                "cells_" + std::to_string(numProcesses) + "proc(s)";
+        auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, vtkFilename, vtkWriteFrequency, 0, false, vtkDirectory,
                                                        "simulation_step", false, true, true, false, 0);
         auto tempWriter = make_shared<field::VTKWriter<ScalarField>>(uFieldId, "temperature");
         vtkOutput->addCellDataWriter(tempWriter);
@@ -211,7 +223,7 @@ int main(int argc, char** argv) {
     WcTimer simTimer;
 
     WALBERLA_MPI_WORLD_BARRIER()
-    WALBERLA_LOG_INFO_ON_ROOT("Starting simulation with " << timeSteps << " time steps")
+    WALBERLA_LOG_INFO_ON_ROOT("Starting CPU simulation with " << timeSteps << " time steps")
 
     simTimer.start();
     timeloop.run(timeloopTiming);

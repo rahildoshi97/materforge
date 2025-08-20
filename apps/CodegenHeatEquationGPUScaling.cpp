@@ -124,31 +124,39 @@ int main(int argc, char** argv) {
 
     // Calculate domain decomposition for GPUs
     uint_t gpus_x = 1, gpus_y = 1, gpus_z = 1;
-    if (numGPUs == 8) {
+    if (numGPUs == 1) {
+        gpus_x = 1; gpus_y = 1; gpus_z = 1;
+    } else if (numGPUs == 2) {
+        gpus_x = 2; gpus_y = 1; gpus_z = 1;
+    } else if (numGPUs == 4) {
+        gpus_x = 2; gpus_y = 2; gpus_z = 1;
+    } else if (numGPUs == 8) {
         gpus_x = 2; gpus_y = 2; gpus_z = 2;
-    } else if (numGPUs == 64) {
-        gpus_x = 4; gpus_y = 4; gpus_z = 4;
     } else if (numGPUs == 16) {
         gpus_x = 2; gpus_y = 2; gpus_z = 4;
     } else if (numGPUs == 32) {
         gpus_x = 2; gpus_y = 4; gpus_z = 4;
+    } else if (numGPUs == 64) {
+        gpus_x = 4; gpus_y = 4; gpus_z = 4;
+    } else {
+        WALBERLA_ABORT("Unsupported number of GPUs: " << numGPUs);
     }
 
     uint_t xCells, yCells, zCells;
     real_t xSize, ySize, zSize;
 
     if (weakScaling) {
-        // Weak scaling: constant cells per GPU
+        // Weak scaling: constant cells per GPU/process
         xCells = baseCells;
         yCells = baseCells;
         zCells = baseCells;
-        // Domain size scales with GPU count
-        xSize = real_c(gpus_x * 1.0);
+        // Domain size scales with GPU/processes count
+        xSize = real_c(gpus_x * 1.0);  // or procs_x for CPU
         ySize = real_c(gpus_y * 1.0);
         zSize = real_c(gpus_z * 1.0);
     } else {
         // Strong scaling: fixed total domain size
-        const uint_t totalSize = baseCells * 4;  // e.g., 1024 for base 256
+        const uint_t totalSize = baseCells;
         xCells = totalSize / gpus_x;
         yCells = totalSize / gpus_y;
         zCells = totalSize / gpus_z;
@@ -174,7 +182,7 @@ int main(int argc, char** argv) {
     const real_t dx = xSize / real_c(xBlocks * xCells + uint_c(1));
     const real_t dt = real_c(1);
     const uint_t timeSteps = uint_c(2e4);
-    const uint_t vtkWriteFrequency = uint_c(0);
+    const uint_t vtkWriteFrequency = uint_c(400);
 
     // Block storage setup
     auto aabb = math::AABB(real_c(0.5) * dx, real_c(0.5) * dx, real_c(0.5) * dx,
@@ -205,12 +213,18 @@ int main(int argc, char** argv) {
 
     // GPU Timeloop
     SweepTimeloop timeloop(blocks, timeSteps);
-    timeloop.add() << BeforeFunction([&]() {commScheme.getCommunicateFunctor();}, "GPU Communication")
+    //<< BeforeFunction([&]() {commScheme.getCommunicateFunctor();}, "GPU Communication")
+    timeloop.add() << BeforeFunction(commScheme.getCommunicateFunctor(), "GPU Communication")
                    << Sweep(HeatEquationKernelWithMaterialGPU(alphaFieldId, uFieldId, uTmpFieldId, dt, dx), "HeatSolverGPU")
                    << AfterFunction([&]() {swapFields(*blocks, uFieldId, uTmpFieldId);}, "GPU Swap");
 
     if (vtkWriteFrequency > 0) {
-        auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, "vtkGPU", vtkWriteFrequency, 0, false, "vtk_out_gpu",
+        std::string scalingType = weakScaling ? "weak" : "strong";
+        std::string vtkFilename = "vtk_GPU_" + scalingType + "_" + std::to_string(baseCells) + 
+                                "cells_" + std::to_string(numGPUs) + "gpu(s)";
+        std::string vtkDirectory = "vtk_out_gpu_" + scalingType + "_" + std::to_string(baseCells) + 
+                                "cells_" + std::to_string(numGPUs) + "gpu(s)";
+        auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, vtkFilename, vtkWriteFrequency, 0, false, vtkDirectory,
                                                        "simulation_step", false, true, true, false, 0);
         auto tempWriter = make_shared<field::VTKWriter<ScalarField>>(uFieldCpuId, "temperature");
         vtkOutput->addCellDataWriter(tempWriter);
