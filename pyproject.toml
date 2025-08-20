@@ -116,4 +116,4 @@ materforge = [
 write_to = "src/materforge/_version.py"
 version_scheme = "python-simplified-semver"
 local_scheme = "node-and-date"
-fallback_version = "0.5.9"
+fallback_version = "0.6.0"
