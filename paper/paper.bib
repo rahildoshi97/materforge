@@ -82,14 +82,6 @@
     url = {https://github.com/cjekel/piecewise_linear_fit_py}
 }
 
-@misc{ruamel-yaml,
-    title = {ruamel.yaml: YAML 1.2 loader/dumper package for Python},
-    author = {van der Wel, Anthon},
-    year = {2023},
-    url = {https://yaml.readthedocs.io/},
-    note = {Python package for YAML processing}
-}
-
 @article{coolprop,
     author = {Bell, Ian H. and Wronski, Jorrit and Quoilin, Sylvain and Lemort, Vincent},
     title = {Pure and Pseudo-pure Fluid Thermophysical Property Evaluation and
@@ -104,12 +96,18 @@
     eprint = {http://pubs.acs.org/doi/pdf/10.1021/ie4033999}
 }
 
-@misc{nist_webbook,
-    title = {NIST Chemistry WebBook},
-    author = {{National Institute of Standards and Technology}},
-    year = 2023,
-    url = {https://webbook.nist.gov/chemistry/},
-    note = {Accessed: 2025-07-15}
+@article{nist_webbook,
+    author = {Linstrom, Peter J. and Mallard, William G.},
+    title = {The NIST Chemistry WebBook:  A Chemical Data Resource on the Internet},
+    journal = {Journal of Chemical \& Engineering Data},
+    volume = {46},
+    number = {5},
+    pages = {1059-1063},
+    year = {2001},
+    doi = {10.1021/je000236i},
+    URL = {https://doi.org/10.1021/je000236i},
+    eprint = {https://doi.org/10.1021/je000236i},
+    abstract = { The NIST Chemistry WebBook (http://webbook.nist.gov) is an Internet site that provides access to chemical and physical property data both from NIST and other sources. The site was established in 1996 and has grown to encompass a wide variety of thermochemical, ion energetics, solubility, and spectroscopic data. The thermochemical data available include enthalpies of formation, enthalpies of phase transitions, and heat capacities. Thermochemical properties of many reactions that support enthalpy of formation values are provided. Automated tools are used to check data prior to its inclusion in the web site. Most of the collections in the site provide extensive coverage of the literature in their field and include relevant metadata such as the experiment type or important auxiliary data. These features make the site an excellent tool for data evaluation. A major goal of the project was to provide convenient access to all types of chemical data. Several challenges were encountered in the development of systems and conventions for concisely and accurately displaying chemical data on the Internet. The next phase of the evolution of the site will be the addition of tools to aid researchers in getting data from the site. Data from the site have found applications in industrial, research, and educational settings. Usage patterns for the site will be discussed. }
 }
 
 @InProceedings{ pandas,
@@ -130,22 +128,31 @@
     isbn = {978-0471943617}
 }
 
-@book{zienkiewicz2013finite,
+@incollection{zienkiewicz2013finite,
     title = {The Finite Element Method: Its Basis and Fundamentals},
-    author = {Zienkiewicz, Olek C. and Taylor, Robert L. and Zhu, Jian Z.},
-    edition = {7th},
-    year = 2013,
+    editor = {O.C. Zienkiewicz and R.L. Taylor and J.Z. Zhu},
+    booktitle = {The Finite Element Method: its Basis and Fundamentals (Seventh Edition)},
     publisher = {Butterworth-Heinemann},
-    isbn = {978-1856176330}
+    edition = {Seventh Edition},
+    address = {Oxford},
+    pages = {i},
+    year = {2013},
+    isbn = {978-1-85617-633-0},
+    doi = {https://doi.org/10.1016/B978-1-85617-633-0.00019-8},
+    url = {https://www.sciencedirect.com/science/article/pii/B9781856176330000198}
 }
 
-@book{ashby2013materials,
-    title = {Materials and Design: The Art and Science of Material Selection in Product Design},
-    author = {Ashby, Michael F.},
-    edition = {3rd},
-    year = 2013,
+@incollection{ashby2013materials,
+    title = {Materials and Design},
+    editor = {Michael Ashby and Kara Johnson},
+    booktitle = {Materials and Design (Third Edition)},
     publisher = {Butterworth-Heinemann},
-    isbn = {978-0080982052}
+    edition = {Third Edition},
+    pages = {i},
+    year = {2014},
+    isbn = {978-0-08-098205-2},
+    doi = {https://doi.org/10.1016/B978-0-08-098205-2.00011-1},
+    url = {https://www.sciencedirect.com/science/article/pii/B9780080982052000111}
 }
 
 @book{calphad,
@@ -173,15 +180,6 @@
     year = 1998,
     publisher = {Hermosa Publishers},
     isbn = {978-0913478080}
-}
-
-@book{callister2018materials,
-    title = {Materials Science and Engineering: An Introduction},
-    author = {Callister, William D. and Rethwisch, David G.},
-    edition = {10th},
-    year = 2018,
-    publisher = {John Wiley \& Sons},
-    isbn = {978-1119405498}
 }
 
 @book{hughes2012finite,
