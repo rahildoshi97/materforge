@@ -137,11 +137,11 @@ material_type: alloy
 
 # Composition fractions must sum to 1.0
 composition:
-  Fe: 0.675  # Iron
-  Cr: 0.170  # Chromium
-  Ni: 0.120  # Nickel
-  Mo: 0.025  # Molybdenum
-  Mn: 0.010  # Manganese
+  Fe: 0.675
+  Cr: 0.170
+  Ni: 0.120
+  Mo: 0.025
+  Mn: 0.010
 
 # Required temperature properties for alloys
 solidus_temperature: 1605.0          # Melting begins (K)
