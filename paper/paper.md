@@ -158,7 +158,7 @@ properties:
       degree: 1
       segments: 3
 ```
-Complete YAML configuration files for different materials are provided in the [documentation](https://github.com/rahildoshi97/materforge/blob/master/docs/how-to/define_materials.md).
+Complete YAML configurations for different materials are provided in the [documentation](https://github.com/rahildoshi97/materforge/blob/master/docs/how-to/define_materials.md).
 
 ## Python Integration
 The primary entry point is the `create_material` function, which parses the YAML file and returns a fully configured material object.
@@ -166,7 +166,7 @@ The primary entry point is the `create_material` function, which parses the YAML
     import sympy as sp
     from materforge.parsing.api import create_material
 
-    # Create a material with a symbolic temperature variable
+    # Create a material from a YAML file
     T = sp.Symbol('T')
     steel = create_material('steel.yaml', T, enable_plotting=True)
 
