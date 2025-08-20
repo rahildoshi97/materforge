@@ -19,11 +19,13 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Physics",
     "Topic :: Scientific/Engineering"
 ]
@@ -93,13 +95,14 @@ materforge-validate = "materforge.parsing.api:validate_yaml_file"
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["materforge*"]
-exclude = ["tests*", "apps*", "examples*"]
+exclude = ["tests*", "apps*", "examples*", "*materforge_plots*"]
 
 [tool.setuptools.package-data]
 materforge = [
     "data/**/*",
     "data/alloys/**/*",
     "data/pure_metals/**/*",
+    "!**/materforge_plots/**",
     "*.yaml",
     "*.yml",
     "*.json",
@@ -113,4 +116,4 @@ materforge = [
 write_to = "src/materforge/_version.py"
 version_scheme = "python-simplified-semver"
 local_scheme = "node-and-date"
-fallback_version = "0.5.8"
+fallback_version = "0.6.0"
