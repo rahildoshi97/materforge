@@ -151,14 +151,14 @@ final_boiling_temperature: 3200.0    # Material is completely vaporized (K)
 
 properties:
   density:
-    file_path: ./1.4301.xlsx  # Supports .xlsx, .csv, and .txt formats
+    file_path: ./1.4301.xlsx
     dependency_column: T (K)
     property_column: rho (kg/m^3)
     bounds: [constant, extrapolate]
-    regression:      # Optional regression configuration
-      simplify: pre  # Simplify before processing
-      degree: 1      # Use linear regression for simplification
-      segments: 3    # Fit with 3 segments for piecewise linear approximation
+    regression:
+      simplify: pre
+      degree: 1
+      segments: 3
 ```
 Complete YAML configuration files for different materials are provided in the MaterForge [documentation](https://github.com/rahildoshi97/materforge/blob/master/docs/how-to/define_materials.md).
 
