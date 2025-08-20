@@ -162,11 +162,11 @@ int main(int argc, char** argv)
     const uint_t zCells = uint_c(x);
     // Physical domain size in X,Y,Z
     const real_t xSize = real_c(1.0);
-    const real_t ySize = real_c(2.0);  // 2
+    const real_t ySize = real_c(1.0);  // 2
     const real_t zSize = real_c(1.0);
     // Number of blocks in X,Y,Z direction
     const uint_t xBlocks = uint_c(1);
-    const uint_t yBlocks = uint_c(2);  // 2
+    const uint_t yBlocks = uint_c(1);  // 2
     const uint_t zBlocks = uint_c(1);
 
     const uint_t processes = uint_c(MPIManager::instance()->numProcesses());
