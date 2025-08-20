@@ -155,7 +155,7 @@ int main(int argc, char** argv)
                   // << Sweep(HeatEquationKernelWithMaterial(alphaFieldId, cpFieldId, kFieldId, rhoFieldId, uFieldId, uTmpFieldId, dt, dx), "HeatEquationKernelWithMaterial")
                   << AfterFunction([blocks, uFieldId, uTmpFieldId]() { swapFields(*blocks, uFieldId, uTmpFieldId); }, "Swap");
 
-   if constexpr (vtkWriteFrequency > 0)
+   if (vtkWriteFrequency > 0)
    {
       auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, "vtk", vtkWriteFrequency, 0, false, "vtk_out",
                                                       "simulation_step", false, true, true, false, 0);
