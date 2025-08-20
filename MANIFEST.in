@@ -20,6 +20,12 @@ prune examples
 # Exclude tests directory - not needed in distribution
 prune tests
 
+# Exclude materforge_plots directory - not part of the library
+global-exclude */materforge_plots/*
+global-exclude materforge_plots/*
+prune */materforge_plots
+recursive-exclude * materforge_plots
+
 # Exclude specific files
 exclude sync-repos.sh
 exclude update-docs.sh

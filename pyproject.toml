@@ -95,13 +95,14 @@ materforge-validate = "materforge.parsing.api:validate_yaml_file"
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["materforge*"]
-exclude = ["tests*", "apps*", "examples*"]
+exclude = ["tests*", "apps*", "examples*", "*materforge_plots*"]
 
 [tool.setuptools.package-data]
 materforge = [
     "data/**/*",
     "data/alloys/**/*",
     "data/pure_metals/**/*",
+    "!**/materforge_plots/**",
     "*.yaml",
     "*.yml",
     "*.json",
