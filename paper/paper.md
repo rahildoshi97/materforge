@@ -135,7 +135,6 @@ The following example demonstrates an alloy configuration, followed by the Pytho
 name: Steel 1.4301
 material_type: alloy
 
-# Composition fractions must sum to 1.0
 composition:
   Fe: 0.675
   Cr: 0.170
@@ -143,11 +142,10 @@ composition:
   Mo: 0.025
   Mn: 0.010
 
-# Required temperature properties for alloys
-solidus_temperature: 1605.0          # Melting begins (K)
-liquidus_temperature: 1735.0         # Material is completely melted (K)
-initial_boiling_temperature: 3090.0  # Boiling begins (K)
-final_boiling_temperature: 3200.0    # Material is completely vaporized (K)
+solidus_temperature: 1605.0
+liquidus_temperature: 1735.0
+initial_boiling_temperature: 3090.0
+final_boiling_temperature: 3200.0
 
 properties:
   density:
