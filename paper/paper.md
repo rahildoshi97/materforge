@@ -166,19 +166,14 @@ The `create_material` function parses the YAML file and returns a fully configur
 
 # Comparison with Existing Tools
 
-| Feature                  | **MaterForge** | **CoolProp** | **NIST WebBook** | **CALPHAD Tools** |
+| **Feature**              | **MaterForge** | **CoolProp** | **NIST WebBook** | **CALPHAD Tools** |
 |:-------------------------|:----------------|:------------|:-----------------|:------------------|
-| **Core Capabilities**    |                 |             |                  |                   |
 | Symbolic Integration     | Yes             | No          | No               | Not typical       |
 | Dependency Resolution    | Automatic       | No          | No               | No                |
 | Multi-method Inputs      | Yes (6 types)   | No          | No               | No                |
-|                          |                 |             |                  |                   |
-| **Material Support**     |                 |             |                  |                   |
 | Solid Materials          | Yes             | Limited     | Yes              | Yes               |
 | Custom Properties        | Any             | No          | No               | Limited           |
-| Variable Dependencies    | Any             | T, P only   | fixed data       | T, P, composition |
-|                          |                 |             |                  |                   |
-| **Accessibility**        |                 |             |                  |                   |
+| Variable Dependencies    | Any             | T, P only   | Fixed data       | T, P, composition |
 | Open Source              | Yes             | Yes         | No               | No                |
 | Python Integration       | Native          | Yes         | API only         | No                |
 
