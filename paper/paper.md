@@ -161,14 +161,9 @@ The `create_material` function parses the YAML file and returns a fully configur
     T = sp.Symbol('T')
     steel = create_material('steel.yaml', T, enable_plotting=True)
 
-    print(f"Density: {steel.density}")
-    # Output: Piecewise((2678.43051234161, T < 300.0), 
-    #                   (2744.36352618972 - 0.21977671282703*T, T < 3000.0), 
-    #                   (2085.03338770863, True))
+    steel_density = steel.density
 
-    property_at_500 = steel.evaluate_properties_at_temperature(500.0)
-    print(f"Density at 500 K: {property_at_500['density']:.2f} kg/m^3")
-    # Output: Density at 500 K: 2634.48 kg/m^3
+    density_500k = steel.evaluate_properties_at_temperature(500.0, ['density'])
 ```
 
 # Comparison with Existing Tools
