@@ -147,10 +147,8 @@ properties:
     import sympy as sp
     from materforge.parsing.api import create_material
 
-    # Define temperature symbol
+    # Define temperature symbol and load material definition from YAML
     T = sp.Symbol('T')
-
-    # Load material definition from YAML
     steel = create_material('steel.yaml', T, enable_plotting=True)
     
     # Access symbolic property expressions
@@ -167,11 +165,11 @@ properties:
 | Symbolic Integration     | Yes            | No           | No               | Limited           |
 | Dependency Resolution    | Automatic      | No           | No               | No                |
 | Input Methods            | 6 types        | 1            | 1                | 1                 |
-| Solid Materials          | Yes            | Limited      | Yes              | Yes               |
 | Custom Properties        | Any            | No           | No               | Limited           |
 | Variable Support         | Any            | T, P only    | Static           | T, P, Comp.       |
-| Open Source              | Yes            | Yes          | No               | Mixed             |
+| Solid Materials          | Yes            | Limited      | Yes              | Yes               |
 | Python Integration       | Native         | Yes          | API only         | Limited           |
+| Open Source              | Yes            | Yes          | No               | Mixed             |
 
 **Key Advantage**: MaterForge's native symbolic mathematics via SymPy [@sympy],
 automatic dependency resolution, and multiple input methods provide flexibility and integration
