@@ -147,9 +147,16 @@ properties:
     import sympy as sp
     from materforge.parsing.api import create_material
 
+    # Define temperature symbol
     T = sp.Symbol('T')
+
+    # Load material definition from YAML
     steel = create_material('steel.yaml', T, enable_plotting=True)
-    steel_density = steel.density
+    
+    # Access symbolic property expressions
+    density_expr = steel.density
+
+    # Evaluate density at 500 K
     density_500k = steel.evaluate_properties_at_temperature(500.0, ['density'])
 ```
 
