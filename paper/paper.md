@@ -120,26 +120,23 @@ to standardizes and simplify the integration of realistic material behavior into
 
 # Usage
 
-Materials are defined in YAML files and loaded via the `create_material` function.
-The following example demonstrates an alloy configuration and Python integration.
+Materials are defined in YAML files and loaded via `create_material`, which returns a fully configured material object.
 
 ## YAML Configuration Example: Alloy (`steel.yaml`)
 ```yaml
 name: Steel 1.4301
 material_type: alloy
-
+composition: {Fe: 0.675, Cr: 0.170, Ni: 0.120, Mo: 0.025, Mn: 0.010}
 composition:
   Fe: 0.675
   Cr: 0.170
   Ni: 0.120
   Mo: 0.025
   Mn: 0.010
-
 solidus_temperature: 1605.0
 liquidus_temperature: 1735.0
 initial_boiling_temperature: 3090.0
 final_boiling_temperature: 3200.0
-
 properties:
   density:
     file_path: ./1.4301.xlsx
@@ -153,7 +150,6 @@ properties:
 ```
 
 ## Python Integration
-The `create_material` function parses the YAML file and returns a fully configured material object.
 ```python
     import sympy as sp
     from materforge.parsing.api import create_material
@@ -167,15 +163,15 @@ The `create_material` function parses the YAML file and returns a fully configur
 # Comparison with Existing Tools
 
 | **Feature**              | **MaterForge** | **CoolProp** | **NIST WebBook** | **CALPHAD Tools** |
-|:-------------------------|:----------------|:------------|:-----------------|:------------------|
-| Symbolic Integration     | Yes             | No          | No               | Not typical       |
-| Dependency Resolution    | Automatic       | No          | No               | No                |
-| Multi-method Inputs      | Yes (6 types)   | No          | No               | No                |
-| Solid Materials          | Yes             | Limited     | Yes              | Yes               |
-| Custom Properties        | Any             | No          | No               | Limited           |
-| Variable Dependencies    | Any             | T, P only   | Fixed data       | T, P, composition |
-| Open Source              | Yes             | Yes         | No               | No                |
-| Python Integration       | Native          | Yes         | API only         | No                |
+|:-------------------------|:---------------|:-------------|:-----------------|:------------------|
+| Symbolic Integration     | Yes            | No           | No               | Not typical       |
+| Dependency Resolution    | Automatic      | No           | No               | No                |
+| Multi-method Inputs      | Yes (6 types)  | No           | No               | No                |
+| Solid Materials          | Yes            | Limited      | Yes              | Yes               |
+| Custom Properties        | Any            | No           | No               | Limited           |
+| Variable Dependencies    | Any            | T, P only    | Fixed data       | T, P, composition |
+| Open Source              | Yes            | Yes          | No               | No                |
+| Python Integration       | Native         | Yes          | API only         | No                |
 
 **Key Advantage**: MaterForge's native symbolic mathematics via SymPy [@sympy],
 automatic dependency resolution, and multiple input methods provide flexibility and integration
