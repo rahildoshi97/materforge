@@ -102,7 +102,6 @@ to standardizes and simplify the integration of realistic material behavior into
       degree: 2
       segments: 3
 ```
-
 ![MaterForge's data processing capabilities: regression and data reduction showing raw data (points) fitted with different polynomial degrees and segment configurations, and configurable boundary behavior options demonstrating constant versus extrapolate settings for the same density property, illustrating how MaterForge can reduce complexity while maintaining physical accuracy and providing flexible boundary control.\label{fig:regression_options_with_boundary_behavior_new}](figures/regression_options_with_boundary_behavior_new.png)
 
 - **Inverse Property Computation**: The library can generate inverse piecewise-linear functions,
@@ -160,16 +159,17 @@ properties:
 |:-------------------------|:---------------|:-------------|:-----------------|:------------------|
 | Symbolic Integration     | Yes            | No           | No               | Not typical       |
 | Dependency Resolution    | Automatic      | No           | No               | No                |
-| Multi-method Inputs      | Yes (6)        | No           | No               | No                |
+| Multi-method Inputs      | Yes (6 types)  | No           | No               | No                |
 | Solid Materials          | Yes            | Limited      | Yes              | Yes               |
 | Custom Properties        | Any            | No           | No               | Limited           |
-| Dependencies             | Any            | T, P only    | Fixed data       | T, P, composition |
+| Variable Dependencies    | Any            | T, P only    | Fixed data       | T, P, C[^1]       |
 | Open Source              | Yes            | Yes          | No               | No                |
 | Python Integration       | Native         | Yes          | API only         | No                |
 
 **Key Advantage**: MaterForge's native symbolic mathematics via SymPy [@sympy],
 automatic dependency resolution, and multiple input methods provide flexibility and integration
 not found in existing tools, enabling more reproducible and sophisticated scientific simulations.
+[^1]: C: composition
 
 # Research Applications
 
