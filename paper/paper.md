@@ -160,10 +160,10 @@ properties:
 |:-------------------------|:---------------|:-------------|:-----------------|:------------------|
 | Symbolic Integration     | Yes            | No           | No               | Not typical       |
 | Dependency Resolution    | Automatic      | No           | No               | No                |
-| Multi-method Inputs      | Yes (6 types)  | No           | No               | No                |
+| Multi-method Inputs      | Yes (6)        | No           | No               | No                |
 | Solid Materials          | Yes            | Limited      | Yes              | Yes               |
 | Custom Properties        | Any            | No           | No               | Limited           |
-| Variable Dependencies    | Any            | T, P only    | Fixed data       | T, P, composition |
+| Dependencies             | Any            | T, P only    | Fixed data       | T, P, composition |
 | Open Source              | Yes            | Yes          | No               | No                |
 | Python Integration       | Native         | Yes          | API only         | No                |
 
