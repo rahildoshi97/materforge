@@ -162,14 +162,13 @@ properties:
 | Multi-method Inputs      | Yes (6 types)  | No           | No               | No                |
 | Solid Materials          | Yes            | Limited      | Yes              | Yes               |
 | Custom Properties        | Any            | No           | No               | Limited           |
-| Variable Dependencies    | Any            | T, P only    | Fixed data       | T, P, C[^1] only  |
+| Variable Dependencies    | Any            | T, P only    | Fixed data       | T, P, Comp.       |
 | Open Source              | Yes            | Yes          | No               | No                |
 | Python Integration       | Native         | Yes          | API only         | No                |
 
 **Key Advantage**: MaterForge's native symbolic mathematics via SymPy [@sympy],
 automatic dependency resolution, and multiple input methods provide flexibility and integration
 not found in existing tools, enabling more reproducible and sophisticated scientific simulations.
-[^1]: C: composition
 
 # Research Applications
 
