@@ -162,7 +162,7 @@ properties:
 | Input Methods            | 6 types        | 1            | 1                | 1                 |
 | Solid Materials          | Yes            | Limited      | Yes              | Yes               |
 | Custom Properties        | Any            | No           | No               | Limited           |
-| Variable Support         | Any            | T,P only     | Static           | T,P,Comp.         |
+| Variable Support         | Any            | T, P only    | Static           | T, P, Comp.       |
 | Open Source              | Yes            | Yes          | No               | Mixed             |
 | Python Integration       | Native         | Yes          | API only         | Limited           |
 
