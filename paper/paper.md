@@ -39,22 +39,23 @@ MaterForge supports different material types,
 offers multiple property definition methods,
 and automatically resolves dependency order for derived properties while detecting cycles.
 It is designed for high-performance computing (HPC) applications
-and serves as a streamlined bridge between experimental data and numerical simulation.
+and serves as a streamlined bridge between experimental data and numerical simulation, 
+making sophisticated material modeling accessible to a broader scientific community.
 
 # Statement of Need
 
 Accurate numerical simulation requires accounting for material properties such as thermal conductivity, density, and viscosity
-that depend on variables like temperature, pressure, or strain rate [@lewis1996finite; @zienkiewicz2013finite].
+that are not constant but depend on variables like temperature, pressure, or strain rate [@lewis1996finite; @zienkiewicz2013finite].
 This challenge is compounded by the wide variation in data availability,
 from well-characterized models for established materials to sparse experimental points for novel materials.
 Consequently, property definitions can range from simple constants to complex tabular datasets or sophisticated equations,
 creating a significant integration hurdle for researchers.
 
-To manage this complexity, researchers often resort to manual interpolation, custom scripting, or proprietary software,
+To manage this complexity, researchers often resort to manual interpolation, custom scripting to handle different data formats, or proprietary software,
 which compromises reproducibility and standardization [@ashby2013materials].
 While valuable resources like the NIST WebBook [@nist_webbook] and libraries such as CoolProp [@coolprop] exist,
 they primarily provide raw data without the integrated processing needed to unify these varied formats.
-Similarly, CALPHAD databases [@calphad] are powerful but often require proprietary software
+Similarly, specialized CALPHAD databases [@calphad] are powerful but often require proprietary software
 and do not easily integrate with general-purpose simulation codes.
 
 This gap often leads to the development of ad hoc solutions, hindering workflow efficiency and the adoption of FAIR data principles [@wilkinson2016fair].
@@ -73,14 +74,14 @@ MaterForge standardizes and simplifies the integration of realistic material beh
 
 ![MaterForge's property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods_new}](figures/input_methods_new.jpg)
 
-- **Extensible Material Support**: The framework supports any material type through its extensible architecture.
-  Currently implemented and thoroughly tested for pure metals and alloys through its unified interface,
-  its modular design allows for straightforward extension to other materials such as
+- **Extensible Material Support**: The framework is designed with an extensible architecture to support any material type.
+  It is currently implemented and thoroughly tested for pure metals and alloys through its unified interface,
+  with a modular design that allows for straightforward extension to other materials such as
   ceramics, polymers or composites.
 
 - **Automatic Dependency Resolution**: For properties that depend on others 
   (e.g., thermal diffusivity calculated from thermal conductivity, density, and heat capacity),
-  MaterForge automatically determines the correct processing order and resolves mathematical dependencies.
+  MaterForge automatically determines the correct processing order and resolves mathematical dependencies without manual intervention.
   The library detects circular dependencies and provides clear error messages for invalid configurations,
   freeing users from complex dependency management.
 
@@ -215,7 +216,7 @@ with demonstrated integrations into frameworks like pystencils [@pystencils] and
 # Availability
 
 MaterForge is an open-source software distributed under the [BSD-3-Clause License](https://github.com/rahildoshi97/materforge/blob/master/LICENSE). 
-The source code, documentation, and examples are available at [https://github.com/rahildoshi97/materforge](https://github.com/rahildoshi97/materforge). 
+The source code, comprehensive documentation, and examples are available at [https://github.com/rahildoshi97/materforge](https://github.com/rahildoshi97/materforge). 
 The software can be installed via [PyPI](https://pypi.org/project/materforge/) using `pip install materforge`.
 
 # Acknowledgements
