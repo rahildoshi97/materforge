@@ -32,33 +32,33 @@ bibliography: paper.bib
 
 MaterForge is an extensible, open-source Python library that streamlines the definition and use of
 material properties in numerical simulations.
-The library allows users to define complex material behaviors, ranging from simple constants to experimental data
-in user-friendly YAML configuration files.
-These are internally converted into symbolic mathematical expressions for direct use in scientific computing frameworks.
-MaterForge supports different material types,
-offers flexible property definition methods,
+The library supports complex material behaviors, from simple constants to experimental data
+in user-friendly YAML configurations.
+These are internally converted into symbolic mathematical expressions for scientific computing frameworks.
+MaterForge supports various material types,
+provides flexible property definitions,
 and automatically resolves dependency order for derived properties while detecting cycles.
 It is designed for high-performance computing (HPC) applications
 and serves as a bridge between experimental data and numerical simulation.
 
 # Statement of Need
 
-Accurate numerical simulation requires accounting for material properties such as thermal conductivity, density, and viscosity
+Accurate numerical simulation requires material properties such as thermal conductivity, density, and viscosity
 that depend on variables like temperature, pressure, or strain rate [@lewis1996finite].
 This challenge is compounded by the wide variation in data availability,
 from well-characterized models for established materials to sparse experimental points for novel materials.
-Consequently, property definitions can range from simple constants to complex tabular datasets or sophisticated equations,
-creating a significant integration hurdle for researchers.
+Property definitions consequently range from simple constants to complex tabular datasets or sophisticated equations,
+creating significant integration hurdles for researchers.
 
 To manage this complexity, researchers often resort to manual interpolation, custom scripting, or proprietary software,
 which compromises reproducibility and standardization [@ashby2013materials].
-While valuable resources like the NIST WebBook [@linstrom2001nist] and libraries such as CoolProp [@coolprop] exist,
-they primarily provide raw data without the integrated processing needed to unify these varied formats.
-Similarly, CALPHAD databases [@calphad] are powerful but often require proprietary software
+While valuable resources like the NIST WebBook [@linstrom2001nist] and CoolProp [@coolprop] provide valuable raw data,
+they lack integrated processing to unify these varied formats.
+CALPHAD databases [@calphad] are powerful but often require proprietary software
 and do not easily integrate with general-purpose simulation codes.
 
 This leads to ad hoc solutions, hindering workflow efficiency and FAIR data adoption [@wilkinson2016fair].
-MaterForge bridges this gap by providing a unified, framework that leverages
+MaterForge bridges this gap by providing a unified framework that leverages
 symbolic mathematics, automatic regression, and dependency resolution
 to standardizes and simplify the integration of realistic material behavior into scientific simulations.
 
@@ -160,9 +160,7 @@ The `create_material` function parses the YAML file and returns a fully configur
 
     T = sp.Symbol('T')
     steel = create_material('steel.yaml', T, enable_plotting=True)
-
     steel_density = steel.density
-
     density_500k = steel.evaluate_properties_at_temperature(500.0, ['density'])
 ```
 
