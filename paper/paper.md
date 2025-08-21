@@ -166,21 +166,21 @@ The `create_material` function parses the YAML file and returns a fully configur
 
 # Comparison with Existing Tools
 
-| Feature                  | **MaterForge**  | **CoolProp** | **NIST WebBook**   | **CALPHAD Tools**       |
-|:-------------------------|:----------------|:---------------|:-----------------|:------------------------|
-| **Core Capabilities**    |                 |                |                  |                         |
-| Symbolic Integration     | Yes             | No             | No               | Not typical             |
-| Dependency Resolution    | Yes (automatic) | No             | No               | No                      |
-| Multiple Input Methods   | Yes (6 types)   | No             | No               | No                      |
-|                          |                 |                |                  |                         |
-| **Material Support**     |                 |                |                  |                         |
-| Solid Materials          | Yes             | Limited        | Yes              | Yes                     |
-| Custom Properties        | Yes (any)       | No             | No               | Limited                 |
-| Variable Dependencies    | Yes (any)       | Limited (T, P) | No (fixed data)  | Yes (T, P, composition) |
-|                          |                 |                |                  |                         |
-| **Accessibility**        |                 |                |                  |                         |
-| Open Source              | Yes             | Yes            | No               | No                      |
-| Python Integration       | Native          | Yes            | API only         | No                      |
+| Feature                  | **MaterForge** | **CoolProp** | **NIST WebBook** | **CALPHAD Tools** |
+|:-------------------------|:----------------|:------------|:-----------------|:------------------|
+| **Core Capabilities**    |                 |             |                  |                   |
+| Symbolic Integration     | Yes             | No          | No               | Not typical       |
+| Dependency Resolution    | Automatic       | No          | No               | No                |
+| Multi-method Inputs      | Yes (6 types)   | No          | No               | No                |
+|                          |                 |             |                  |                   |
+| **Material Support**     |                 |             |                  |                   |
+| Solid Materials          | Yes             | Limited     | Yes              | Yes               |
+| Custom Properties        | Any             | No          | No               | Limited           |
+| Variable Dependencies    | Any             | T, P only   | fixed data       | T, P, composition |
+|                          |                 |             |                  |                   |
+| **Accessibility**        |                 |             |                  |                   |
+| Open Source              | Yes             | Yes         | No               | No                |
+| Python Integration       | Native          | Yes         | API only         | No                |
 
 **Key Advantage**: MaterForge's native symbolic mathematics via SymPy [@sympy],
 automatic dependency resolution, and multiple input methods provide flexibility and integration
