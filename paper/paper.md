@@ -157,14 +157,14 @@ properties:
 
 | **Feature**              | **MaterForge** | **CoolProp** | **NIST WebBook** | **CALPHAD Tools** |
 |:-------------------------|:---------------|:-------------|:-----------------|:------------------|
-| Symbolic Integration     | Yes            | No           | No               | Not typical       |
+| Symbolic Integration     | Yes            | No           | No               | Limited           |
 | Dependency Resolution    | Automatic      | No           | No               | No                |
-| Multi-method Inputs      | Yes (6)        | No           | No               | No                |
+| Input Methods            | 6 types        | 1            | 1                | 1                 |
 | Solid Materials          | Yes            | Limited      | Yes              | Yes               |
 | Custom Properties        | Any            | No           | No               | Limited           |
-| Variable Dependencies    | Any            | T, P only    | Fixed data       | T, P, Comp.       |
-| Open Source              | Yes            | Yes          | No               | No                |
-| Python Integration       | Native         | Yes          | API only         | No                |
+| Variable Support         | Any            | T,P only     | Static           | T,P,Comp.         |
+| Open Source              | Yes            | Yes          | No               | Mixed             |
+| Python Integration       | Native         | Yes          | API only         | Limited           |
 
 **Key Advantage**: MaterForge's native symbolic mathematics via SymPy [@sympy],
 automatic dependency resolution, and multiple input methods provide flexibility and integration
