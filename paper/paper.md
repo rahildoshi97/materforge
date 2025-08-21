@@ -81,9 +81,6 @@ to standardizes and simplify the integration of realistic material behavior into
   MaterForge automatically determines the correct processing order, resolves mathematical dependencies,
   and detects circular references.
 
-- **Configurable Boundary Behavior**: Users can define how properties behave outside their specified ranges,
-  choosing between constant-value or extrapolation to best match the physical behavior of the material.
-
 - **Regression and Data Reduction**: The library performs piecewise regression for large datasets, 
   simplifying complex property curves into efficient mathematical representations with configurable polynomial degrees and segments,
   reducing computational overhead while maintaining accuracy.
@@ -93,8 +90,10 @@ to standardizes and simplify the integration of realistic material behavior into
   `simplify: pre` optimizes performance by simplifying properties before being used in dependent calculations,
   while `simplify: post` defers simplification until all dependent properties have been computed, maximizing numerical accuracy.
 
-The boundary behavior options work seamlessly with the regression capabilities to provide comprehensive data processing control 
-(\autoref{fig:regression_options_with_boundary_behavior_new}).
+- **Configurable Boundary Behavior**: Users can define how properties behave outside their specified ranges,
+  choosing between constant-value or extrapolation to best match the physical behavior of the material.
+  The boundary behavior options work seamlessly with the regression capabilities to provide comprehensive data processing control 
+  (\autoref{fig:regression_options_with_boundary_behavior_new}).
 
 ```yaml
     bounds: [constant, extrapolate] # Defines behavior for [lower, upper] bounds
