@@ -44,7 +44,7 @@ and serves as a bridge between experimental data and numerical simulation.
 # Statement of Need
 
 Accurate numerical simulation requires accounting for material properties such as thermal conductivity, density, and viscosity
-that depend on variables like temperature, pressure, or strain rate [@lewis1996finite; @zienkiewicz2013finite].
+that depend on variables like temperature, pressure, or strain rate [@lewis1996finite].
 This challenge is compounded by the wide variation in data availability,
 from well-characterized models for established materials to sparse experimental points for novel materials.
 Consequently, property definitions can range from simple constants to complex tabular datasets or sophisticated equations,
@@ -58,42 +58,40 @@ Similarly, CALPHAD databases [@calphad] are powerful but often require proprieta
 and do not easily integrate with general-purpose simulation codes.
 
 This leads to ad hoc solutions, hindering workflow efficiency and FAIR data adoption [@wilkinson2016fair].
-MaterForge bridges this gap by providing a unified, open-source framework that leverages
-symbolic mathematics, automatic regression, and dependency resolution.
-By combining a user-friendly YAML configuration with powerful backend processing,
-MaterForge standardizes and simplifies the integration of realistic material behavior into scientific simulations.
+MaterForge bridges this gap by providing a unified, framework that leverages
+symbolic mathematics, automatic regression, and dependency resolution
+to standardizes and simplify the integration of realistic material behavior into scientific simulations.
 
 # Key Functionality
 
 - **Flexible Input Methods**: The library supports various property definition methods such as
   constant values, step functions, file-based data (.xlsx, .csv, .txt), tabular data, piecewise equations, and computed properties 
   (\autoref{fig:input_methods_new}).
-  This versatility allows users to leverage data from diverse sources with robust file processing capabilities.
+  This versatility allows users to leverage data from diverse sources.
 
 ![MaterForge's property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods_new}](figures/input_methods_new.jpg)
 
 - **Extensible Material Support**: The framework supports any material type through its extensible architecture.
-  Currently implemented and thoroughly tested for pure metals and alloys through its unified interface,
-  its modular design allows for straightforward extension to other materials such as
+  Currently implemented for pure metals and alloys,
+  its modular design allows straightforward extension to materials such as
   ceramics, polymers, or composites.
 
 - **Automatic Dependency Resolution**: For dependent properties 
-  (e.g., thermal diffusivity calculated from thermal conductivity, density, and heat capacity),
+  (e.g., density calculated from thermal expansion coefficient),
   MaterForge automatically determines the correct processing order, resolves mathematical dependencies,
   and detects circular references.
 
 - **Configurable Boundary Behavior**: Users can define how properties behave outside their specified ranges,
   choosing between constant-value or extrapolation to best match the physical behavior of the material.
 
-- **Regression and Data Reduction**: The library performs piecewise regression for large datasets.
-  This simplifies complex property curves into efficient mathematical representations with configurable polynomial degrees and number of segments,
-  reducing computational overhead while maintaining physical accuracy.
+- **Regression and Data Reduction**: The library performs piecewise regression for large datasets, 
+  simplifying complex property curves into efficient mathematical representations with configurable polynomial degrees and segments,
+  reducing computational overhead while maintaining accuracy.
 
 - **Intelligent Simplification Timing**: MaterForge provides sophisticated control over when data simplification occurs
-  in the dependency chain via the `simplify` parameter.
-  `simplify: pre` optimizes performance by simplifying properties before they are used in dependent calculations,
+  via the `simplify` parameter.
+  `simplify: pre` optimizes performance by simplifying properties before being used in dependent calculations,
   while `simplify: post` defers simplification until all dependent properties have been computed, maximizing numerical accuracy.
-  This allows users to balance computational efficiency with numerical accuracy based on their specific simulation requirements.
 
 The boundary behavior options work seamlessly with the regression capabilities to provide comprehensive data processing control 
 (\autoref{fig:regression_options_with_boundary_behavior_new}).
@@ -110,18 +108,16 @@ The boundary behavior options work seamlessly with the regression capabilities t
 
 - **Inverse Property Computation**: The library can generate inverse piecewise-linear functions,
   enabling the determination of independent variables from known property values.
-  This capability is essential for energy-based numerical methods and iterative solvers [@voller1987fixed],
+  This capability is essential for energy-based numerical methods [@voller1987fixed],
   where temperature is computed via the inverse function of the enthalpy.
-  While currently focused on single dependent variables,
-  the underlying architecture is designed to be extensible toward multiple independent variables (e.g., pressure, shear rate).
 
 - **Built-in Validation Framework**: A comprehensive validation framework checks YAML configurations for correctness,
-  including composition sums, required fields, and valid property names.
-  This prevents common configuration errors and ensures reproducible material definitions [@roache1998verification].
+  including composition sums, required fields, and valid property names, 
+  preventing common configuration errors [@roache1998verification].
 
 - **Integrated Visualization**: An integrated visualization tool
-  allows users to automatically generate plots to verify their property definitions visually,
-  with the option to disable visualization for production workflows after validation.
+  automatically generates plots to verify property definitions,
+  with the option to disable visualization for production workflows.
 
 # Usage
 
@@ -156,7 +152,6 @@ properties:
       degree: 1
       segments: 3
 ```
-Complete YAML configurations for different materials are provided in the [documentation](https://github.com/rahildoshi97/materforge/blob/master/docs/how-to/define_materials.md).
 
 ## Python Integration
 The `create_material` function parses the YAML file and returns a fully configured material object.
@@ -164,17 +159,14 @@ The `create_material` function parses the YAML file and returns a fully configur
     import sympy as sp
     from materforge.parsing.api import create_material
 
-    # Create a material from a YAML file
     T = sp.Symbol('T')
     steel = create_material('steel.yaml', T, enable_plotting=True)
 
-    # Access properties as symbolic expressions
     print(f"Density: {steel.density}")
     # Output: Piecewise((2678.43051234161, T < 300.0), 
     #                   (2744.36352618972 - 0.21977671282703*T, T < 3000.0), 
     #                   (2085.03338770863, True))
 
-    # Evaluate properties at a specific temperature
     property_at_500 = steel.evaluate_properties_at_temperature(500.0)
     print(f"Density at 500 K: {property_at_500['density']:.2f} kg/m^3")
     # Output: Density at 500 K: 2634.48 kg/m^3
@@ -198,13 +190,13 @@ The `create_material` function parses the YAML file and returns a fully configur
 | Open Source              | Yes             | Yes            | No               | No                      |
 | Python Integration       | Native          | Yes            | API only         | No                      |
 
-**Key Advantage**: MaterForge's unique combination of native symbolic mathematics via SymPy [@sympy],
-automatic dependency resolution, and multiple input methods provides a level of flexibility and integration
+**Key Advantage**: MaterForge's native symbolic mathematics via SymPy [@sympy],
+automatic dependency resolution, and multiple input methods provide flexibility and integration
 not found in existing tools, enabling more reproducible and sophisticated scientific simulations.
 
 # Research Applications
 
-MaterForge is applicable to a wide range of research areas, including alloy design and optimization [@callister2018materials],
+MaterForge is applicable to alloy design [@callister2018materials],
 finite element analysis [@hughes2012finite], multiscale modeling [@tadmor2011modeling],
 computational fluid dynamics, and heat transfer.
 Its architecture promotes reproducible science and is well-suited for HPC environments,
@@ -212,9 +204,11 @@ with demonstrated integrations into frameworks like pystencils [@pystencils] and
 
 # Availability
 
-MaterForge is an open-source software distributed under the [BSD-3-Clause License](https://github.com/rahildoshi97/materforge/blob/master/LICENSE). 
-The source code, documentation, and examples are available at [https://github.com/rahildoshi97/materforge](https://github.com/rahildoshi97/materforge). 
-The software can be installed via [PyPI](https://pypi.org/project/materforge/) using `pip install materforge`.
+MaterForge is distributed under the [BSD-3-Clause License](https://github.com/rahildoshi97/materforge/blob/master/LICENSE). 
+The source code is hosted on [GitHub](https://github.com/rahildoshi97/materforge), with
+[full documentation](https://materforge.readthedocs.io/en/stable/) 
+and [YAML examples](https://materforge.readthedocs.io/en/stable/how-to/define_materials.html).
+The package can be installed via [PyPI](https://pypi.org/project/materforge/) using `pip install materforge`.
 
 # Acknowledgements
 
