@@ -91,16 +91,16 @@ to standardizes and simplify the integration of realistic material behavior into
   while `simplify: post` defers simplification until all dependent properties have been computed, maximizing numerical accuracy.
 
 - **Configurable Boundary Behavior**: Users can define how properties behave outside their specified ranges,
-  choosing between constant-value or extrapolation to best match the physical behavior of the material.
+  choosing between `constant`-value or `extrapolation` to best match the physical behavior of the material.
   The boundary behavior options work seamlessly with the regression capabilities to provide comprehensive data processing control 
   (\autoref{fig:regression_options_with_boundary_behavior_new}).
 
 ```yaml
-    bounds: [constant, extrapolate] # Defines behavior for [lower, upper] bounds
-    regression:      # Optional regression configuration
-      simplify: pre  # 'pre' (before processing) or 'post' (after processing)
-      degree: 2      # Polynomial degree for regression
-      segments: 3    # Number of piecewise segments
+    bounds: [constant, extrapolate]
+    regression:
+      simplify: pre
+      degree: 2
+      segments: 3
 ```
 
 ![MaterForge's data processing capabilities: regression and data reduction showing raw data (points) fitted with different polynomial degrees and segment configurations, and configurable boundary behavior options demonstrating constant versus extrapolate settings for the same density property, illustrating how MaterForge can reduce complexity while maintaining physical accuracy and providing flexible boundary control.\label{fig:regression_options_with_boundary_behavior_new}](figures/regression_options_with_boundary_behavior_new.png)
