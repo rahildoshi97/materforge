@@ -162,7 +162,7 @@ properties:
 | Multi-method Inputs      | Yes (6 types)  | No           | No               | No                |
 | Solid Materials          | Yes            | Limited      | Yes              | Yes               |
 | Custom Properties        | Any            | No           | No               | Limited           |
-| Variable Dependencies    | Any            | T, P only    | Fixed data       | T, P, C[^1]       |
+| Variable Dependencies    | Any            | T, P only    | Fixed data       | T, P, C[^1] only  |
 | Open Source              | Yes            | Yes          | No               | No                |
 | Python Integration       | Native         | Yes          | API only         | No                |
 
