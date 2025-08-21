@@ -127,12 +127,6 @@ Materials are defined in YAML files and loaded via `create_material`, which retu
 name: Steel 1.4301
 material_type: alloy
 composition: {Fe: 0.675, Cr: 0.170, Ni: 0.120, Mo: 0.025, Mn: 0.010}
-composition:
-  Fe: 0.675
-  Cr: 0.170
-  Ni: 0.120
-  Mo: 0.025
-  Mn: 0.010
 solidus_temperature: 1605.0
 liquidus_temperature: 1735.0
 initial_boiling_temperature: 3090.0
