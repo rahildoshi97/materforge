@@ -10,12 +10,9 @@ SCRIPT_PATH="$(realpath $0)"
 
 NAME="materforge"
 MATERFORGE_REPO="https://i10git.cs.fau.de/rahil.doshi/materforge.git"
-MATERFORGE_BRANCH="bm" #
+MATERFORGE_BRANCH="bm"
 MATERFORGE_COMMIT=""
 
-# BASE_DIR="$(pwd)"
-# SRC_DIR="${BASE_DIR}/materforge_src"
-# Use your existing repository instead of cloning
 SRC_DIR="${HOME}/rahil/repos/materforge"
 BUILD_DIR="$(pwd)/build_${NAME}_${timestamp}"
 LOGFILE="${BUILD_DIR}/build_${timestamp}.log"
@@ -27,12 +24,6 @@ mkdir -p ${BUILD_DIR} || exit 1
 	echo "--- currently executed script: $(basename ${SCRIPT_PATH})"
 	cat "${SCRIPT_PATH}"
 	echo "---"
-
-	# Clone/update materforge source
-	#if [ ! -d "${SRC_DIR}" ]; then
-	#	echo "Cloning into ${SRC_DIR}"
-	#	git clone -b ${MATERFORGE_BRANCH} ${MATERFORGE_REPO} ${SRC_DIR}
-	#fi
 
 	# Use existing repository instead of cloning
 	echo "Using existing repository at ${SRC_DIR}"
