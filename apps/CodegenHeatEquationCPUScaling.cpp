@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
         xSize = real_c(procs_x * 1.0);  // or gpus_x for GPU
         ySize = real_c(procs_y * 1.0);
         zSize = real_c(procs_z * 1.0);
-        WALBERLA_LOG_INFO_ON_ROOT("Weak Scaling: " << problemSize << "³ cells per process");
+        WALBERLA_LOG_INFO_ON_ROOT("Weak Scaling: " << problemSize << "^3 cells per process");
     } else {
         // Strong scaling: fixed total domain size
         const uint_t totalCellsPerDim = problemSize;
