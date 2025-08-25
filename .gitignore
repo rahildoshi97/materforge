@@ -331,3 +331,7 @@ Testing/
 *.a
 *.lib
 *.exe
+# Benchmarking build directories
+benchmarking-scripts/**/build_*
+benchmarking-scripts/**/materforge_src
+benchmarking-scripts/**/*.log
