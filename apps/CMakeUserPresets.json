@@ -8,8 +8,9 @@
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cc",
                 "CMAKE_CXX_COMPILER": "CC",
-                "Python_ROOT_DIR": "/pfs/lustrep4/users/zikelimi/rahil/venvs/materforge",
-                "Python_EXECUTABLE": "/pfs/lustrep4/users/zikelimi/rahil/venvs/materforge/bin/python"
+                "Python_ROOT_DIR": "/pfs/lustrep1/projappl/project_465001284/venvs/materforge",
+                "Python_EXECUTABLE": "/pfs/lustrep1/projappl/project_465001284/venvs/materforge/bin/python",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/cmake-build-lumi-debug-cpu"
             },
             "binaryDir": "${sourceDir}/cmake-build-lumi-debug-cpu"
         },
@@ -20,35 +21,40 @@
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cc",
                 "CMAKE_CXX_COMPILER": "CC",
-                "Python_ROOT_DIR": "/pfs/lustrep4/users/zikelimi/rahil/venvs/materforge",
-                "Python_EXECUTABLE": "/pfs/lustrep4/users/zikelimi/rahil/venvs/materforge/bin/python",
+                "Python_ROOT_DIR": "/pfs/lustrep1/projappl/project_465001284/venvs/materforge",
+                "Python_EXECUTABLE": "/pfs/lustrep1/projappl/project_465001284/venvs/materforge/bin/python",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/cmake-build-lumi-release-cpu"
             },
             "binaryDir": "${sourceDir}/cmake-build-lumi-release-cpu"
         },
         {
             "name": "lumi-debug-gpu",
-            "inherits": "debug-gpu",
-            "displayName": "LUMI Debug GPU Build (ROCm)",
+            "inherits": "debug-gpu", 
+            "displayName": "LUMI Debug GPU Build (ROCm 6.0.3)",
             "environment": {
                 "ROCM_PATH": "/opt/rocm-6.0.3",
-                "HIP_PATH": "/opt/rocm-6.0.3",
+                "HIP_PATH": "/opt/rocm-6.0.3", 
                 "CMAKE_PREFIX_PATH": "/opt/rocm-6.0.3:/opt/rocm-6.0.3/lib/cmake"
             },
             "cacheVariables": {
-                "CMAKE_C_COMPILER": "cc",
-                "CMAKE_CXX_COMPILER": "CC",
-                "CMAKE_C_FLAGS": "-fopenmp",
-                "CMAKE_CXX_FLAGS": "-fopenmp",
+                "CMAKE_C_COMPILER": "hipcc",
+                "CMAKE_CXX_COMPILER": "hipcc",
+                "CMAKE_C_FLAGS": "-fopenmp -DSQLITE_DISABLE_INTRINSIC -DSQLITE_OMIT_LOAD_EXTENSION",
+                "CMAKE_CXX_FLAGS": "-fopenmp -DSQLITE_DISABLE_INTRINSIC -DSQLITE_OMIT_LOAD_EXTENSION", 
+                "CMAKE_EXE_LINKER_FLAGS": "-fopenmp",
+                "CMAKE_SHARED_LINKER_FLAGS": "-fopenmp",
+                "OpenMP_omp_LIBRARY": "/opt/cray/pe/lib64/libomp.so",
+                "OpenMP_C_FOUND": "TRUE",
+                "OpenMP_CXX_FOUND": "TRUE",
+                "CMAKE_HIP_ARCHITECTURES": "gfx90a",
                 "OpenMP_C_FLAGS": "-fopenmp",
-                "OpenMP_CXX_FLAGS": "-fopenmp",
+                "OpenMP_CXX_FLAGS": "-fopenmp", 
                 "OpenMP_C_LIB_NAMES": "omp",
                 "OpenMP_CXX_LIB_NAMES": "omp",
-                "OpenMP_omp_LIBRARY": "/opt/rocm-6.0.3/llvm/lib/libomp.so",
-                "Python_ROOT_DIR": "/pfs/lustrep4/users/zikelimi/rahil/venvs/materforge",
-                "Python_EXECUTABLE": "/pfs/lustrep4/users/zikelimi/rahil/venvs/materforge/bin/python",
+                "Python_ROOT_DIR": "/pfs/lustrep1/projappl/project_465001284/venvs/materforge",
+                "Python_EXECUTABLE": "/pfs/lustrep1/projappl/project_465001284/venvs/materforge/bin/python",
                 "WALBERLA_BUILD_WITH_CUDA": "OFF",
-                "WALBERLA_BUILD_WITH_HIP": "ON",
+                "WALBERLA_BUILD_WITH_HIP": "ON", 
                 "WALBERLA_BUILD_WITH_CODEGEN": "OFF",
                 "ENABLE_GPU_SUPPORT": "ON",
                 "ROCM_PATH": "/opt/rocm-6.0.3",
@@ -60,15 +66,32 @@
         {
             "name": "lumi-release-gpu", 
             "inherits": "release-gpu",
-            "displayName": "LUMI Release GPU Build (ROCm)",
+            "displayName": "LUMI Release GPU Build (ROCm 6.0.3)",
+            "environment": {
+                "ROCM_PATH": "/opt/rocm-6.0.3",
+                "HIP_PATH": "/opt/rocm-6.0.3",
+                "CMAKE_PREFIX_PATH": "/opt/rocm-6.0.3:/opt/rocm-6.0.3/lib/cmake"
+            },
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cc",
-                "CMAKE_CXX_COMPILER": "CC", 
-                "Python_ROOT_DIR": "/pfs/lustrep4/users/zikelimi/rahil/venvs/materforge",
-                "Python_EXECUTABLE": "/pfs/lustrep4/users/zikelimi/rahil/venvs/materforge/bin/python",
+                "CMAKE_CXX_COMPILER": "CC",
+                "CMAKE_C_FLAGS": "-fopenmp -DSQLITE_DISABLE_INTRINSIC -DSQLITE_OMIT_LOAD_EXTENSION",
+                "CMAKE_CXX_FLAGS": "-fopenmp -DSQLITE_DISABLE_INTRINSIC -DSQLITE_OMIT_LOAD_EXTENSION",
+                "CMAKE_HIP_ARCHITECTURES": "gfx90a",
+                "OpenMP_C_FLAGS": "-fopenmp",
+                "OpenMP_CXX_FLAGS": "-fopenmp",
+                "OpenMP_C_LIB_NAMES": "omp",
+                "OpenMP_CXX_LIB_NAMES": "omp",
+                "Python_ROOT_DIR": "/pfs/lustrep1/projappl/project_465001284/venvs/materforge",
+                "Python_EXECUTABLE": "/pfs/lustrep1/projappl/project_465001284/venvs/materforge/bin/python",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/cmake-build-lumi-release-gpu",
                 "WALBERLA_BUILD_WITH_CUDA": "OFF",
-                "WALBERLA_BUILD_WITH_HIP": "ON"
+                "WALBERLA_BUILD_WITH_HIP": "ON",
+                "WALBERLA_BUILD_WITH_CODEGEN": "OFF",
+                "ENABLE_GPU_SUPPORT": "ON",
+                "ROCM_PATH": "/opt/rocm-6.0.3",
+                "HIP_PATH": "/opt/rocm-6.0.3",
+                "AMDDeviceLibs_DIR": "/opt/rocm-6.0.3/lib/cmake/AMDDeviceLibs"
             },
             "binaryDir": "${sourceDir}/cmake-build-lumi-release-gpu"
         }
