@@ -61,30 +61,14 @@
             "name": "lumi-release-gpu", 
             "inherits": "release-gpu",
             "displayName": "LUMI Release GPU Build (ROCm)",
-            "environment": {
-                "ROCM_PATH": "/opt/rocm-6.0.3",
-                "HIP_PATH": "/opt/rocm-6.0.3",
-                "CMAKE_PREFIX_PATH": "/opt/rocm-6.0.3:/opt/rocm-6.0.3/lib/cmake"
-            },
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cc",
                 "CMAKE_CXX_COMPILER": "CC", 
-                "CMAKE_C_FLAGS": "-fopenmp",
-                "CMAKE_CXX_FLAGS": "-fopenmp",
-                "OpenMP_C_FLAGS": "-fopenmp",
-                "OpenMP_CXX_FLAGS": "-fopenmp",
-                "OpenMP_C_LIB_NAMES": "omp",
-                "OpenMP_CXX_LIB_NAMES": "omp",
-                "OpenMP_omp_LIBRARY": "/opt/rocm-6.0.3/llvm/lib/libomp.so",
                 "Python_ROOT_DIR": "/pfs/lustrep4/users/zikelimi/rahil/venvs/materforge",
                 "Python_EXECUTABLE": "/pfs/lustrep4/users/zikelimi/rahil/venvs/materforge/bin/python",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/cmake-build-lumi-release-gpu",
                 "WALBERLA_BUILD_WITH_CUDA": "OFF",
-                "WALBERLA_BUILD_WITH_HIP": "ON",
-                "ENABLE_GPU_SUPPORT": "ON",
-                "ROCM_PATH": "/opt/rocm-6.0.3",
-                "HIP_PATH": "/opt/rocm-6.0.3",
-                "AMDDeviceLibs_DIR": "/opt/rocm-6.0.3/lib/cmake/AMDDeviceLibs"
+                "WALBERLA_BUILD_WITH_HIP": "ON"
             },
             "binaryDir": "${sourceDir}/cmake-build-lumi-release-gpu"
         }
