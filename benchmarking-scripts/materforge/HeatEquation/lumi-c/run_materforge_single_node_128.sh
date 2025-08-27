@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --job-name=benchmark_materforge_lumi-c_single_node
+#SBATCH --job-name=benchmark_materforge_lumi-c_single_node_128
 #SBATCH --output=%x.%j.out
 #SBATCH --partition=standard
 #SBATCH --nodes=1
@@ -48,7 +48,7 @@ source /project/project_465001284/venvs/materforge/bin/activate
 
 echo "=== Single Node Performance Tests ==="
 
-# Test different thread counts with fixed problem size
+# Test different thread counts with 128 cells per process
 export OMP_NUM_THREADS=1
 echo "--- 1 Thread, 1 MPI rank ---"
 srun --cpu-freq=2200000-2200000 --ntasks=1 --cpus-per-task=128 ${CMD} weak 128
