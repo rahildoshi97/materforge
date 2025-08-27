@@ -23,8 +23,22 @@ lumi_cpu() {
 lumi_gpu() {
     module purge  
     module --force purge
+
+    # Clear ALL potentially problematic environment variables
+    unset HIP_FLAGS
+    unset HIPCXX_FLAGS
+    unset CMAKE_HIP_FLAGS
+    unset CRAY_ROCM_INCLUDE_OPTS
+    unset HIP_COMPILE_FLAGS
+    unset HIP_LINK_FLAGS
+
     module load LUMI/24.03 partition/G PrgEnv-cray buildtools/24.03 craype-accel-amd-gfx90a rocm/6.0.3
     module load cray-mpich
+
+    # Force override the problematic variable AFTER module loading
+    export CRAY_ROCM_INCLUDE_OPTS="-I/opt/rocm-6.0.3/include -I/opt/rocm-6.0.3/include/rocprofiler -I/opt/rocm-6.0.3/include/roctracer -I/opt/rocm-6.0.3/include/hip"
+
+    unset CRAY_ROCM_INCLUDE_OPTS
 
     # Set ROCm environment variables
     export ROCM_PATH=/opt/rocm-6.0.3
@@ -33,9 +47,12 @@ lumi_gpu() {
     export HIP_DEVICE_LIB_PATH=/opt/rocm-6.0.3/amdgcn/bitcode
     export CMAKE_PREFIX_PATH="/opt/rocm-6.0.3:/opt/rocm-6.0.3/lib/cmake"
     export HIP_PLATFORM=amd
+
+    # Additional safeguards - clear any cached CMake HIP flags
+    export CMAKE_HIP_FLAGS=""
     
-    # Set HIP compiler flags to avoid spacing issues
-    export HIPCXX_FLAGS="-D__HIP_PLATFORM_AMD__=1 -D__HIP__=1"
+    # Override the problematic CRAY_ROCM_INCLUDE_OPTS without the -D__HIP_PLATFORM_AMD__ 
+    # export CRAY_ROCM_INCLUDE_OPTS="-I/opt/rocm-6.0.3/include -I/opt/rocm-6.0.3/include/rocprofiler -I/opt/rocm-6.0.3/include/roctracer -I/opt/rocm-6.0.3/include/hip"
 
     # Activate virtual environment
     if [[ -f /project/project_465001284/venvs/materforge/bin/activate ]]; then
