@@ -24,6 +24,7 @@ lumi_gpu() {
     module purge  
     module --force purge
     module load LUMI/24.03 partition/G PrgEnv-cray buildtools/24.03 craype-accel-amd-gfx90a rocm/6.0.3
+    module load cray-mpich
 
     # Set ROCm environment variables
     export ROCM_PATH=/opt/rocm-6.0.3
@@ -40,6 +41,7 @@ lumi_gpu() {
     echo "✅ ROCm 6.0.3 environment configured for materforge"
     echo "Partition: GPU (partition/G)"
     echo "Compiler: $(CC --version | head -1)"
+    echo "MPI: $(module list cray-mpich 2>&1 | grep cray-mpich || echo 'Not loaded')"
 }
 
 # Default behavior: setup CPU environment
