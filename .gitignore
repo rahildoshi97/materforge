@@ -337,3 +337,4 @@ benchmarking-scripts/**/build_*/
 benchmarking-scripts/**/build_materforge_*
 benchmarking-scripts/**/materforge_src
 benchmarking-scripts/**/*.log
+benchmarking-scripts/**/*.out
