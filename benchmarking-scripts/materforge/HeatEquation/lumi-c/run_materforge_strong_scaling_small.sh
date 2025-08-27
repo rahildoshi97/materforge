@@ -17,10 +17,10 @@ JOB_DIR="$HOME/lss-rdm/jobs/$SLURM_JOBID/"
 mkdir -p ${JOB_DIR} || exit 1
 cd ${JOB_DIR}
 
-CMD="${HOME}/rahil/repos/materforge/apps/cmake-build-lumi-release-cpu/${BINARY}"
+CMD="/project/project_465001284/repos/materforge/apps/cmake-build-lumi-release-cpu/${BINARY}"
 
 module load LUMI/24.03 partition/C PrgEnv-gnu buildtools/24.03 cray-python/3.11.7
-source ~/rahil/venvs/materforge/bin/activate
+source /project/project_465001284/venvs/materforge/bin/activate
 
 echo "=== Strong Scaling Test - Small (Fixed Total Size: 256³) ==="
 

@@ -40,11 +40,11 @@ cd ${JOB_DIR}
 cp ${BUILD_DIR}/build_*.log .
 
 set -x
-CMD="${HOME}/rahil/repos/materforge/apps/cmake-build-lumi-release-cpu/${BINARY}"
+CMD="/project/project_465001284/repos/materforge/apps/cmake-build-lumi-release-cpu/${BINARY}"
 
 # Load environment
 module load LUMI/24.03 partition/C PrgEnv-gnu buildtools/24.03 cray-python/3.11.7
-source ~/rahil/venvs/materforge/bin/activate
+source /project/project_465001284/venvs/materforge/bin/activate
 
 echo "=== Single Node Performance Tests ==="
 
