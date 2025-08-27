@@ -9,7 +9,7 @@ lumi_cpu() {
     module load PrgEnv-gnu
     module load buildtools/24.03 cray-python/3.11.7
 
-    # Activate venv AFTER loading modules
+    # Activate virtual environment
     if [[ -f /project/project_465001284/venvs/materforge/bin/activate ]]; then
         source /project/project_465001284/venvs/materforge/bin/activate
     fi
@@ -31,6 +31,11 @@ lumi_gpu() {
     export DEVICE_LIB_PATH=/opt/rocm-6.0.3/amdgcn/bitcode
     export HIP_DEVICE_LIB_PATH=/opt/rocm-6.0.3/amdgcn/bitcode
     export CMAKE_PREFIX_PATH="/opt/rocm-6.0.3:/opt/rocm-6.0.3/lib/cmake"
+
+    # Activate virtual environment
+    if [[ -f /project/project_465001284/venvs/materforge/bin/activate ]]; then
+        source /project/project_465001284/venvs/materforge/bin/activate
+    fi
 
     echo "✅ ROCm 6.0.3 environment configured for materforge"
     echo "Partition: GPU (partition/G)"
