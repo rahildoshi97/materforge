@@ -42,13 +42,13 @@ mkdir -p ${BUILD_DIR} || exit 1
 	[[ -n "$MATERFORGE_COMMIT" ]] && git checkout $MATERFORGE_COMMIT
 	git pull
 	
-	# Load LUMI environment
+	# Load LUMI-C modules
 	module load LUMI/24.03 partition/C
 	module load PrgEnv-gnu
 	module load buildtools/24.03 cray-python/3.11.7
 	module list
 	
-	# Python virtual environment setup - updated path
+	# Activate virtual environment
 	source /project/project_465001284/venvs/materforge/bin/activate
 	
 	# Use existing cmake build from apps directory
