@@ -32,6 +32,10 @@ lumi_gpu() {
     export DEVICE_LIB_PATH=/opt/rocm-6.0.3/amdgcn/bitcode
     export HIP_DEVICE_LIB_PATH=/opt/rocm-6.0.3/amdgcn/bitcode
     export CMAKE_PREFIX_PATH="/opt/rocm-6.0.3:/opt/rocm-6.0.3/lib/cmake"
+    export HIP_PLATFORM=amd
+    
+    # Set HIP compiler flags to avoid spacing issues
+    export HIPCXX_FLAGS="-D__HIP_PLATFORM_AMD__=1 -D__HIP__=1"
 
     # Activate virtual environment
     if [[ -f /project/project_465001284/venvs/materforge/bin/activate ]]; then
