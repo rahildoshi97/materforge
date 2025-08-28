@@ -55,7 +55,7 @@ mkdir -p ${BUILD_DIR} || exit 1
 	cd ${SRC_DIR}/apps
 	
 	# Clean any existing builds
-	rm -rf cmake-build-lumi-*
+	rm -rf cmake-build-lumi-release-cpu
 	
 	echo "Building materforge using existing cmake system"
 	

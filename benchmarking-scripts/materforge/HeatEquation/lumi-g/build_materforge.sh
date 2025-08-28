@@ -44,6 +44,7 @@ mkdir -p ${BUILD_DIR} || exit 1
 
     # Load LUMI-G modules
     module load LUMI/24.03 partition/G buildtools/24.03 rocm/6.0.3 craype-accel-amd-gfx90a PrgEnv-cray
+    module load cray-mpich
     module list
     
     # Activate virtual environment
@@ -53,7 +54,7 @@ mkdir -p ${BUILD_DIR} || exit 1
     cd ${SRC_DIR}/apps
 
 	# Clean any existing builds
-	rm -rf cmake-build-lumi-*
+	rm -rf cmake-build-lumi-release-gpu
 	
 	echo "Building materforge using existing cmake system"
 	
