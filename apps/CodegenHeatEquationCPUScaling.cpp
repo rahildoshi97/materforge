@@ -27,7 +27,6 @@ void swapFields(StructuredBlockForest& blocks, BlockDataID uID, BlockDataID uTmp
     }
 }
 
-
 // Automatic process decomposition for any number of processes
 std::tuple<uint_t, uint_t, uint_t> calculateProcessDecomposition(uint_t numProcesses) {
     // Find best factorization for 3D decomposition
@@ -152,7 +151,7 @@ int main(int argc, char** argv) {
         yCells = problemSize;
         zCells = problemSize;
         // Domain size scales with process count
-        xSize = real_c(procs_x * 1.0);  // or gpus_x for GPU
+        xSize = real_c(procs_x * 1.0);
         ySize = real_c(procs_y * 1.0);
         zSize = real_c(procs_z * 1.0);
         WALBERLA_LOG_INFO_ON_ROOT("Weak Scaling: " << problemSize << "^3 cells per process");

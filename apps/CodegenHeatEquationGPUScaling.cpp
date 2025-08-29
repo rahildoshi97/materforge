@@ -2,7 +2,6 @@
 //! \file CodegenHeatEquationGPUScaling.cpp
 //! \author Rahil Doshi
 //======================================================================================================================
-
 #include "blockforest/Initialization.h"
 #include "core/Environment.h"
 #include "field/AddToStorage.h"
@@ -31,10 +30,37 @@ void swapFields(StructuredBlockForest& blocks, BlockDataID uID, BlockDataID uTmp
     }
 }
 
+// Automatic process decomposition for any number of processes (same as CPU)
+std::tuple<uint_t, uint_t, uint_t> calculateProcessDecomposition(uint_t numProcesses) {
+    // Find best factorization for 3D decomposition
+    uint_t procs_x = 1, procs_y = 1, procs_z = 1;
+    
+    // Start with cube root as base
+    uint_t base = uint_c(std::round(std::cbrt(real_c(numProcesses))));
+    
+    // Find factors close to cube root
+    for (uint_t z = base; z >= 1; --z) {
+        if (numProcesses % z == 0) {
+            uint_t remaining = numProcesses / z;
+            uint_t base_xy = uint_c(std::round(std::sqrt(real_c(remaining))));
+            
+            for (uint_t y = base_xy; y >= 1; --y) {
+                if (remaining % y == 0) {
+                    uint_t x = remaining / y;
+                    procs_x = x; procs_y = y; procs_z = z;
+                    goto found;
+                }
+            }
+        }
+    }
+    found:
+    return std::make_tuple(procs_x, procs_y, procs_z);
+}
+
 void initDirichletBoundaries(const shared_ptr<StructuredBlockForest>& blocks,
                             BlockDataID uId, BlockDataID uTmpId,
                             BlockDataID uCpuId, BlockDataID uTmpCpuId) {
-    // Initialize on CPU, then copy to GPU
+    // Simplified boundary initialization - hot north (3800K), cold elsewhere (300K)
     for (auto block = blocks->begin(); block != blocks->end(); ++block) {
         ScalarField* u = block->getData<ScalarField>(uCpuId);
         ScalarField* u_tmp = block->getData<ScalarField>(uTmpCpuId);
@@ -44,7 +70,7 @@ void initDirichletBoundaries(const shared_ptr<StructuredBlockForest>& blocks,
             CellInterval north = u->xyzSizeWithGhostLayer();
             north.yMin() = north.yMax();
             for (auto cell = north.begin(); cell != north.end(); ++cell) {
-                u->get(*cell) = real_c(3800.0);
+                u->get(*cell) = real_c(3800.0);  // Hot boundary
                 u_tmp->get(*cell) = real_c(3800.0);
             }
         }
@@ -53,9 +79,8 @@ void initDirichletBoundaries(const shared_ptr<StructuredBlockForest>& blocks,
             CellInterval south = u->xyzSizeWithGhostLayer();
             south.yMax() = south.yMin();
             for (auto cell = south.begin(); cell != south.end(); ++cell) {
-                real_t v = real_c(300.0); // Cold boundary
-                u->get(*cell) = v;
-                u_tmp->get(*cell) = v;
+                u->get(*cell) = real_c(300.0); // Cold boundary
+                u_tmp->get(*cell) = real_c(300.0);
             }
         }
         // East boundary (X max)
@@ -107,169 +132,176 @@ void initDirichletBoundaries(const shared_ptr<StructuredBlockForest>& blocks,
 int main(int argc, char** argv) {
     mpi::Environment env(argc, argv);
     gpu::selectDeviceBasedOnMpiRank();
-
-    // Command line argument parsing
+    
+    // Command line argument parsing (same as CPU)
     bool weakScaling = false;
-    uint_t baseCells = 256;  // Default cells per GPU
-
+    uint_t problemSize = 256;  // Default cells per block/rank
+    
     if (argc > 1) {
         std::string scalingType(argv[1]);
         if (scalingType == "weak") weakScaling = true;
+        else if (scalingType == "strong") weakScaling = false;
+        else {WALBERLA_LOG_WARNING_ON_ROOT("Unknown scaling type: " << scalingType << ". Use 'weak' or 'strong'. Defaulting to strong.");}
     }
     if (argc > 2) {
-        baseCells = uint_c(std::stoi(argv[2]));
+        problemSize = uint_c(std::stoi(argv[2]));
     }
-
-    const uint_t numGPUs = uint_c(MPIManager::instance()->numProcesses());
-
-    // Calculate domain decomposition for GPUs
-    uint_t gpus_x = 1, gpus_y = 1, gpus_z = 1;
-    if (numGPUs == 1) {
-        gpus_x = 1; gpus_y = 1; gpus_z = 1;
-    } else if (numGPUs == 2) {
-        gpus_x = 2; gpus_y = 1; gpus_z = 1;
-    } else if (numGPUs == 4) {
-        gpus_x = 2; gpus_y = 2; gpus_z = 1;
-    } else if (numGPUs == 8) {
-        gpus_x = 2; gpus_y = 2; gpus_z = 2;
-    } else if (numGPUs == 16) {
-        gpus_x = 2; gpus_y = 2; gpus_z = 4;
-    } else if (numGPUs == 32) {
-        gpus_x = 2; gpus_y = 4; gpus_z = 4;
-    } else if (numGPUs == 64) {
-        gpus_x = 4; gpus_y = 4; gpus_z = 4;
-    } else {
-        WALBERLA_ABORT("Unsupported number of GPUs: " << numGPUs);
-    }
-
+    
+    const uint_t numProcesses = uint_c(MPIManager::instance()->numProcesses());
+    
+    // Automatic process decomposition (same as CPU)
+    uint_t procs_x, procs_y, procs_z;
+    std::tie(procs_x, procs_y, procs_z) = calculateProcessDecomposition(numProcesses);
+    
     uint_t xCells, yCells, zCells;
     real_t xSize, ySize, zSize;
-
+    
     if (weakScaling) {
-        // Weak scaling: constant cells per GPU/process
-        xCells = baseCells;
-        yCells = baseCells;
-        zCells = baseCells;
-        // Domain size scales with GPU/processes count
-        xSize = real_c(gpus_x * 1.0);  // or procs_x for CPU
-        ySize = real_c(gpus_y * 1.0);
-        zSize = real_c(gpus_z * 1.0);
+        // Weak scaling: constant cells per process
+        xCells = problemSize;
+        yCells = problemSize;
+        zCells = problemSize;
+        // Domain size scales with process count
+        xSize = real_c(procs_x * 1.0);
+        ySize = real_c(procs_y * 1.0);
+        zSize = real_c(procs_z * 1.0);
+        WALBERLA_LOG_INFO_ON_ROOT("Weak Scaling: " << problemSize << "^3 cells per process");
     } else {
         // Strong scaling: fixed total domain size
-        const uint_t totalSize = baseCells;
-        xCells = totalSize / gpus_x;
-        yCells = totalSize / gpus_y;
-        zCells = totalSize / gpus_z;
+        const uint_t totalCellsPerDim = problemSize;
+        xCells = totalCellsPerDim / procs_x;
+        yCells = totalCellsPerDim / procs_y;
+        zCells = totalCellsPerDim / procs_z;
+        
+        // Ensure cells are evenly divisible
+        if (totalCellsPerDim % procs_x != 0 || totalCellsPerDim % procs_y != 0 || totalCellsPerDim % procs_z != 0) {
+            WALBERLA_ABORT("Problem size " << problemSize << " not evenly divisible by process grid " 
+                          << procs_x << "x" << procs_y << "x" << procs_z);
+        }
+        
         // Physical domain remains constant
         xSize = real_c(1.0);
         ySize = real_c(1.0);
         zSize = real_c(1.0);
+        WALBERLA_LOG_INFO_ON_ROOT("Strong Scaling: " << problemSize << "^3 total cells");
     }
-
-    const uint_t xBlocks = gpus_x;
-    const uint_t yBlocks = gpus_y;
-    const uint_t zBlocks = gpus_z;
-
-    WALBERLA_LOG_INFO_ON_ROOT("GPU Scaling Type: " << (weakScaling ? "Weak" : "Strong"));
-    WALBERLA_LOG_INFO_ON_ROOT("GPUs: " << numGPUs);
-    WALBERLA_LOG_INFO_ON_ROOT("Cells per GPU: " << xCells << "×" << yCells << "×" << zCells);
-    WALBERLA_LOG_INFO_ON_ROOT("Memory per GPU: ~" << (3 * xCells * yCells * zCells * 8 / 1024 / 1024) << " MB");
-
-    if (numGPUs != xBlocks * yBlocks * zBlocks) {
-        WALBERLA_ABORT("GPU count mismatch!");
+    
+    const uint_t xBlocks = procs_x;
+    const uint_t yBlocks = procs_y;
+    const uint_t zBlocks = procs_z;
+    
+    WALBERLA_LOG_INFO_ON_ROOT("=== GPU Scaling Configuration ===");
+    WALBERLA_LOG_INFO_ON_ROOT("Scaling Type: " << (weakScaling ? "Weak" : "Strong"));
+    WALBERLA_LOG_INFO_ON_ROOT("Processes: " << numProcesses);
+    WALBERLA_LOG_INFO_ON_ROOT("Process Grid: " << procs_x << "x" << procs_y << "x" << procs_z);
+    WALBERLA_LOG_INFO_ON_ROOT("Cells per process: " << xCells << "x" << yCells << "x" << zCells);
+    WALBERLA_LOG_INFO_ON_ROOT("Total cells: " << (xCells*xBlocks) << "x" << (yCells*yBlocks) << "x" << (zCells*zBlocks));
+    WALBERLA_LOG_INFO_ON_ROOT("Total cells count: " << (xCells*yCells*zCells*numProcesses));
+    
+    // Verification
+    if (numProcesses != xBlocks * yBlocks * zBlocks) {
+        WALBERLA_ABORT("Process decomposition failed: " << numProcesses << " != " << xBlocks*yBlocks*zBlocks);
     }
-
-    const real_t dx = xSize / real_c(xBlocks * xCells + uint_c(1));
-    const real_t dt = real_c(1);
-    const uint_t timeSteps = uint_c(2e4);
-    const uint_t vtkWriteFrequency = uint_c(400);
-
+    
+    const real_t dx = xSize / real_c(xBlocks * xCells);  // Fixed: removed +1
+    const real_t dt = real_c(1e-3);  // Same as CPU
+    const uint_t timeSteps = uint_c(1e3);  // Same as CPU
+    const uint_t vtkWriteFrequency = uint_c(0);  // Same as CPU (disabled by default)
+    
     // Block storage setup
     auto aabb = math::AABB(real_c(0.5) * dx, real_c(0.5) * dx, real_c(0.5) * dx,
                           xSize - real_c(0.5) * dx, ySize - real_c(0.5) * dx, zSize - real_c(0.5) * dx);
-
+    
     shared_ptr<StructuredBlockForest> blocks = blockforest::createUniformBlockGrid(
         aabb, xBlocks, yBlocks, zBlocks, xCells, yCells, zCells, true, false, false, false);
-
+    
     // Field initialization with pinned memory
     auto allocator = make_shared<gpu::HostFieldAllocator<real_t>>();
     BlockDataID uFieldCpuId = field::addToStorage<ScalarField>(blocks, "u_cpu", real_c(300.0), field::fzyx, uint_c(1), allocator);
     BlockDataID uTmpFieldCpuId = field::addToStorage<ScalarField>(blocks, "u_tmp_cpu", real_c(300.0), field::fzyx, uint_c(1), allocator);
     BlockDataID alphaFieldCpuId = field::addToStorage<ScalarField>(blocks, "alpha_cpu", real_c(0.0), field::fzyx, uint_c(1), allocator);
-
+    
     // GPU fields
     BlockDataID uFieldId = gpu::addGPUFieldToStorage<ScalarField>(blocks, uFieldCpuId, "u", true);
     BlockDataID uTmpFieldId = gpu::addGPUFieldToStorage<ScalarField>(blocks, uTmpFieldCpuId, "u_tmp", true);
     BlockDataID alphaFieldId = gpu::addGPUFieldToStorage<ScalarField>(blocks, alphaFieldCpuId, "alpha", true);
-
+    
     // GPU Communication
     constexpr bool cudaEnabledMPI = false;
     gpu::communication::UniformGPUScheme<stencil::D3Q19> commScheme(blocks, cudaEnabledMPI);
     auto packInfo = make_shared<gpu::communication::MemcpyPackInfo<GPUScalarField>>(uFieldId);
     commScheme.addPackInfo(packInfo);
-
-    // Initialize boundaries
+    
+    // Boundary conditions
     initDirichletBoundaries(blocks, uFieldId, uTmpFieldId, uFieldCpuId, uTmpFieldCpuId);
-
-    // GPU Timeloop
+    
+    // Timeloop
     SweepTimeloop timeloop(blocks, timeSteps);
-    //<< BeforeFunction([&]() {commScheme.getCommunicateFunctor();}, "GPU Communication")
-    timeloop.add() << BeforeFunction(commScheme.getCommunicateFunctor(), "GPU Communication")
+    timeloop.add() << BeforeFunction(commScheme.getCommunicateFunctor(), "Communication")
                    << Sweep(HeatEquationKernelWithMaterialGPU(alphaFieldId, uFieldId, uTmpFieldId, dt, dx), "HeatSolverGPU")
-                   << AfterFunction([&]() {swapFields(*blocks, uFieldId, uTmpFieldId);}, "GPU Swap");
-
+                   << AfterFunction([blocks, uFieldId, uTmpFieldId]() {swapFields(*blocks, uFieldId, uTmpFieldId);}, "Swap");
+    
     if (vtkWriteFrequency > 0) {
         std::string scalingType = weakScaling ? "weak" : "strong";
-        std::string vtkFilename = "vtk_GPU_" + scalingType + "_" + std::to_string(baseCells) + 
-                                "cells_" + std::to_string(numGPUs) + "gpu(s)";
-        std::string vtkDirectory = "vtk_out_gpu_" + scalingType + "_" + std::to_string(baseCells) + 
-                                "cells_" + std::to_string(numGPUs) + "gpu(s)";
+        std::string vtkFilename = "vtk_GPU_" + scalingType + "_" + std::to_string(problemSize) + 
+                                "cells_" + std::to_string(numProcesses) + "proc(s)";
+        std::string vtkDirectory = "vtk_out_gpu_" + scalingType + "_" + std::to_string(problemSize) + 
+                                "cells_" + std::to_string(numProcesses) + "proc(s)";
         auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, vtkFilename, vtkWriteFrequency, 0, false, vtkDirectory,
                                                        "simulation_step", false, true, true, false, 0);
         auto tempWriter = make_shared<field::VTKWriter<ScalarField>>(uFieldCpuId, "temperature");
         vtkOutput->addCellDataWriter(tempWriter);
         auto alphaWriter = make_shared<field::VTKWriter<ScalarField>>(alphaFieldCpuId, "thermal_diffusivity");
         vtkOutput->addCellDataWriter(alphaWriter);
-        vtkOutput->addBeforeFunction([&]() {
+        vtkOutput->addBeforeFunction([blocks, uFieldCpuId, uFieldId, alphaFieldCpuId, alphaFieldId]() {
             // Copy GPU data to CPU for VTK output
-            // Only copy when actually writing VTK (every 400 steps)
             gpu::fieldCpy<ScalarField, GPUScalarField>(blocks, uFieldCpuId, uFieldId);
             gpu::fieldCpy<ScalarField, GPUScalarField>(blocks, alphaFieldCpuId, alphaFieldId);
         });
         timeloop.addFuncAfterTimeStep(vtk::writeFiles(vtkOutput), "VTK Output GPU");
     }
-
+    
     // Benchmark
     const uint_t warmupSteps = uint_c(5);
     for (uint_t i = 0; i < warmupSteps; ++i)
         timeloop.singleStep();
-
+    
     WcTimingPool timeloopTiming;
     WcTimer simTimer;
-
+    
     WALBERLA_MPI_WORLD_BARRIER()
     WALBERLA_GPU_CHECK(gpuDeviceSynchronize())
     WALBERLA_LOG_INFO_ON_ROOT("Starting GPU simulation with " << timeSteps << " time steps")
-
+    
     simTimer.start();
     timeloop.run(timeloopTiming);
     WALBERLA_GPU_CHECK(gpuDeviceSynchronize())
     simTimer.end();
-
+    
     double simTime = simTimer.max();
     WALBERLA_MPI_SECTION() { walberla::mpi::reduceInplace(simTime, walberla::mpi::MAX); }
-
+    
     const auto reducedTimeloopTiming = timeloopTiming.getReduced();
-    WALBERLA_LOG_RESULT_ON_ROOT("GPU Time loop timing:\n" << *reducedTimeloopTiming)
-
-    uint_t totalCellUpdates = timeSteps * xCells * yCells * zCells;
-    uint_t mlups = totalCellUpdates / uint_c(simTime * 1000000.0);
-    WALBERLA_LOG_RESULT_ON_ROOT("MLUPS per GPU: " << mlups)
-
-    uint_t globalCells = xCells * yCells * zCells * numGPUs;
-    uint_t globalMLUPS = timeSteps * globalCells / uint_c(simTime * 1000000.0);
-    WALBERLA_LOG_RESULT_ON_ROOT("Global GPU MLUPS: " << globalMLUPS)
-
+    WALBERLA_LOG_RESULT_ON_ROOT("=== Performance Results ===")
+    WALBERLA_LOG_RESULT_ON_ROOT("Total simulation time: " << simTime << " seconds")
+    
+    // Calculate performance metrics (same as CPU)
+    uint_t cellsPerProcess = xCells * yCells * zCells;
+    uint_t totalCells = cellsPerProcess * numProcesses;
+    uint_t totalCellUpdates = timeSteps * totalCells;
+    
+    double mlupsPerProcess = (timeSteps * cellsPerProcess) / (simTime * 1e6);
+    double totalMLUPS = totalCellUpdates / (simTime * 1e6);
+    
+    WALBERLA_LOG_RESULT_ON_ROOT("MLUPS per process: " << mlupsPerProcess)
+    WALBERLA_LOG_RESULT_ON_ROOT("Total MLUPS: " << totalMLUPS)
+    WALBERLA_LOG_RESULT_ON_ROOT("Time per timestep: " << (simTime / timeSteps * 1000) << " ms")
+    WALBERLA_LOG_RESULT_ON_ROOT("Cells per process: " << cellsPerProcess)
+    WALBERLA_LOG_RESULT_ON_ROOT("Total cells: " << totalCells)
+    
+    // Timing breakdown
+    WALBERLA_LOG_RESULT_ON_ROOT("Detailed timing:\n" << *reducedTimeloopTiming)
+    
     return EXIT_SUCCESS;
 }
 
