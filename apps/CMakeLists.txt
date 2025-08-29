@@ -117,11 +117,25 @@ if(BUILD_CPU_ONLY)
 
 else()
     if(GPU_TYPE STREQUAL "HIP")
-        # Find MPI
         find_package(MPI REQUIRED)
+        message(STATUS "MPI_CXX_INCLUDE_DIRS: ${MPI_CXX_INCLUDE_DIRS}")
+        
+        # Get GTL library information from environment
+        set(PE_MPICH_GTL_DIR_amd_gfx90a "$ENV{PE_MPICH_GTL_DIR_amd_gfx90a}")
+        set(PE_MPICH_GTL_LIBS_amd_gfx90a "$ENV{PE_MPICH_GTL_LIBS_amd_gfx90a}")
+        
+        # Strip the -L and -l prefixes for CMake
+        if(PE_MPICH_GTL_DIR_amd_gfx90a)
+            string(REPLACE "-L" "" GTL_LIB_DIR "${PE_MPICH_GTL_DIR_amd_gfx90a}")
+        endif()
+        if(PE_MPICH_GTL_LIBS_amd_gfx90a)
+            string(REPLACE "-l" "" GTL_LIB_NAME "${PE_MPICH_GTL_LIBS_amd_gfx90a}")
+        endif()
         
         # Debug: Print MPI include directories
         message(STATUS "MPI_CXX_INCLUDE_DIRS: ${MPI_CXX_INCLUDE_DIRS}")
+        message(STATUS "GTL_LIB_DIR: ${GTL_LIB_DIR}")
+        message(STATUS "GTL_LIB_NAME: ${GTL_LIB_NAME}")
         
         # Create executables with full MPI::MPI_CXX target
         add_executable(HeatEquationWithMaterialGPU)
@@ -132,6 +146,12 @@ else()
                 hip::device
                 MPI::MPI_CXX)
         
+        # Link GTL library correctly
+        if(GTL_LIB_DIR AND GTL_LIB_NAME)
+            target_link_directories(HeatEquationWithMaterialGPU PRIVATE ${GTL_LIB_DIR})
+            target_link_libraries(HeatEquationWithMaterialGPU PRIVATE ${GTL_LIB_NAME})
+        endif()
+
         # Add compile options for HIP
         target_compile_options(HeatEquationWithMaterialGPU PRIVATE 
             $<$<COMPILE_LANGUAGE:HIP>:--offload-arch=gfx90a>)
@@ -147,7 +167,7 @@ else()
                 ${CMAKE_CURRENT_BINARY_DIR}/_gen/HeatEquationWithMaterialGPU/gen/HeatEquationKernelWithMaterialGPU.cpp
                 PROPERTIES LANGUAGE HIP)
 
-        # Same pattern for CodegenHeatEquationGPUScaling
+        # CodegenHeatEquationGPUScaling
         add_executable(CodegenHeatEquationGPUScaling)
         target_sources(CodegenHeatEquationGPUScaling PRIVATE CodegenHeatEquationGPUScaling.cpp)
         target_link_libraries(CodegenHeatEquationGPUScaling PRIVATE
@@ -156,6 +176,12 @@ else()
                 hip::device
                 MPI::MPI_CXX)
         
+        # Link GTL library correctly
+        if(GTL_LIB_DIR AND GTL_LIB_NAME)
+            target_link_directories(CodegenHeatEquationGPUScaling PRIVATE ${GTL_LIB_DIR})
+            target_link_libraries(CodegenHeatEquationGPUScaling PRIVATE ${GTL_LIB_NAME})
+        endif()
+
         target_compile_options(CodegenHeatEquationGPUScaling PRIVATE 
             $<$<COMPILE_LANGUAGE:HIP>:--offload-arch=gfx90a>)
         
@@ -170,5 +196,45 @@ else()
                 PROPERTIES LANGUAGE HIP)
 
         message(STATUS "HIP GPU executables will be built: HeatEquationWithMaterialGPU, CodegenHeatEquationGPUScaling")
+    
+    elseif(GPU_TYPE STREQUAL "CUDA")
+        # Find MPI for CUDA builds too
+        find_package(MPI REQUIRED)
+
+        # Debug: Print MPI include directories
+        message(STATUS "MPI_CXX_INCLUDE_DIRS: ${MPI_CXX_INCLUDE_DIRS}")
+
+        # Create HeatEquationWithMaterialGPU executable
+        add_executable(HeatEquationWithMaterialGPU)
+        target_sources(HeatEquationWithMaterialGPU PRIVATE CodegenHeatEquationWithMaterialGPU.cpp)
+        target_link_libraries(HeatEquationWithMaterialGPU PRIVATE
+                walberla::blockforest walberla::core walberla::gpu walberla::field
+                walberla::stencil walberla::timeloop walberla::vtk walberla::pde
+                MPI::MPI_CXX)
+        set_property(TARGET HeatEquationWithMaterialGPU PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+        walberla_generate_sources(HeatEquationWithMaterialGPU
+                SCRIPTS HeatEquationKernelWithMaterialGPU.py
+                FILE_EXTENSIONS .cu .hpp)
+        set_source_files_properties(
+                ${CMAKE_CURRENT_BINARY_DIR}/_gen/HeatEquationWithMaterialGPU/gen/HeatEquationKernelWithMaterialGPU.cu
+                PROPERTIES LANGUAGE CUDA)
+
+        # GPU Scaling executable
+        add_executable(CodegenHeatEquationGPUScaling)
+        target_sources(CodegenHeatEquationGPUScaling PRIVATE CodegenHeatEquationGPUScaling.cpp)
+        target_link_libraries(CodegenHeatEquationGPUScaling PRIVATE
+                walberla::blockforest walberla::core walberla::gpu walberla::field
+                walberla::stencil walberla::timeloop walberla::vtk walberla::pde
+                MPI::MPI_CXX)
+        # Set CUDA properties for scaling executable
+        set_property(TARGET CodegenHeatEquationGPUScaling PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+        walberla_generate_sources(CodegenHeatEquationGPUScaling
+                SCRIPTS HeatEquationKernelWithMaterialGPU.py
+                FILE_EXTENSIONS .cu .hpp)
+        set_source_files_properties(
+                ${CMAKE_CURRENT_BINARY_DIR}/_gen/CodegenHeatEquationGPUScaling/gen/HeatEquationKernelWithMaterialGPU.cu
+                PROPERTIES LANGUAGE CUDA)
+
+        message(STATUS "CUDA GPU executables will be built: HeatEquationWithMaterialGPU, CodegenHeatEquationGPUScaling")
     endif()
 endif()
