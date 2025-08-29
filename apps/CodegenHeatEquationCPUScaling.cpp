@@ -161,18 +161,15 @@ int main(int argc, char** argv) {
         xCells = totalCellsPerDim / procs_x;
         yCells = totalCellsPerDim / procs_y;
         zCells = totalCellsPerDim / procs_z;
-
         // Ensure cells are evenly divisible
         if (totalCellsPerDim % procs_x != 0 || totalCellsPerDim % procs_y != 0 || totalCellsPerDim % procs_z != 0) {
             WALBERLA_ABORT("Problem size " << problemSize << " not evenly divisible by process grid " 
                           << procs_x << "x" << procs_y << "x" << procs_z);
         }
-
         // Physical domain remains constant
         xSize = real_c(1.0);
         ySize = real_c(1.0);
         zSize = real_c(1.0);
-
         WALBERLA_LOG_INFO_ON_ROOT("Strong Scaling: " << problemSize << "^3 total cells");
     }
 

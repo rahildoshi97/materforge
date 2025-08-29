@@ -34,16 +34,13 @@ void swapFields(StructuredBlockForest& blocks, BlockDataID uID, BlockDataID uTmp
 std::tuple<uint_t, uint_t, uint_t> calculateProcessDecomposition(uint_t numProcesses) {
     // Find best factorization for 3D decomposition
     uint_t procs_x = 1, procs_y = 1, procs_z = 1;
-    
     // Start with cube root as base
     uint_t base = uint_c(std::round(std::cbrt(real_c(numProcesses))));
-    
     // Find factors close to cube root
     for (uint_t z = base; z >= 1; --z) {
         if (numProcesses % z == 0) {
             uint_t remaining = numProcesses / z;
             uint_t base_xy = uint_c(std::round(std::sqrt(real_c(remaining))));
-            
             for (uint_t y = base_xy; y >= 1; --y) {
                 if (remaining % y == 0) {
                     uint_t x = remaining / y;
@@ -172,13 +169,11 @@ int main(int argc, char** argv) {
         xCells = totalCellsPerDim / procs_x;
         yCells = totalCellsPerDim / procs_y;
         zCells = totalCellsPerDim / procs_z;
-        
         // Ensure cells are evenly divisible
         if (totalCellsPerDim % procs_x != 0 || totalCellsPerDim % procs_y != 0 || totalCellsPerDim % procs_z != 0) {
             WALBERLA_ABORT("Problem size " << problemSize << " not evenly divisible by process grid " 
                           << procs_x << "x" << procs_y << "x" << procs_z);
         }
-        
         // Physical domain remains constant
         xSize = real_c(1.0);
         ySize = real_c(1.0);
