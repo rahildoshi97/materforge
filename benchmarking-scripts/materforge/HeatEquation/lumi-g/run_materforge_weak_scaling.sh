@@ -3,7 +3,7 @@
 #SBATCH --job-name=benchmark_materforge_lumi-g_weak_scaling
 #SBATCH --output=%x.%j.out
 #SBATCH --partition=standard-g
-#SBATCH --nodes=128
+#SBATCH --nodes=64
 #SBATCH --ntasks-per-node=8
 #SBATCH --gpus-per-node=8
 #SBATCH --time=0-01:00:00
@@ -61,7 +61,7 @@ export MPICH_GPU_SUPPORT_ENABLED=1
 CMD="${BUILD_DIR}/${BINARY}"
 
 # Weak scaling test: constant work per GPU
-for n in 1 2 4 8 16 32 64 128; do
+for n in 1 2 4 8 16 32 64; do
     echo "========================================="
     echo "Weak Scaling: $n nodes"
     echo "Cells per GPU: ${PROBLEM_SIZE}^3"
