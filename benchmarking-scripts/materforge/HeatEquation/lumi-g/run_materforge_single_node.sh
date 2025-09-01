@@ -13,6 +13,7 @@ unset SLURM_EXPORT_ENV
 
 # Default values
 BUILD_DIR=""
+PROBLEM_SIZE=256  # Default cells per GPU for weak scaling
 
 usage() {
     echo "Usage: $0 build_dir [problem_size]"

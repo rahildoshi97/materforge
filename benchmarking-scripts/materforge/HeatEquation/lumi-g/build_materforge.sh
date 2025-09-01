@@ -29,10 +29,10 @@ mkdir -p "${BUILD_DIR}" || { echo -e "${ERROR}Failed to create build directory: 
     
     # Clone or use existing repository
     if [ ! -d "${SRC_DIR}" ]; then
-        echo "Cloning into ${SRC_DIR}"
-        git clone -b ${MATERFORGE_BRANCH} ${MATERFORGE_REPO} ${SRC_DIR}
+        echo -e "${PROGRESS}Cloning into ${SRC_DIR}${NC}"
+        git clone --recursive -b ${MATERFORGE_BRANCH} ${MATERFORGE_REPO} ${SRC_DIR}
     else
-        echo "Using existing repository at ${SRC_DIR}"
+        echo -e "${PROGRESS}Using existing repository at ${SRC_DIR}${NC}"
     fi
 
     cd "${SRC_DIR}" || exit 1
@@ -49,6 +49,10 @@ mkdir -p "${BUILD_DIR}" || { echo -e "${ERROR}Failed to create build directory: 
     git checkout $MATERFORGE_BRANCH
     [[ -n "$MATERFORGE_COMMIT" ]] && git checkout $MATERFORGE_COMMIT
     git pull
+
+    # Initialize and update submodules
+    echo -e "${PROGRESS}Updating submodules${NC}"
+    git submodule update --init --recursive || exit 1
 
     # Load LUMI-G modules
     module load LUMI/24.03 partition/G buildtools/24.03 rocm/6.0.3 craype-accel-amd-gfx90a PrgEnv-cray
@@ -88,11 +92,12 @@ mkdir -p "${BUILD_DIR}" || { echo -e "${ERROR}Failed to create build directory: 
     # cmake --preset lumi-release-gpu \
         # -DCMAKE_CXX_FLAGS="$CMAKE_CXX_FLAGS"
 
-	# Use existing cmake presets
-    echo "Building materforge using cmake presets"
-    cmake --preset lumi-release-gpu || { echo "CMake confiCMakegure failed"; exit 1; }
-    cmake --build --preset lumi-release-gpu-build || { echo " build failed"; exit 1; }
-        
+    # Use existing cmake presets
+    cmake --preset lumi-release-gpu || { echo -e "${ERROR}CMake configure failed${NC}"; exit 1; }
+    cmake --build --preset lumi-release-gpu-build || { echo -e "${ERROR}Build failed${NC}"; exit 1; }        
+
+    set +x
+
     # Copy executables to build directory
     mkdir -p ${BUILD_DIR}/apps
     if ls cmake-build-lumi-release-gpu/CodegenHeatEquation* 1> /dev/null 2>&1; then
