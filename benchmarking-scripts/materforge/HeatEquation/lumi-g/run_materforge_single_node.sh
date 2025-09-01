@@ -11,8 +11,19 @@
 # Enable export of environment from this script to srun
 unset SLURM_EXPORT_ENV
 
+# Get the build directory argument
+if [ $# -eq 0 ]; then
+    echo "Missing build_dir argument." >&2
+    usage
+elif [ $# -gt 1 ]; then
+    echo "Too many arguments provided." >&2
+    usage
+else
+    BUILD_DIR=$1
+fi
+
 # Get build directory argument
-BUILD_DIR=$1
+echo "BUILD_DIR = $BUILD_DIR"
 BUILD_DIR=$(realpath ${BUILD_DIR})
 SCRIPT_PATH="$(realpath $0)"
 TIMESTAMP=$(date +%s)
@@ -29,7 +40,7 @@ ARGUMENT=""
 
 # Create job directory
 JOB_DIR="$HOME/lss-rdm/jobs/$SLURM_JOBID/"
-mkdir -p ${JOB_DIR}
+mkdir -p ${JOB_DIR} || usage
 cd ${JOB_DIR}
 
 # Copy build logs
@@ -54,11 +65,17 @@ module list
 set -x
 
 # LUMI-G specific configuration
-# The ideal binding is given in the LUMI documentation
 CPU_BIND="map_cpu:49,57,17,25,1,9,33,41"
 export MPICH_GPU_SUPPORT_ENABLED=1
 
 CMD="${BUILD_DIR}/${BINARY}"
+
+# Verify executable exists
+if [ ! -f "${CMD}" ]; then
+    echo "Error: Executable ${CMD} not found!"
+    ls -la ${BUILD_DIR}/
+    exit 1
+fi
 
 # Execute with srun
 srun --cpu-bind=${CPU_BIND} ${CMD}
