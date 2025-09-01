@@ -13,12 +13,12 @@ unset SLURM_EXPORT_ENV
 
 # Default values
 BUILD_DIR=""
-PROBLEM_SIZE=256  # Default cells per GPU for weak scaling
+PROBLEM_SIZE=512  # Default cells per GPU for weak scaling
 
 usage() {
     echo "Usage: $0 build_dir [problem_size]"
     echo "  build_dir    The build directory (required)"
-    echo "  problem_size Cells per GPU (optional, default: 256)"
+    echo "  problem_size Cells per GPU (optional, default: 512)"
     exit 1
 }
 
@@ -31,7 +31,7 @@ elif [ $# -gt 2 ]; then
     usage
 else
     BUILD_DIR=$1
-    PROBLEM_SIZE=${2:-256}  # Default to 256 cells per GPU
+    PROBLEM_SIZE=${2:-512}  # Default to 512 cells per GPU
 fi
 
 # Get build directory argument
