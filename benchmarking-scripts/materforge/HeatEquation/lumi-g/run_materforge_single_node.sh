@@ -11,32 +11,43 @@
 # Enable export of environment from this script to srun
 unset SLURM_EXPORT_ENV
 
-# Get the build directory argument
+# Default values
+BUILD_DIR=""
+
+usage() {
+    echo "Usage: $0 build_dir [problem_size]"
+    echo "  build_dir    The build directory (required)"
+    echo "  problem_size Cells per GPU (optional, default: 256)"
+    exit 1
+}
+
+# Argument parsing
 if [ $# -eq 0 ]; then
     echo "Missing build_dir argument." >&2
     usage
-elif [ $# -gt 1 ]; then
+elif [ $# -gt 2 ]; then
     echo "Too many arguments provided." >&2
     usage
 else
     BUILD_DIR=$1
+    PROBLEM_SIZE=${2:-256}  # Default to 256 cells per GPU
 fi
 
 # Get build directory argument
-echo "BUILD_DIR = $BUILD_DIR"
 BUILD_DIR=$(realpath ${BUILD_DIR})
 SCRIPT_PATH="$(realpath $0)"
 TIMESTAMP=$(date +%s)
 
 echo "Using BUILD_DIR: ${BUILD_DIR}"
+echo "Using PROBLEM_SIZE: ${PROBLEM_SIZE}"
+
+# Print script for reproducibility
 echo "--- currently executed script: $(basename ${SCRIPT_PATH})"
 cat "${SCRIPT_PATH}"
 echo "---"
 
 # Application configuration
-APP_PATH=""
 BINARY="CodegenHeatEquationGPUScaling"
-ARGUMENT=""
 
 # Create job directory
 JOB_DIR="$HOME/lss-rdm/jobs/$SLURM_JOBID/"
@@ -44,7 +55,7 @@ mkdir -p ${JOB_DIR} || usage
 cd ${JOB_DIR}
 
 # Copy build logs
-cp ${BUILD_DIR}/build_*.log .
+cp ${BUILD_DIR}/build_*.log . 2>/dev/null || echo "No build logs found"
 
 # Load necessary modules
 #module load LUMI/24.03 \
@@ -77,5 +88,12 @@ if [ ! -f "${CMD}" ]; then
     exit 1
 fi
 
+# Single node benchmark with weak scaling (optimal for single node)
+echo "========================================="
+echo "Single Node Weak Scaling Benchmark"
+echo "Problem size per GPU: ${PROBLEM_SIZE}^3"
+echo "Total GPUs: 8"
+echo "========================================="
+
 # Execute with srun
-srun --cpu-bind=${CPU_BIND} ${CMD}
+srun --cpu-bind=${CPU_BIND} ${CMD} weak ${PROBLEM_SIZE}
