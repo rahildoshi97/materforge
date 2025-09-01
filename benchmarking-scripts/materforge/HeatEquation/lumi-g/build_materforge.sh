@@ -17,7 +17,20 @@ SRC_DIR="/project/project_465001284/repos/materforge"
 BUILD_DIR="$(pwd)/build_${NAME}_${timestamp}"
 LOGFILE="${BUILD_DIR}/build_${timestamp}.log"
 
-mkdir -p ${BUILD_DIR} || exit 1
+# Print the values of the variables
+echo
+echo -e "${PROGRESS}--- Inside the materforge build script ---${NC}"
+echo
+echo -e "${INFO}BENCHMARK_NAME = $NAME"
+echo -e "${INFO}TIME_LABEL = $TIME_LABEL"
+echo -e "${INFO}BASE_DIR = $BASE_DIR"
+echo -e "${INFO}SRC_DIR = $SRC_DIR"
+echo -e "${INFO}BUILD_DIR = $BUILD_DIR"
+echo -e "${INFO}BUILD_LOG = $LOGFILE"
+echo -e "${INFO}SCRIPT_DIR = $(dirname "$SCRIPT_PATH")${NC}"
+echo
+
+mkdir -p "${BUILD_DIR}" || { echo -e "${ERROR}Failed to create build directory: ${BUILD_DIR}${NC}"; exit 1; }
 
 {
     date -d @${timestamp}
@@ -25,10 +38,13 @@ mkdir -p ${BUILD_DIR} || exit 1
     cat "${SCRIPT_PATH}"
     echo "---"
     
-    # Use existing repository instead of cloning
-	echo "Using existing repository at ${SRC_DIR}"
-    cd "${SRC_DIR}" || exit 1
-    echo "Current directory: $(pwd)"
+    # Clone or update the materforge source code
+    if [ ! -d "${SRC_DIR}" ]; then
+        echo "Cloning into ${SRC_DIR}"
+        git clone -b ${MATERFORGE_BRANCH} ${MATERFORGE_REPO} ${SRC_DIR}
+    else
+        echo "Using existing repository at ${SRC_DIR}"
+    fi
 
 	echo "Git Info:"
 	echo "Git url = $(git remote get-url origin 2>/dev/null || echo 'No remote')"
@@ -36,6 +52,7 @@ mkdir -p ${BUILD_DIR} || exit 1
 	echo "Git commit = $(git rev-parse HEAD 2>/dev/null || echo 'No commit')"
 	echo
     
+    cd "${SRC_DIR}" || exit 1
     git checkout .
 	git fetch -a
 	git checkout $MATERFORGE_BRANCH
@@ -47,27 +64,56 @@ mkdir -p ${BUILD_DIR} || exit 1
     module load cray-mpich
     module list
     
-    # Activate virtual environment
-    source /project/project_465001284/venvs/materforge/bin/activate
-    
-    # Use existing cmake build from apps directory
-    cd ${SRC_DIR}/apps
+    # python setup
+    VENV_PATH="/project/project_465001284/venvs/materforge"
+    if [[ -f "${VENV_PATH}/bin/activate" ]]; then
+        source "${VENV_PATH}/bin/activate"
+        echo -e "${INFO}Activated virtual environment: ${VENV_PATH}${NC}"
+    else
+        echo -e "${ERROR}Virtual environment not found at ${VENV_PATH}${NC}"
+        exit 1
+    fi
 
-	# Clean any existing builds
-	rm -rf cmake-build-lumi-release-gpu
+    PYTHON_VERSION=$(python --version 2>&1 | awk '{print $2}')
+    REQUIRED_VERSION="3.10"
+    if [[ "$(printf '%s\n' "$REQUIRED_VERSION" "$PYTHON_VERSION" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]]; then
+        echo -e "${ERROR}Python version $PYTHON_VERSION is less than required version $REQUIRED_VERSION${NC}"
+        exit 1
+    fi
+    echo -e "${INFO}Python version $PYTHON_VERSION is compatible (>= $REQUIRED_VERSION)${NC}"
+
+    # Use existing cmake build from apps directory
+    cd ${SRC_DIR}/apps || exit 1
+
+    # Clean any existing builds
+    rm -rf cmake-build-lumi-release-gpu
+
+    echo -e "${PROGRESS}Building materforge using cmake system${NC}"
+    set -x
 	
-	echo "Building materforge using existing cmake system"
-	
+    # Configure with proper flags for GTL library linking
+    # CMAKE_CXX_FLAGS="--offload-arch=gfx90a -I$MPICH_DIR/include -L$MPICH_DIR/lib -lmpi $PE_MPICH_GTL_DIR_amd_gfx90a $PE_MPICH_GTL_LIBS_amd_gfx90a"
+
+    # Use existing cmake presets but with corrected configuration
+    # cmake --preset lumi-release-gpu \
+        # -DCMAKE_CXX_FLAGS="$CMAKE_CXX_FLAGS"
+
 	# Use existing cmake presets
-	cmake --preset lumi-release-gpu
-	cmake --build --preset lumi-release-gpu-build
-    
-    # Copy executables to benchmark build directory
-    mkdir -p ${BUILD_DIR}
-    cp cmake-build-lumi-release-gpu/CodegenHeatEquation* ${BUILD_DIR}/ 2>/dev/null || true
-    
+    echo "Building materforge using cmake presets"
+    cmake --preset lumi-release-gpu || { echo "CMake confiCMakegure failed"; exit 1; }
+    cmake --build --preset lumi-release-gpu-build || { echo " build failed"; exit 1; }
+        
+    # Copy executables to build directory
+    mkdir -p ${BUILD_DIR}/apps
+    if ls cmake-build-lumi-release-gpu/CodegenHeatEquation* 1> /dev/null 2>&1; then
+        cp cmake-build-lumi-release-gpu/CodegenHeatEquation* ${BUILD_DIR}/
+        echo "Executables copied successfully"
+    else
+        echo "Warning: No CodegenHeatEquation executables found"
+    fi
+
     echo
-    echo "materforge build completed in ${BUILD_DIR}"
+    echo -e "${SUCCESS}materforge build completed in ${BUILD_DIR}${NC}"
     echo "Available executables:"
     ls -la ${BUILD_DIR}/CodegenHeatEquation* 2>/dev/null || echo "No executables built"
     
