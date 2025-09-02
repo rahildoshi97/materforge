@@ -11,12 +11,12 @@
 unset SLURM_EXPORT_ENV
 
 BUILD_DIR=""
-PROBLEM_SIZE=256  # Cells per CPU core
+PROBLEM_SIZE=384  # Cells per CPU core
 
 usage() {
     echo "Usage: $0 build_dir [cells_per_core]"
     echo "  build_dir     The build directory (required)"
-    echo "  cells_per_core Cells per CPU core (optional, default: 256)"
+    echo "  cells_per_core Cells per CPU core (optional, default: 384)"
     exit 1
 }
 
@@ -28,7 +28,7 @@ elif [ $# -gt 2 ]; then
     usage
 else
     BUILD_DIR=$1
-    PROBLEM_SIZE=${2:-256}
+    PROBLEM_SIZE=${2:-384}
 fi
 
 BUILD_DIR=$(realpath ${BUILD_DIR})
