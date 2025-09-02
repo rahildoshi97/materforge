@@ -27,9 +27,9 @@ SUCCESS='\033[1;32m'
 INFO='\033[1;36m'
 PROGRESS='\033[1;35m'
 
-{
 mkdir -p "${BUILD_DIR}" || { echo -e "${ERROR}Failed to create build directory: ${BUILD_DIR}${NC}"; exit 1; }
 
+{
 date -d @${timestamp}
 echo "--- currently executed script: $(basename ${SCRIPT_PATH})"
 cat "${SCRIPT_PATH}"
