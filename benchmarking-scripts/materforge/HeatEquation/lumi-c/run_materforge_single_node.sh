@@ -12,12 +12,12 @@ unset SLURM_EXPORT_ENV
 
 # Default values
 BUILD_DIR=""
-PROBLEM_SIZE=256  # Default cells per CPU core for weak scaling
+PROBLEM_SIZE=384  # Default cells per CPU core for weak scaling
 
 usage() {
     echo "Usage: $0 build_dir [problem_size]"
     echo "  build_dir    The build directory (required)"
-    echo "  problem_size Cells per dimension per core (optional, default: 256)"
+    echo "  problem_size Cells per dimension per core (optional, default: 384)"
     exit 1
 }
 
@@ -30,7 +30,7 @@ elif [ $# -gt 2 ]; then
     usage
 else
     BUILD_DIR=$1
-    PROBLEM_SIZE=${2:-256}
+    PROBLEM_SIZE=${2:-384}
 fi
 
 BUILD_DIR=$(realpath ${BUILD_DIR})
