@@ -19,6 +19,13 @@ BUILD_DIR="$(pwd)/build_${NAME}_${timestamp}"
 LOGFILE="${BUILD_DIR}/build_${timestamp}.log"
 VENV_PATH="${MATERFORGE_VENV:-/project/project_465001284/venvs/materforge}"
 
+# Colors
+NC='\033[0m'
+ERROR='\033[1;31m'
+SUCCESS='\033[1;32m'
+INFO='\033[1;36m'
+PROGRESS='\033[1;35m'
+
 mkdir -p "${BUILD_DIR}" || { echo -e "${ERROR}Failed to create build directory: ${BUILD_DIR}${NC}"; exit 1; }
 
 {
@@ -99,16 +106,15 @@ mkdir -p "${BUILD_DIR}" || { echo -e "${ERROR}Failed to create build directory: 
     set +x
 
     # Copy executables to build directory
-    mkdir -p ${BUILD_DIR}/apps
     if ls cmake-build-lumi-release-gpu/CodegenHeatEquation* 1> /dev/null 2>&1; then
         cp cmake-build-lumi-release-gpu/CodegenHeatEquation* ${BUILD_DIR}/
-        echo "Executables copied successfully"
+        echo -e "${SUCCESS}Executables copied successfully${NC}"
     else
-        echo "Warning: No CodegenHeatEquation executables found"
+        echo -e "${ERROR}Warning: No CodegenHeatEquation executables found${NC}"
     fi
 
     echo
-    echo -e "${SUCCESS}materforge build completed in ${BUILD_DIR}${NC}"
+    echo -e "${SUCCESS}materforge GPU build completed in ${BUILD_DIR}${NC}"
     echo "Available executables:"
     ls -la ${BUILD_DIR}/CodegenHeatEquation* 2>/dev/null || echo "No executables built"
     

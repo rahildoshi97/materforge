@@ -6,18 +6,27 @@
 # ---
 
 timestamp=$(date +%s)
+
 SCRIPT_PATH="$(realpath $0)"
 NAME="materforge"
+
 MATERFORGE_REPO="https://i10git.cs.fau.de/rahil.doshi/materforge.git"
 MATERFORGE_BRANCH="bm"
 MATERFORGE_COMMIT=""
 
-# Updated paths
-SRC_DIR="/project/project_465001284/repos/materforge"
+SRC_DIR="${MATERFORGE_SRC_DIR:-$(pwd)/materforge_src}"
 BUILD_DIR="$(pwd)/build_${NAME}_${timestamp}"
 LOGFILE="${BUILD_DIR}/build_${timestamp}.log"
+VENV_PATH="${MATERFORGE_VENV:-/project/project_465001284/venvs/materforge}"
 
-mkdir -p ${BUILD_DIR} || exit 1
+# Colors
+NC='\033[0m'
+ERROR='\033[1;31m'
+SUCCESS='\033[1;32m'
+INFO='\033[1;36m'
+PROGRESS='\033[1;35m'
+
+mkdir -p "${BUILD_DIR}" || { echo -e "${ERROR}Failed to create build directory: ${BUILD_DIR}${NC}"; exit 1; }
 
 {
 	date -d @${timestamp}
@@ -25,11 +34,17 @@ mkdir -p ${BUILD_DIR} || exit 1
 	cat "${SCRIPT_PATH}"
 	echo "---"
 	
-	# Use existing repository instead of cloning
-	echo "Using existing repository at ${SRC_DIR}"
+	# Clone or use existing repository with submodules
+	if [ ! -d "${SRC_DIR}" ]; then
+		echo -e "${PROGRESS}Cloning into ${SRC_DIR}${NC}"
+		git clone --recursive -b ${MATERFORGE_BRANCH} ${MATERFORGE_REPO} ${SRC_DIR}
+	else
+		echo -e "${PROGRESS}Using existing repository at ${SRC_DIR}${NC}"
+	fi
+
 	cd "${SRC_DIR}" || exit 1
+
 	echo "Current directory: $(pwd)"
-	
 	echo "Git Info:"
 	echo "Git url = $(git remote get-url origin 2>/dev/null || echo 'No remote')"
 	echo "Git branch = $(git branch --show-current 2>/dev/null || echo 'No branch')"
@@ -42,6 +57,10 @@ mkdir -p ${BUILD_DIR} || exit 1
 	[[ -n "$MATERFORGE_COMMIT" ]] && git checkout $MATERFORGE_COMMIT
 	git pull
 	
+	# Initialize and update submodules
+	echo -e "${PROGRESS}Updating submodules${NC}"
+	git submodule update --init --recursive || exit 1
+
 	# Load LUMI-C modules
 	module load LUMI/24.03 partition/C
 	module load PrgEnv-gnu
@@ -51,27 +70,34 @@ mkdir -p ${BUILD_DIR} || exit 1
 	# Activate virtual environment
 	source /project/project_465001284/venvs/materforge/bin/activate
 	
-	# Use existing cmake build from apps directory
-	cd ${SRC_DIR}/apps
+	# Build in apps directory
+	cd ${SRC_DIR}/apps || exit 1
 	
 	# Clean any existing builds
 	rm -rf cmake-build-lumi-release-cpu
 	
-	echo "Building materforge using existing cmake system"
+	echo -e "${PROGRESS}Building materforge for CPU using cmake presets${NC}"
+	set -x
 	
 	# Use existing cmake presets
-	cmake --preset lumi-release-cpu
-	cmake --build --preset lumi-release-cpu-build
+	cmake --preset lumi-release-cpu || { echo -e "${ERROR}CMake configure failed${NC}"; exit 1; }
+	cmake --build --preset lumi-release-cpu-build || { echo -e "${ERROR}Build failed${NC}"; exit 1; } 
 	
-	# Copy built executables to benchmark build directory
-	mkdir -p ${BUILD_DIR}
-	cp cmake-build-lumi-release-cpu/CodegenHeatEquation* ${BUILD_DIR}/ 2>/dev/null || true
+	set +x
 	
+	# Copy executables to build directory
+	if ls cmake-build-lumi-release-cpu/CodegenHeatEquation* 1> /dev/null 2>&1; then
+		cp cmake-build-lumi-release-cpu/CodegenHeatEquation* ${BUILD_DIR}/
+		echo -e "${SUCCESS}Executables copied successfully${NC}"
+	else
+		echo -e "${ERROR}Warning: No CodegenHeatEquation executables found${NC}"
+	fi
+
 	echo
-	echo "materforge build completed in ${BUILD_DIR}"
+	echo -e "${SUCCESS}materforge CPU build completed in ${BUILD_DIR}${NC}"
 	echo "Available executables:"
 	ls -la ${BUILD_DIR}/CodegenHeatEquation* 2>/dev/null || echo "No executables built"
-	
+
 	# Also show where the actual build is
 	echo "Actual build location: ${SRC_DIR}/apps/cmake-build-lumi-release-cpu"
 	echo "Available executables there:"
