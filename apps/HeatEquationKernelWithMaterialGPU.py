@@ -16,7 +16,7 @@ logging.getLogger('matplotlib').setLevel(logging.WARNING)
 logging.getLogger('PIL').setLevel(logging.WARNING)
 logging.getLogger('fontTools').setLevel(logging.WARNING)
 
-material_library = 1 # Set to 1 to use material library, 0 to use hardcoded values
+material_library = 0 # Set to 1 to use material library, 0 to use hardcoded values
 
 with SourceFileGenerator() as sfg:
     data_type = "float64"
