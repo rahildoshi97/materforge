@@ -27,7 +27,7 @@ with SourceFileGenerator() as sfg:
 
     alpha = s_k / (s_rho * s_cp)
 
-    heat_pde = ps.fd.transient(f_u) - alpha * (ps.fd.diff(f_u, 0, 0) + ps.fd.diff(f_u, 1, 1))
+    heat_pde = ps.fd.transient(f_u) - alpha * (ps.fd.diff(f_u, 0, 0) + ps.fd.diff(f_u, 1, 1) + ps.fd.diff(f_u, 2, 2))
 
     discretize = ps.fd.Discretization2ndOrder(dx=s_dx, dt=s_dt)
     heat_pde_discretized = discretize(heat_pde)
