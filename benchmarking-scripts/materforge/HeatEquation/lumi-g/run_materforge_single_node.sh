@@ -96,5 +96,5 @@ echo "Problem size per GPU: ${PROBLEM_SIZE}^3"
 echo "Total GPUs: 8"
 echo "========================================="
 
-# Execute with srun
-srun --cpu-bind=${CPU_BIND} ${CMD} weak ${PROBLEM_SIZE}
+# Execute single node test with fixed total problem size
+srun --cpu-bind=${CPU_BIND} ${CMD} single ${PROBLEM_SIZE}

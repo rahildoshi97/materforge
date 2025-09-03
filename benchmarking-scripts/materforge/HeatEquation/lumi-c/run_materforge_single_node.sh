@@ -73,5 +73,5 @@ echo "Problem size per core: ${PROBLEM_SIZE}^3"
 echo "Total CPU cores: 128"
 echo "========================================="
 
-# Execute with srun - weak scaling is optimal for single node
-srun --cpu-freq=2200000-2200000 ${CMD} weak ${PROBLEM_SIZE}
+# Execute single node test with fixed total problem size
+srun --cpu-freq=2200000-2200000 ${CMD} single ${PROBLEM_SIZE}

@@ -124,13 +124,15 @@ int main(int argc, char** argv) {
 
     // Command line argument parsing
     bool weakScaling = false;
+    bool singleNode = false;
     uint_t problemSize = 256;  // Default cells per block/rank
 
     if (argc > 1) {
-        std::string scalingType(argv[1]);
-        if (scalingType == "weak") weakScaling = true;
-        else if (scalingType == "strong") weakScaling = false;
-        else {WALBERLA_LOG_WARNING_ON_ROOT("Unknown scaling type: " << scalingType << ". Use 'weak' or 'strong'. Defaulting to strong.");}
+        std::string testType(argv[1]);
+        if (testType == "weak") weakScaling = true;
+        else if (testType == "strong") weakScaling = false;
+        else if (testType == "single") singleNode = true;
+        else {WALBERLA_LOG_WARNING_ON_ROOT("Unknown test type: " << testType << ". Use 'weak', 'strong', or 'single'. Defaulting to strong.");}
     }
     if (argc > 2) {
         problemSize = uint_c(std::stoi(argv[2]));
@@ -145,7 +147,19 @@ int main(int argc, char** argv) {
     uint_t xCells, yCells, zCells;
     real_t xSize, ySize, zSize;
 
-    if (weakScaling) {
+    if (singleNode) {
+        // Single node test: all processes in one node
+        const uint_t totalCellsPerDim = problemSize;
+        xCells = totalCellsPerDim / procs_x;
+        yCells = totalCellsPerDim / procs_y;
+        zCells = totalCellsPerDim / procs_z;
+        if (totalCellsPerDim % procs_x != 0 || totalCellsPerDim % procs_y != 0 || 
+            totalCellsPerDim % procs_z != 0) {
+            WALBERLA_ABORT("Problem size " << problemSize << " not evenly divisible by process grid " << procs_x << "x" << procs_y << "x" << procs_z);
+        }
+        xSize = ySize = zSize = real_c(1.0);
+        WALBERLA_LOG_INFO_ON_ROOT("Single Node Test: " << numProcesses << " processes on one node with " << problemSize << "^3 cells each");
+    } else if (weakScaling) {
         // Weak scaling: constant cells per process
         xCells = problemSize;
         yCells = problemSize;
@@ -154,7 +168,7 @@ int main(int argc, char** argv) {
         xSize = real_c(procs_x * 1.0);
         ySize = real_c(procs_y * 1.0);
         zSize = real_c(procs_z * 1.0);
-        WALBERLA_LOG_INFO_ON_ROOT("Weak Scaling: " << problemSize << "^3 cells per process");
+        WALBERLA_LOG_INFO_ON_ROOT("Weak Scaling: " << numProcesses << " processes with " << problemSize << "^3 cells per process");
     } else {
         // Strong scaling: fixed total domain size
         const uint_t totalCellsPerDim = problemSize;
@@ -163,14 +177,13 @@ int main(int argc, char** argv) {
         zCells = totalCellsPerDim / procs_z;
         // Ensure cells are evenly divisible
         if (totalCellsPerDim % procs_x != 0 || totalCellsPerDim % procs_y != 0 || totalCellsPerDim % procs_z != 0) {
-            WALBERLA_ABORT("Problem size " << problemSize << " not evenly divisible by process grid " 
-                          << procs_x << "x" << procs_y << "x" << procs_z);
+            WALBERLA_ABORT("Problem size " << problemSize << " not evenly divisible by process grid " << procs_x << "x" << procs_y << "x" << procs_z);
         }
         // Physical domain remains constant
         xSize = real_c(1.0);
         ySize = real_c(1.0);
         zSize = real_c(1.0);
-        WALBERLA_LOG_INFO_ON_ROOT("Strong Scaling: " << problemSize << "^3 total cells");
+        WALBERLA_LOG_INFO_ON_ROOT("Strong Scaling: " << numProcesses << " processes with " << problemSize << "^3 total cells");
     }
 
     const uint_t xBlocks = procs_x;
@@ -178,6 +191,7 @@ int main(int argc, char** argv) {
     const uint_t zBlocks = procs_z;
 
     WALBERLA_LOG_INFO_ON_ROOT("=== Scaling Configuration ===");
+    WALBERLA_LOG_INFO_ON_ROOT("Test Type: " << (singleNode ? "Single Node" : (weakScaling ? "Weak" : "Strong")));
     WALBERLA_LOG_INFO_ON_ROOT("Scaling Type: " << (weakScaling ? "Weak" : "Strong"));
     WALBERLA_LOG_INFO_ON_ROOT("Processes: " << numProcesses);
     WALBERLA_LOG_INFO_ON_ROOT("Process Grid: " << procs_x << "x" << procs_y << "x" << procs_z);
@@ -221,11 +235,11 @@ int main(int argc, char** argv) {
                    << AfterFunction([blocks, uFieldId, uTmpFieldId]() {swapFields(*blocks, uFieldId, uTmpFieldId);}, "Swap");
 
     if (vtkWriteFrequency > 0) {
-        std::string scalingType = weakScaling ? "weak" : "strong";
-        std::string vtkFilename = "vtk_CPU_" + scalingType + "_" + std::to_string(problemSize) + 
-                                "cells_" + std::to_string(numProcesses) + "proc(s)";
-        std::string vtkDirectory = "vtk_out_cpu_" + scalingType + "_" + std::to_string(problemSize) + 
-                                "cells_" + std::to_string(numProcesses) + "proc(s)";
+        std::string testType = singleNode ? "single" : (weakScaling ? "weak" : "strong");
+        std::string vtkFilename = "vtk_CPU_" + testType + "_" + std::to_string(problemSize) +
+                                   "cells_" + std::to_string(numProcesses) + "proc(s)";
+        std::string vtkDirectory = "vtk_out_cpu_" + testType + "_" + std::to_string(problemSize) +
+                                   "cells_" + std::to_string(numProcesses) + "proc(s)";
         auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, vtkFilename, vtkWriteFrequency, 0, false, vtkDirectory,
                                                        "simulation_step", false, true, true, false, 0);
         auto tempWriter = make_shared<field::VTKWriter<ScalarField>>(uFieldId, "temperature");
@@ -254,23 +268,23 @@ int main(int argc, char** argv) {
     WALBERLA_MPI_SECTION() { walberla::mpi::reduceInplace(simTime, walberla::mpi::MAX); }
 
     const auto reducedTimeloopTiming = timeloopTiming.getReduced();
-    WALBERLA_LOG_RESULT_ON_ROOT("=== Performance Results ===")
-    WALBERLA_LOG_RESULT_ON_ROOT("Total simulation time: " << simTime << " seconds")
 
     // Calculate performance metrics
     uint_t cellsPerProcess = xCells * yCells * zCells;
     uint_t totalCells = cellsPerProcess * numProcesses;
     uint_t totalCellUpdates = timeSteps * totalCells;
-    
     double mlupsPerProcess = (timeSteps * cellsPerProcess) / (simTime * 1e6);
     double totalMLUPS = totalCellUpdates / (simTime * 1e6);
     
+    WALBERLA_LOG_RESULT_ON_ROOT("=== Performance Results ===")
+    WALBERLA_LOG_RESULT_ON_ROOT("Test type: " << (singleNode ? "Single Node" : (weakScaling ? "Weak Scaling" : "Strong Scaling")))
+    WALBERLA_LOG_RESULT_ON_ROOT("Total simulation time: " << simTime << " seconds")
     WALBERLA_LOG_RESULT_ON_ROOT("MLUPS per process: " << mlupsPerProcess)
     WALBERLA_LOG_RESULT_ON_ROOT("Total MLUPS: " << totalMLUPS)
     WALBERLA_LOG_RESULT_ON_ROOT("Time per timestep: " << (simTime / timeSteps * 1000) << " ms")
     WALBERLA_LOG_RESULT_ON_ROOT("Cells per process: " << cellsPerProcess)
     WALBERLA_LOG_RESULT_ON_ROOT("Total cells: " << totalCells)
-    
+        
     // Timing breakdown
     WALBERLA_LOG_RESULT_ON_ROOT("Detailed timing:\n" << *reducedTimeloopTiming)
 
