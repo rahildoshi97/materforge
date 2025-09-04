@@ -60,7 +60,7 @@ and do not easily integrate with general-purpose simulation codes.
 This leads to ad hoc solutions, hindering workflow efficiency and FAIR data adoption [@wilkinson2016fair].
 MaterForge bridges this gap by providing a unified framework that leverages
 symbolic mathematics, automatic regression, and dependency resolution
-to standardizes and simplify the integration of realistic material behavior into scientific simulations.
+to standardize and simplify the integration of realistic material behavior into scientific simulations.
 
 # Key Functionality
 
