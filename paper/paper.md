@@ -155,7 +155,7 @@ properties:
     density_expr = steel.density
 
     # Evaluate density at 500 K
-    density_500k = steel.evaluate_properties_at_temperature(500.0, ['density'])
+    density_500K = evaluate_material_properties(steel, 500.0, ['density'])
 ```
 
 # Comparison with Existing Tools
