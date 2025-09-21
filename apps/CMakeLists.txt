@@ -10,14 +10,14 @@ SET(WALBERLA_BUILD_TOOLS OFF CACHE BOOL "")
 SET(WALBERLA_BUILD_TUTORIALS OFF CACHE BOOL "")
 SET(WALBERLA_BUILD_SHOWCASES OFF CACHE BOOL "")
 SET(WALBERLA_BUILD_DOC OFF CACHE BOOL "")
-SET(WALBERLA_BUILD_WITH_PYTHON OFF CACHE BOOL "")
-SET(WALBERLA_BUILD_WITH_CODEGEN OFF CACHE BOOL "")
+SET(WALBERLA_BUILD_WITH_PYTHON ON CACHE BOOL "")
+SET(WALBERLA_BUILD_WITH_CODEGEN ON CACHE BOOL "")
 SET(WALBERLA_BUILD_WITH_OPENMP ON CACHE BOOL "")
 SET(WALBERLA_BUILD_WITH_MPI ON CACHE BOOL "")
 
 # Build mode detection
-option(BUILD_CPU_ONLY "Build only CPU targets (ignore GPU)" OFF)
-option(ENABLE_GPU_SUPPORT "Enable GPU support" ON)
+option(BUILD_CPU_ONLY "Build only CPU targets (ignore GPU)" ON) # Default to CPU
+option(ENABLE_GPU_SUPPORT "Enable GPU support" OFF) # Default to OFF
 
 # Configure waLBerla based on build mode
 if(BUILD_CPU_ONLY)
@@ -113,7 +113,17 @@ if(BUILD_CPU_ONLY)
             SCRIPTS HeatEquationKernelWithMaterialCPU.py
             FILE_EXTENSIONS .cpp .hpp)
 
-    message(STATUS "CPU executables will be built: HeatEquationWithMaterial, HeatEquationWithMaterialCPU, CodegenHeatEquationCPUScaling")
+    add_executable(CouetteFlowCodegen)
+    target_sources(CouetteFlowCodegen PRIVATE CouetteFlowSimulation.cpp)
+    target_link_libraries(CouetteFlowCodegen PRIVATE
+            walberla::blockforest walberla::boundary walberla::core walberla::field 
+            walberla::lbm walberla::postprocessing walberla::stencil 
+            walberla::timeloop walberla::vtk walberla::sqlite)
+    walberla_generate_sources(CouetteFlowCodegen
+            SCRIPTS CouetteFlowKernel.py
+            FILE_EXTENSIONS .cpp .hpp)
+
+    message(STATUS "CPU executables will be built: HeatEquationWithMaterial, HeatEquationWithMaterialCPU, CodegenHeatEquationCPUScaling, CouetteFlowCodegen")
 
 else()
     if(GPU_TYPE STREQUAL "HIP")
