@@ -66,10 +66,10 @@ to standardize and simplify the integration of realistic material behavior into 
 
 - **Flexible Input Methods**: The library supports various property definition methods such as
   constant values, step functions, file-based data (.xlsx, .csv, .txt), tabular data, piecewise equations, and computed properties 
-  (\autoref{fig:input_methods_new}).
+  (\autoref{fig:input_methods}).
   This versatility allows users to leverage data from diverse sources.
 
-![MaterForge's property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods_new}](figures/input_methods_new.jpg)
+![MaterForge's property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods}](figures/input_methods.jpg)
 
 - **Extensible Material Support**: The framework supports any material type through its extensible architecture.
   Currently implemented for pure metals and alloys,
