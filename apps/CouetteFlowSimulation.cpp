@@ -1,5 +1,5 @@
 //======================================================================================================================
-//! \file CouetteFlowSimulation.cpp WITH DIRECT BOUNDARY CONDITIONS
+//! \file CouetteFlowSimulation.cpp - OPTIMIZED WITH EFFICIENT BOUNDARY CONDITIONS
 //! \author Rahil Doshi  
 //! \brief Couette Flow Simulation with temperature-dependent viscosity using waLBerla and materforge
 //======================================================================================================================
@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
     // Create sweep objects
     auto couetteFlowSweep = make_shared<CouetteFlowSweep>(densityId, forceId, pdfFieldId, temperatureId, velocityId, viscosityId);
     
-    // Time loop - CORRECTED: Direct boundary condition implementation
+    // Time loop - OPTIMIZED: More efficient boundary condition implementation
     SweepTimeloop timeloop(blocks, timesteps);
     
     timeloop.add() 
@@ -161,39 +161,41 @@ int main(int argc, char** argv) {
             (*couetteFlowSweep)(block); 
         }, "CouetteFlowSweep")
         << AfterFunction([&]() {
-            // DIRECT boundary condition implementation
+            // OPTIMIZED boundary condition implementation - only iterate boundary cells
             for (auto block = blocks->begin(); block != blocks->end(); ++block) {
                 VectorField* velocity = block->getData<VectorField>(velocityId);
                 ScalarField* temperature = block->getData<ScalarField>(temperatureId);
                 
-                // Get the size of the velocity field (including ghost layers)
-                CellInterval fieldSize = velocity->xyzSizeWithGhostLayer();
+                // Get domain without ghost layers for boundary detection
+                CellInterval domain = velocity->xyzSize();
                 
-                // Apply boundary conditions directly to ALL cells in boundary layers
-                for (auto cell = fieldSize.begin(); cell != fieldSize.end(); ++cell) {
-                    Cell localCell = *cell;
-                    
-                    // Top wall boundary (y = yMax) - moving wall
-                    if (blocks->atDomainYMaxBorder(*block) && localCell.y() >= fieldSize.yMax() - 1) {
-                        velocity->get(localCell, 0) = wallVelocity;  // x-component = wall velocity
-                        velocity->get(localCell, 1) = 0.0;          // y-component = 0
-                        velocity->get(localCell, 2) = 0.0;          // z-component = 0
-                        temperature->get(localCell) = hotTemperature;
-                        
-                        // WALBERLA_LOG_DEVEL_VAR_ON_ROOT(localCell);
-                        // WALBERLA_LOG_DEVEL_VAR_ON_ROOT(velocity->get(localCell, 0));
+                // Top wall boundary (y = yMax) - moving wall
+                if (blocks->atDomainYMaxBorder(*block)) {
+                    for (int x = 0; x < domain.xSize(); ++x) {
+                        for (int z = 0; z < domain.zSize(); ++z) {
+                            Cell topCell(x, domain.yMax(), z);
+                            velocity->get(topCell, 0) = wallVelocity;  // x-component = wall velocity
+                            velocity->get(topCell, 1) = 0.0;          // y-component = 0
+                            velocity->get(topCell, 2) = 0.0;          // z-component = 0
+                            temperature->get(topCell) = hotTemperature;
+                        }
                     }
-                    
-                    // Bottom wall boundary (y = yMin) - stationary wall
-                    if (blocks->atDomainYMinBorder(*block) && localCell.y() <= fieldSize.yMin() + 1) {
-                        velocity->get(localCell, 0) = 0.0;          // x-component = 0
-                        velocity->get(localCell, 1) = 0.0;          // y-component = 0
-                        velocity->get(localCell, 2) = 0.0;          // z-component = 0
-                        temperature->get(localCell) = coldTemperature;
+                }
+                
+                // Bottom wall boundary (y = yMin) - stationary wall
+                if (blocks->atDomainYMinBorder(*block)) {
+                    for (int x = 0; x < domain.xSize(); ++x) {
+                        for (int z = 0; z < domain.zSize(); ++z) {
+                            Cell bottomCell(x, domain.yMin(), z);
+                            velocity->get(bottomCell, 0) = 0.0;       // x-component = 0
+                            velocity->get(bottomCell, 1) = 0.0;       // y-component = 0
+                            velocity->get(bottomCell, 2) = 0.0;       // z-component = 0
+                            temperature->get(bottomCell) = coldTemperature;
+                        }
                     }
                 }
             }
-        }, "Direct Boundary Conditions");
+        }, "Optimized Boundary Conditions");
     
     // VTK output
     if (vtkWriteFrequency > 0) {
