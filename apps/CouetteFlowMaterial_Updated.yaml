@@ -2,42 +2,41 @@
 # MATERFORGE MATERIAL CONFIGURATION FILE
 # ====================================================================================================
 # Material properties for Couette flow simulation with temperature-dependent viscosity
-# This file defines a steel-like material for temperature-dependent viscous flow analysis
+# Higher viscosity values for numerical stability
 # ====================================================================================================
 
 name: "CouetteFlowSteel"
-material_type: alloy  # Steel is an alloy
+material_type: alloy
 
-# Composition fractions must sum to 1.0 (simplified steel composition)
 composition:
-  Fe: 0.70   # Iron (primary component)
-  C: 0.01    # Carbon
-  Cr: 0.18   # Chromium (for corrosion resistance)
-  Ni: 0.08   # Nickel
-  Mn: 0.02   # Manganese
-  Si: 0.01   # Silicon
+  Fe: 0.70
+  C: 0.01
+  Cr: 0.18
+  Ni: 0.08
+  Mn: 0.02
+  Si: 0.01
 
-# Required temperature properties for alloys
-solidus_temperature: 1673.0    # Temperature where melting begins (K) - 1400C
-liquidus_temperature: 1723.0   # Temperature where material is completely melted (K) - 1450C
-initial_boiling_temperature: 3100.0  # Temperature where boiling begins (K)
-final_boiling_temperature: 3200.0    # Temperature where material is completely vaporized (K)
+# Temperature properties
+solidus_temperature: 1673.0
+liquidus_temperature: 1723.0
+initial_boiling_temperature: 3100.0
+final_boiling_temperature: 3200.0
 
 properties:
   # ====================================================================================================
   # CONSTANT PROPERTIES
   # ====================================================================================================
   
-  latent_heat_of_fusion: 270000.0      # J/kg - Heat of fusion for steel
-  latent_heat_of_vaporization: 6300000.0  # J/kg - Heat of vaporization for steel
+  latent_heat_of_fusion: 270000.0
+  latent_heat_of_vaporization: 6300000.0
 
   # ====================================================================================================
   # DENSITY - Temperature-dependent (thermal expansion)
   # ====================================================================================================
   
   density:
-    dependency: (300, 1200, 91)  # Temperature range 300-1200K, 91 points (10K intervals)
-    equation: 7850.0 / (1.0 + 3.0 * thermal_expansion_coefficient * (T - 293.15))  # Thermal expansion model
+    dependency: (300, 600, 31)
+    equation: 7850.0 / (1.0 + 3.0 * thermal_expansion_coefficient * (T - 293.15))
     bounds: [constant, constant]
     regression:
       simplify: post
@@ -49,8 +48,8 @@ properties:
   # ====================================================================================================
   
   thermal_expansion_coefficient:
-    dependency: [300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200]
-    value: [11.7e-6, 12.8e-6, 13.5e-6, 14.0e-6, 14.4e-6, 14.8e-6, 15.1e-6, 15.4e-6, 15.7e-6, 16.0e-6]  # 1/K
+    dependency: [300, 400, 500, 600]
+    value: [11.7e-6, 12.8e-6, 13.5e-6, 14.0e-6]
     bounds: [constant, constant]
     regression:
       simplify: post
@@ -62,8 +61,8 @@ properties:
   # ====================================================================================================
   
   heat_capacity:
-    dependency: [300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200]
-    value: [460, 500, 520, 540, 570, 600, 650, 720, 800, 900]  # J/(kg·K)
+    dependency: [300, 400, 500, 600]
+    value: [460, 500, 520, 540]
     bounds: [constant, constant]
     regression:
       simplify: post
@@ -75,8 +74,8 @@ properties:
   # ====================================================================================================
   
   heat_conductivity:
-    dependency: [300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200]
-    value: [16.3, 18.5, 20.8, 23.1, 25.4, 27.7, 30.0, 32.3, 34.6, 36.9]  # W/(m·K)
+    dependency: [300, 400, 500, 600]
+    value: [16.3, 18.5, 20.8, 23.1]
     bounds: [constant, constant]
     regression:
       simplify: post
@@ -84,28 +83,30 @@ properties:
       segments: 2
 
   # ====================================================================================================
-  # DYNAMIC VISCOSITY - Exponential temperature dependence (key property for Couette flow)
+  # DYNAMIC VISCOSITY - Higher values for numerical stability
   # ====================================================================================================
   
   dynamic_viscosity:
-    dependency: (300, 1200, 91)  # Temperature range 300-1200K, 91 points
-    equation: 0.001 * exp(-0.002 * (T - 300.0))  # Exponential temperature dependence
-    # μ(T) = μ0 * exp(-α * (T - T_ref))
-    # μ0 = 0.001 Pa-s (reference viscosity at 300K)
-    # α = 0.002 K^-1 (temperature coefficient)
+    dependency: (300, 600, 31)  # Temperature range 300-600K, 31 points
+    equation: 0.02 * exp(-0.0005 * (T - 300.0))  # Higher base viscosity, smaller temperature coefficient
+    # μ(T) = 0.02 * exp(-0.0005 * (T - 300))
+    # At 300K: μ = 0.02 Pa·s (20 mPa·s) - MUCH HIGHER
+    # At 400K: μ = 0.019 Pa·s (19 mPa·s) - Still high and stable
+    # At 500K: μ = 0.018 Pa·s (18 mPa·s) - Gradual decrease
+    # At 600K: μ = 0.017 Pa·s (17 mPa·s) - Gradual decrease
     bounds: [constant, constant]
     regression:
       simplify: post
-      degree: 3
-      segments: 3
+      degree: 2
+      segments: 2
 
   # ====================================================================================================
   # COMPUTED PROPERTIES
   # ====================================================================================================
   
   thermal_diffusivity:
-    dependency: (300, 1200, 91)  # Same temperature range
-    equation: heat_conductivity / (density * heat_capacity)  # Standard thermal diffusivity
+    dependency: (300, 600, 31)
+    equation: heat_conductivity / (density * heat_capacity)
     bounds: [constant, constant]
     regression:
       simplify: post
@@ -113,17 +114,17 @@ properties:
       segments: 2
 
   kinematic_viscosity:
-    dependency: (300, 1200, 91)  # Same temperature range  
-    equation: dynamic_viscosity / density  # Kinematic viscosity = dynamic viscosity / density
+    dependency: (300, 600, 31)
+    equation: dynamic_viscosity / density
     bounds: [constant, constant]
     regression:
       simplify: post
-      degree: 3
-      segments: 3
+      degree: 2
+      segments: 2
 
   specific_enthalpy:
-    dependency: (300, 1200, 91)  # Same temperature range
-    equation: Integral(heat_capacity, T)  # Enthalpy from heat capacity integration
+    dependency: (300, 600, 31)
+    equation: Integral(heat_capacity, T)
     bounds: [constant, constant]
     regression:
       simplify: post
@@ -131,41 +132,27 @@ properties:
       segments: 2
 
   energy_density:
-    dependency: (300, 1200, 91)  # Same temperature range
-    equation: density * specific_enthalpy  # Energy density
+    dependency: (300, 600, 31)
+    equation: density * specific_enthalpy
     bounds: [extrapolate, extrapolate]
     regression:
       simplify: post
       degree: 2
-      segments: 3
+      segments: 2
 
 # ====================================================================================================
-# MATERFORGE CONFIGURATION NOTES:
+# KEY CHANGES FOR NUMERICAL STABILITY:
 #
-# 1. KEY PROPERTIES FOR COUETTE FLOW:
-#    - dynamic_viscosity: Exponential temperature dependence μ(T) = μ₀*exp(-α*(T-T_ref))
-#    - kinematic_viscosity: Used directly in LBM relaxation parameter calculation
-#    - density: Affects momentum transport and buoyancy effects
-#    - thermal_conductivity: Controls temperature field evolution
+# 1. HIGHER BASE VISCOSITY: 0.02 Pa·s (20 mPa·s) instead of 0.001 Pa·s (1 mPa·s)
+# 2. SMALLER TEMPERATURE COEFFICIENT: -0.0005 instead of -0.002
+# 3. REDUCED TEMPERATURE RANGE: 300-600K instead of 300-1200K  
+# 4. GRADUAL VISCOSITY VARIATION: ~15% change (20→17 mPa·s) instead of 500% change
+# 5. CONSISTENT VALUES: C++ initial values match YAML base values
 #
-# 2. TEMPERATURE RANGES:
-#    - Operating range: 300-1200K (27-927C)
-#    - Covers typical Couette flow with heated walls
-#    - Below melting point to maintain solid boundaries
+# EXPECTED VISCOSITY VALUES:
+# - At 300K: μ = 0.020 Pa·s (20.0 mPa·s)
+# - At 400K: μ = 0.019 Pa·s (19.0 mPa·s) 
+# - At 500K: μ = 0.018 Pa·s (18.1 mPa·s)
+# - At 600K: μ = 0.017 Pa·s (17.1 mPa·s)
 #
-# 3. VISCOSITY MODEL:
-#    - Exponential model: common for liquids and gases
-#    - Temperature coefficient α = 0.002 K^-1 gives realistic variation
-#    - At 300K: μ = 0.001 Pa·s
-#    - At 800K: μ ≈ 0.0002 Pa·s (5x reduction)
-#
-# 4. REGRESSION SETTINGS:
-#    - Polynomial degree and segments balance accuracy vs. performance
-#    - More segments for nonlinear properties (viscosity, heat capacity)
-#    - Linear regression for weakly temperature-dependent properties
-#
-# 5. INTEGRATION WITH WALBERLA:
-#    - Properties are accessed via materforge API in Python kernel generation
-#    - Temperature field from LBM provides dependency values
-#    - Local material properties update relaxation parameters each time step
 # ====================================================================================================
