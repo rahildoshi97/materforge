@@ -161,7 +161,7 @@ int main(int argc, char** argv) {
             (*couetteFlowSweep)(block); 
         }, "CouetteFlowSweep")
         << AfterFunction([&]() {
-            // DIRECT boundary condition implementation - CORRECTED
+            // DIRECT boundary condition implementation
             for (auto block = blocks->begin(); block != blocks->end(); ++block) {
                 VectorField* velocity = block->getData<VectorField>(velocityId);
                 ScalarField* temperature = block->getData<ScalarField>(temperatureId);
