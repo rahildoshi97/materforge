@@ -1,5 +1,5 @@
 //======================================================================================================================
-//! \file CouetteFlowSimulation.cpp - FINAL WORKING VERSION WITH DIRECT BOUNDARY CONDITIONS
+//! \file CouetteFlowSimulation.cpp WITH DIRECT BOUNDARY CONDITIONS
 //! \author Rahil Doshi  
 //! \brief Couette Flow Simulation with temperature-dependent viscosity using waLBerla and materforge
 //======================================================================================================================
@@ -97,8 +97,8 @@ int main(int argc, char** argv) {
     const uint_t timesteps = 10000;
     const uint_t vtkWriteFrequency = 500;
     
-    // Physical parameters - ADJUSTED for LBM units
-    const real_t wallVelocity = 0.05;       // Reduced for stability
+    // Physical parameters
+    const real_t wallVelocity = 0.05;       // m/s
     const real_t hotTemperature = 600.0;    // K
     const real_t coldTemperature = 300.0;   // K
     
@@ -180,8 +180,8 @@ int main(int argc, char** argv) {
                         velocity->get(localCell, 2) = 0.0;          // z-component = 0
                         temperature->get(localCell) = hotTemperature;
                         
-                        WALBERLA_LOG_DEVEL_VAR_ON_ROOT(localCell);
-                        WALBERLA_LOG_DEVEL_VAR_ON_ROOT(velocity->get(localCell, 0));
+                        // WALBERLA_LOG_DEVEL_VAR_ON_ROOT(localCell);
+                        // WALBERLA_LOG_DEVEL_VAR_ON_ROOT(velocity->get(localCell, 0));
                     }
                     
                     // Bottom wall boundary (y = yMin) - stationary wall

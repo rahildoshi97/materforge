@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CouetteFlowKernel.py - CORRECTED WITH SIMPLE VELOCITY BOUNDARY CONDITIONS
+CouetteFlowKernel.py WITH SIMPLE VELOCITY BOUNDARY CONDITIONS
 Code generation script for Couette flow simulation with temperature-dependent viscosity
 """
 
@@ -82,9 +82,8 @@ with SourceFileGenerator() as sfg:
     
     # ===== LBM CONFIGURATION =====
     
-    # Calculate relaxation parameters - CORRECTED for proper LBM viscosity
-    # Use smaller viscosity for better flow development
-    tau = 3.0 * 0.01 + 0.5  # Use tau = 0.53 for stable flow
+    # Calculate relaxation parameters
+    tau = 3.0 * 0.01 + 0.5
     omega = 1.0 / tau
     
     # Create LBM configuration
