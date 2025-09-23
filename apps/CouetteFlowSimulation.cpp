@@ -121,12 +121,29 @@ void applyDrivingForce(const shared_ptr<StructuredBlockForest>& blocks,
     }
 }
 
+// Grid-independent pressure gradient force
+void applyPressureGradientForce(const shared_ptr<StructuredBlockForest>& blocks,
+                               BlockDataID forceId, real_t pressureGradient) {
+    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+        VectorField* force = block->getData<VectorField>(forceId);
+        
+        for (auto cell = force->beginXYZ(); cell != force->end(); ++cell) {
+            Cell localCell = cell.cell();
+            
+            // Constant pressure gradient force (grid-independent)
+            force->get(localCell, 0) = pressureGradient;  // Force per unit mass
+            force->get(localCell, 1) = 0.0;               // No Y-force
+            force->get(localCell, 2) = 0.0;               // No Z-force
+        }
+    }
+}
+
 int main(int argc, char** argv) {
     mpi::Environment env(argc, argv);
     
     // Parameters
     const uint_t timesteps = 10000;
-    const uint_t vtkWriteFrequency = 50;
+    const uint_t vtkWriteFrequency = -50;
     const real_t wallVelocity = 0.02;
     const real_t hotTemperature = 600.0;
     const real_t coldTemperature = 300.0;
@@ -134,13 +151,24 @@ int main(int argc, char** argv) {
     const uint_t xCells = 128, yCells = 64, zCells = 32;
     const real_t refViscosity = 0.05;  // REDUCED viscosity for stability
     const real_t drivingForce = 0.001;  // Small constant force
+    const uint_t refXCells = 64, refYCells = 32, refZCells = 16;  // Reference grid
+    const real_t baseDrivingForce = 0.001;  // Force calibrated for reference grid
+    const real_t scaledDrivingForce = baseDrivingForce * 
+        real_t(xCells * yCells * zCells) / real_t(refXCells * refYCells * refZCells) / 4;
+    // Grid-independent pressure gradient
+    const real_t pressureGradient = 0.0005;  // Force per unit mass (grid-independent)
 
-    WALBERLA_LOG_INFO_ON_ROOT("=== FINAL Thermal Couette Flow Simulation ===");
+    WALBERLA_LOG_INFO_ON_ROOT("=== Thermal Couette Flow Simulation ===");
     WALBERLA_LOG_INFO_ON_ROOT("Grid: " << xCells << " x " << yCells << " x " << zCells);
     WALBERLA_LOG_INFO_ON_ROOT("Wall velocity: " << wallVelocity);
     WALBERLA_LOG_INFO_ON_ROOT("Temperature range: " << coldTemperature << " - " << hotTemperature);
     WALBERLA_LOG_INFO_ON_ROOT("Reference viscosity: " << refViscosity);
-    
+    WALBERLA_LOG_INFO_ON_ROOT("Original driving force: " << drivingForce);
+    WALBERLA_LOG_INFO_ON_ROOT("Scaled driving force: " << scaledDrivingForce);
+    WALBERLA_LOG_INFO_ON_ROOT("Force scaling factor: " << 
+        real_t(refXCells * refYCells * refZCells) / real_t(xCells * yCells * zCells));
+    WALBERLA_LOG_INFO_ON_ROOT("Pressure gradient: " << pressureGradient);
+
     // Create block forest - CORRECTED periodicity
     auto aabb = math::AABB(0, 0, 0, xBlocks*xCells, yBlocks*yCells, zBlocks*zCells);
     shared_ptr<StructuredBlockForest> blocks = blockforest::createUniformBlockGrid(
@@ -183,8 +211,11 @@ int main(int argc, char** argv) {
     // Create generated boundary sweeps
     auto topWallBC = make_shared<TopWallBC>(velocityId, wallVelocity);
     auto bottomWallBC = make_shared<BottomWallBC>(velocityId);
-    
-    applyDrivingForce(blocks, forceId, drivingForce);
+
+    // applyDrivingForce(blocks, forceId, scaledDrivingForce);
+
+    // Apply pressure gradient force (once, during initialization)
+    applyPressureGradientForce(blocks, forceId, pressureGradient);
 
     // TIME LOOP - USING GENERATED BOUNDARIES
     SweepTimeloop timeloop(blocks, timesteps);
@@ -232,8 +263,8 @@ int main(int argc, char** argv) {
     // Run simulation
     WcTimingPool timeloopTiming;
     WcTimer simTimer;
-    
-    WALBERLA_LOG_INFO_ON_ROOT("Starting FINAL thermal Couette simulation...");
+
+    WALBERLA_LOG_INFO_ON_ROOT("Starting thermal Couette simulation with " << timesteps << " timesteps...");
     simTimer.start();
     timeloop.run(timeloopTiming);
     simTimer.end();
@@ -246,7 +277,7 @@ int main(int argc, char** argv) {
     
     const auto reducedTimeloopTiming = timeloopTiming.getReduced();
     
-    WALBERLA_LOG_RESULT_ON_ROOT("=== FINAL Thermal Couette Results ===");
+    WALBERLA_LOG_RESULT_ON_ROOT("=== Thermal Couette Results ===");
     WALBERLA_LOG_RESULT_ON_ROOT("Total time: " << simTime << " seconds");
     WALBERLA_LOG_RESULT_ON_ROOT("Time per timestep: " << (simTime / timesteps * 1000) << " ms");
     WALBERLA_LOG_RESULT_ON_ROOT("Performance timing:\n" << *reducedTimeloopTiming);
