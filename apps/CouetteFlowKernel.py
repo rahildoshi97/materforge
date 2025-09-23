@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-CouetteFlowKernel.py WITH SIMPLE VELOCITY BOUNDARY CONDITIONS
+CouetteFlowKernel.py - 3D Thermal Couette Flow
 Code generation script for Couette flow simulation with temperature-dependent viscosity
 """
+
 
 import logging
 import sympy as sp
@@ -51,7 +52,7 @@ with SourceFileGenerator() as sfg:
                 mat = create_material(yaml_path=yaml_path, dependency=f_temperature.center(), enable_plotting=False)
                 
                 material_assignments.extend([
-                    ps.Assignment(s.density_mat, 1.0),  # LBM normalized density
+                    ps.Assignment(s.density_mat, mat.density),  # Material density
                     ps.Assignment(s.viscosity_mat, mat.dynamic_viscosity), 
                 ])
                 
@@ -69,22 +70,28 @@ with SourceFileGenerator() as sfg:
             print(f"Error loading material: {e}")
             use_material_library = False
     
-    # Fallback to constant model
+    # Fallback to temperature-dependent model
     if not use_material_library or viscosity_expression is None:
-        print("Using constant viscosity and density model")
+        print("Using temperature-dependent viscosity and density model")
+        
+        # Sutherland's law for temperature-dependent viscosity
+        T_ref = 300.0  # Reference temperature [K]
+        mu_ref = 0.001  # Reference viscosity [Pa·s]
+        S = 110.4  # Sutherland constant [K]
         
         material_assignments.extend([
             ps.Assignment(s.density_mat, 1.0),  # LBM normalized density
-            ps.Assignment(s.viscosity_mat, 0.001),  # Constant viscosity
+            ps.Assignment(s.T_ratio, f_temperature.center() / T_ref),
+            ps.Assignment(s.viscosity_mat, mu_ref * s.T_ratio**(3.0/2.0) * (T_ref + S) / (f_temperature.center() + S)),
         ])
         
         viscosity_expression = s.viscosity_mat
     
     # ===== LBM CONFIGURATION =====
     
-    # Calculate relaxation parameters
-    tau = 3.0 * 0.01 + 0.5
-    omega = 1.0 / tau
+    # Calculate relaxation parameters - temperature dependent
+    relaxation_time = 3.0 * viscosity_expression + 0.5
+    omega = 1.0 / relaxation_time
     
     # Create LBM configuration
     lbm_config = LBMConfig(
@@ -122,10 +129,10 @@ with SourceFileGenerator() as sfg:
     
     # Generate the main sweep
     couette_sweep = Sweep("CouetteFlowSweep", couette_kernel)
-    couette_sweep.swap_fields(f_pdfs, f_pdfs_tmp)
+    # couette_sweep.swap_fields(f_pdfs, f_pdfs_tmp)
     sfg.generate(couette_sweep)
     
-    print(f"Generated CouetteFlowSweep with material properties")
+    print(f"Generated CouetteFlowSweep with temperature-dependent material properties")
     
     # ===== INITIALIZATION SWEEP =====
     
@@ -169,4 +176,18 @@ with SourceFileGenerator() as sfg:
     sfg.generate(bottom_wall_sweep)
     
     print("Generated simple boundary condition sweeps")
+    
+    # ===== TEMPERATURE FIELD UPDATE (LINEAR PROFILE) =====
+    
+    # Keep temperature profile linear and constant throughout simulation
+    temp_update_kernel = ps.AssignmentCollection([
+        ps.Assignment(f_temperature.center(), 
+                     s.T_bottom + (s.T_top - s.T_bottom) * s.y_normalized)
+    ])
+    
+    temp_update_sweep = Sweep("TemperatureUpdate", temp_update_kernel)
+    sfg.generate(temp_update_sweep)
+    
+    print("Generated TemperatureUpdate sweep for linear profile maintenance")
+    
     print("Code generation completed successfully!")
