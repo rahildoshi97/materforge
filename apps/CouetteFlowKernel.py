@@ -4,7 +4,6 @@ CouetteFlowKernel.py - 3D Thermal Couette Flow
 Code generation script for Couette flow simulation with temperature-dependent viscosity
 """
 
-
 import logging
 import sympy as sp
 import pystencils as ps
@@ -129,7 +128,7 @@ with SourceFileGenerator() as sfg:
     
     # Generate the main sweep
     couette_sweep = Sweep("CouetteFlowSweep", couette_kernel)
-    # couette_sweep.swap_fields(f_pdfs, f_pdfs_tmp)
+    couette_sweep.swap_fields(f_pdfs, f_pdfs_tmp)
     sfg.generate(couette_sweep)
     
     print(f"Generated CouetteFlowSweep with temperature-dependent material properties")
