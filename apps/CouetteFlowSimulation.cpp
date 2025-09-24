@@ -74,7 +74,7 @@ void initializeFields(const shared_ptr<StructuredBlockForest>& blocks,
     }
 }
 
-// Function to apply boundary conditions at proper locations
+// Function to apply boundary conditions
 void applyBoundaryConditions(const shared_ptr<StructuredBlockForest>& blocks,
                             const shared_ptr<TopWallBC>& topWallBC,
                             const shared_ptr<BottomWallBC>& bottomWallBC) {
@@ -106,21 +106,11 @@ void applyBoundaryConditions(const shared_ptr<StructuredBlockForest>& blocks,
     }
 }
 
-// Apply constant force to drive Couette flow
-void applyDrivingForce(const shared_ptr<StructuredBlockForest>& blocks,
-                      BlockDataID forceId, real_t forceValue) {
-    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
-        VectorField* force = block->getData<VectorField>(forceId);
-        
-        for (auto cell = force->beginXYZ(); cell != force->end(); ++cell) {
-            Cell localCell = cell.cell();
-            force->get(localCell, 0) = forceValue;  // Constant driving force
-            force->get(localCell, 1) = 0.0;
-            force->get(localCell, 2) = 0.0;
-        }
-    }
-}
-
+/* ============================================================================
+ * This function applies the external driving force required for LBM Couette
+ * flow simulation. Without this force, direct velocity boundary conditions
+ * create unphysical negative velocities in the interior domain.
+ * ============================================================================ */
 // Grid-independent pressure gradient force
 void applyPressureGradientForce(const shared_ptr<StructuredBlockForest>& blocks,
                                BlockDataID forceId, real_t pressureGradient) {
@@ -130,10 +120,12 @@ void applyPressureGradientForce(const shared_ptr<StructuredBlockForest>& blocks,
         for (auto cell = force->beginXYZ(); cell != force->end(); ++cell) {
             Cell localCell = cell.cell();
             
-            // Constant pressure gradient force (grid-independent)
-            force->get(localCell, 0) = pressureGradient;  // Force per unit mass
-            force->get(localCell, 1) = 0.0;               // No Y-force
-            force->get(localCell, 2) = 0.0;               // No Z-force
+            // Constant pressure gradient force in flow direction (x) (grid-independent)
+            // This provides the energy needed to sustain Couette flow
+            // against LBM's natural tendency toward zero-velocity equilibrium
+            force->get(localCell, 0) = pressureGradient;  // Force per unit mass F_x = -dP/dx / rho
+            force->get(localCell, 1) = 0.0;               // No Y-force (wall normal)
+            force->get(localCell, 2) = 0.0;               // No Z-force (spanwise)
         }
     }
 }
@@ -143,18 +135,13 @@ int main(int argc, char** argv) {
     
     // Parameters
     const uint_t timesteps = 10000;
-    const uint_t vtkWriteFrequency = -50;
+    const uint_t vtkWriteFrequency = 50;
     const real_t wallVelocity = 0.02;
     const real_t hotTemperature = 600.0;
     const real_t coldTemperature = 300.0;
     const uint_t xBlocks = 1, yBlocks = 1, zBlocks = 1;
     const uint_t xCells = 128, yCells = 64, zCells = 32;
     const real_t refViscosity = 0.05;  // REDUCED viscosity for stability
-    const real_t drivingForce = 0.001;  // Small constant force
-    const uint_t refXCells = 64, refYCells = 32, refZCells = 16;  // Reference grid
-    const real_t baseDrivingForce = 0.001;  // Force calibrated for reference grid
-    const real_t scaledDrivingForce = baseDrivingForce * 
-        real_t(xCells * yCells * zCells) / real_t(refXCells * refYCells * refZCells) / 4;
     // Grid-independent pressure gradient
     const real_t pressureGradient = 0.0005;  // Force per unit mass (grid-independent)
 
@@ -163,10 +150,6 @@ int main(int argc, char** argv) {
     WALBERLA_LOG_INFO_ON_ROOT("Wall velocity: " << wallVelocity);
     WALBERLA_LOG_INFO_ON_ROOT("Temperature range: " << coldTemperature << " - " << hotTemperature);
     WALBERLA_LOG_INFO_ON_ROOT("Reference viscosity: " << refViscosity);
-    WALBERLA_LOG_INFO_ON_ROOT("Original driving force: " << drivingForce);
-    WALBERLA_LOG_INFO_ON_ROOT("Scaled driving force: " << scaledDrivingForce);
-    WALBERLA_LOG_INFO_ON_ROOT("Force scaling factor: " << 
-        real_t(refXCells * refYCells * refZCells) / real_t(xCells * yCells * zCells));
     WALBERLA_LOG_INFO_ON_ROOT("Pressure gradient: " << pressureGradient);
 
     // Create block forest - CORRECTED periodicity
@@ -176,8 +159,8 @@ int main(int argc, char** argv) {
         true,   // oneBlockPerProcess  
         true,   // xPeriodic = true (periodic in x)
         false,  // yPeriodic = false (walls in y)
-        true,    // zPeriodic = true (periodic in z)
-        false    // keepGlobalBlockInformation = false
+        true,   // zPeriodic = true (periodic in z)
+        false   // keepGlobalBlockInformation = false
     );
 
     // Add fields
@@ -203,7 +186,7 @@ int main(int argc, char** argv) {
     commScalar.addPackInfo(make_shared<field::communication::PackInfo<ScalarField>>(viscosityId));
     commScalar.addPackInfo(make_shared<field::communication::PackInfo<ScalarField>>(densityId));
     
-    // Create sweeps using your GENERATED boundary conditions
+    // Create sweeps using GENERATED boundary conditions
     auto couetteFlowSweep = make_shared<CouetteFlowSweep>(
         densityId, forceId, pdfFieldId, temperatureId, velocityId, viscosityId);
         // densityId, forceId, pdfFieldId, pdfFieldTmpId, temperatureId, velocityId, viscosityId);
@@ -211,8 +194,6 @@ int main(int argc, char** argv) {
     // Create generated boundary sweeps
     auto topWallBC = make_shared<TopWallBC>(velocityId, wallVelocity);
     auto bottomWallBC = make_shared<BottomWallBC>(velocityId);
-
-    // applyDrivingForce(blocks, forceId, scaledDrivingForce);
 
     // Apply pressure gradient force (once, during initialization)
     applyPressureGradientForce(blocks, forceId, pressureGradient);
@@ -222,13 +203,13 @@ int main(int argc, char** argv) {
     
     timeloop.add() 
         /*<< BeforeFunction([&]() {
-        applyDrivingForce(blocks, forceId, drivingForce);
+        applyPressureGradientForce(blocks, forceId, drivingForce);
         }, "Driving Force")*/
         << BeforeFunction(commVector, "Vector Communication")
         << BeforeFunction(commScalar, "Scalar Communication")
         << Sweep([couetteFlowSweep](IBlock* block) { (*couetteFlowSweep)(block);}, "CouetteFlowSweep")
         << AfterFunction([&]() {
-            // Apply generated boundary conditions at proper locations
+            // Apply generated boundary conditions
             applyBoundaryConditions(blocks, topWallBC, bottomWallBC);
         }, "Generated Boundary Conditions")
         /*<< AfterFunction([&]() {
@@ -250,11 +231,13 @@ int main(int argc, char** argv) {
         auto temperatureWriter = make_shared<field::VTKWriter<ScalarField>>(temperatureId, "temperature");
         auto viscosityWriter = make_shared<field::VTKWriter<ScalarField>>(viscosityId, "viscosity");
         auto densityWriter = make_shared<field::VTKWriter<ScalarField>>(densityId, "density");
+        auto forceWriter = make_shared<field::VTKWriter<VectorField>>(forceId, "force");
         
         vtkOutput->addCellDataWriter(velocityWriter);
         vtkOutput->addCellDataWriter(temperatureWriter);
         vtkOutput->addCellDataWriter(viscosityWriter);
         vtkOutput->addCellDataWriter(densityWriter);
+        vtkOutput->addCellDataWriter(forceWriter);
         
         timeloop.addFuncAfterTimeStep(vtk::writeFiles(vtkOutput), "VTK Output");
         vtk::writeFiles(vtkOutput)();
