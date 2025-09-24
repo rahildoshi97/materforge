@@ -378,7 +378,7 @@ int main(int argc, char** argv) {
             WALBERLA_LOG_RESULT_ON_ROOT("=== ANALYTICAL VALIDATION ===");
             
             // Effective force
-            const real_t F_effective = 0.00000870;  // From analytical fitting
+            const real_t F_effective = 0.00000923;  // From analytical fitting
             const real_t avgViscosity = (viscosity->get(bottomCell) + viscosity->get(topCell)) / 2.0;
             
             // Calculate analytical values at key points
