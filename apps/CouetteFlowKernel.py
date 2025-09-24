@@ -69,19 +69,12 @@ with SourceFileGenerator() as sfg:
             print(f"Error loading material: {e}")
             use_material_library = False
     
-    # Fallback to temperature-dependent model
+    # Fallback to simple constant model
     if not use_material_library or viscosity_expression is None:
-        print("Using temperature-dependent viscosity and density model")
-        
-        # Sutherland's law for temperature-dependent viscosity
-        T_ref = 300.0  # Reference temperature [K]
-        mu_ref = 0.001  # Reference viscosity [Pa·s]
-        S = 110.4  # Sutherland constant [K]
-        
+        print("Using constant viscosity and density model")        
         material_assignments.extend([
             ps.Assignment(s.density_mat, 1.0),  # LBM normalized density
-            ps.Assignment(s.T_ratio, f_temperature.center() / T_ref),
-            ps.Assignment(s.viscosity_mat, mu_ref * s.T_ratio**(3.0/2.0) * (T_ref + S) / (f_temperature.center() + S)),
+            ps.Assignment(s.viscosity_mat, 0.093),
         ])
         
         viscosity_expression = s.viscosity_mat

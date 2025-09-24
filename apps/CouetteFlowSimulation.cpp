@@ -196,7 +196,7 @@ int main(int argc, char** argv) {
     mpi::Environment env(argc, argv);
     
     // Parameters
-    const uint_t timesteps = 8000;
+    const uint_t timesteps = 7000;
     const uint_t vtkWriteFrequency = 50;
     const real_t wallVelocity = 0.02;
     const real_t hotTemperature = 600.0;
@@ -299,13 +299,13 @@ int main(int argc, char** argv) {
         auto temperatureWriter = make_shared<field::VTKWriter<ScalarField>>(temperatureId, "temperature");
         auto viscosityWriter = make_shared<field::VTKWriter<ScalarField>>(viscosityId, "viscosity");
         auto densityWriter = make_shared<field::VTKWriter<ScalarField>>(densityId, "density");
-        auto forceWriter = make_shared<field::VTKWriter<VectorField>>(forceId, "force");
+        // auto forceWriter = make_shared<field::VTKWriter<VectorField>>(forceId, "force");
         
         vtkOutput->addCellDataWriter(velocityWriter);
         vtkOutput->addCellDataWriter(temperatureWriter);
         vtkOutput->addCellDataWriter(viscosityWriter);
         vtkOutput->addCellDataWriter(densityWriter);
-        vtkOutput->addCellDataWriter(forceWriter);
+        // vtkOutput->addCellDataWriter(forceWriter);
         
         timeloop.addFuncAfterTimeStep(vtk::writeFiles(vtkOutput), "VTK Output");
         vtk::writeFiles(vtkOutput)();
@@ -377,7 +377,7 @@ int main(int argc, char** argv) {
             // ENHANCED FEATURE 2: Analytical Comparison
             WALBERLA_LOG_RESULT_ON_ROOT("=== ANALYTICAL VALIDATION ===");
             
-            // Effective force from previous validation (fitted value)
+            // Effective force
             const real_t F_effective = 0.00000870;  // From analytical fitting
             const real_t avgViscosity = (viscosity->get(bottomCell) + viscosity->get(topCell)) / 2.0;
             
