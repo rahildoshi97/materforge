@@ -51,7 +51,7 @@ with SourceFileGenerator() as sfg:
                 mat = create_material(yaml_path=yaml_path, dependency=f_temperature.center(), enable_plotting=False)
                 
                 material_assignments.extend([
-                    ps.Assignment(s.density_mat, mat.density),  # Material density
+                    ps.Assignment(s.density_mat, 1.0),  # Material density
                     ps.Assignment(s.viscosity_mat, mat.dynamic_viscosity), 
                 ])
                 
@@ -82,7 +82,7 @@ with SourceFileGenerator() as sfg:
     # ===== LBM CONFIGURATION =====
     
     # Calculate relaxation parameters - temperature dependent
-    relaxation_time = 3.0 * viscosity_expression + 0.5
+    relaxation_time = 1.0 * viscosity_expression + 0.5
     omega = 1.0 / relaxation_time
     
     # Create LBM configuration
