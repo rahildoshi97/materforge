@@ -88,12 +88,7 @@ properties:
   
   dynamic_viscosity:
     dependency: (300, 600, 31)  # Temperature range 300-600K, 31 points
-    equation: 0.12 * exp(-0.0005 * (T - 300.0))  # LBM-scaled viscosity
-    # μ(T) = 0.12 * exp(-0.0005 * (T - 300)) in lattice units
-    # At 300K: μ = 0.12 (lattice viscosity)
-    # At 400K: μ = 0.115 (lattice viscosity)  
-    # At 500K: μ = 0.110 (lattice viscosity)
-    # At 600K: μ = 0.105 (lattice viscosity)
+    equation: 0.16667 * exp(-0.0005 * (T - 300.0))  # LBM-scaled viscosity
     bounds: [constant, constant]
     regression:
       simplify: post
