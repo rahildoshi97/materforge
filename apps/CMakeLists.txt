@@ -11,9 +11,11 @@ SET(WALBERLA_BUILD_TUTORIALS OFF CACHE BOOL "")
 SET(WALBERLA_BUILD_SHOWCASES OFF CACHE BOOL "")
 SET(WALBERLA_BUILD_DOC OFF CACHE BOOL "")
 SET(WALBERLA_BUILD_WITH_PYTHON ON CACHE BOOL "")
-SET(WALBERLA_BUILD_WITH_CODEGEN ON CACHE BOOL "")
-SET(WALBERLA_BUILD_WITH_OPENMP ON CACHE BOOL "")
-SET(WALBERLA_BUILD_WITH_MPI ON CACHE BOOL "")
+# SET(WALBERLA_BUILD_WITH_CODEGEN OFF CACHE BOOL "")
+# SET(WALBERLA_BUILD_WITH_OPENMP ON CACHE BOOL "")
+# SET(WALBERLA_BUILD_WITH_MPI ON CACHE BOOL "")
+SET(WALBERLA_ENABLE_SWEEPGEN ON CACHE BOOL "")
+SET(WALBERLA_SWEEPGEN_MANAGED_VENV ON CACHE BOOL "")
 
 # Build mode detection
 option(BUILD_CPU_ONLY "Build only CPU targets (ignore GPU)" ON) # Default to CPU
@@ -78,10 +80,13 @@ else()
     endif()
 endif()
 
+find_package(MPI REQUIRED)
+message(STATUS "MPI_CXX_INCLUDE_DIRS: ${MPI_CXX_INCLUDE_DIRS}")
+
 add_subdirectory(walberla)
-add_subdirectory(sfg-walberla)
-walberla_codegen_venv_require(-e ${CMAKE_SOURCE_DIR}/..)
-walberla_codegen_venv_populate()
+walberla_link_files_to_builddir( "*.prm" )
+sweepgen_venv_require(-e ${CMAKE_SOURCE_DIR}/..)
+sweepgen_venv_populate()
 
 # Build targets based on configuration
 if(BUILD_CPU_ONLY)
@@ -90,7 +95,8 @@ if(BUILD_CPU_ONLY)
     target_sources(HeatEquationWithMaterial PRIVATE CodegenHeatEquationWithMaterial.cpp)
     target_link_libraries(HeatEquationWithMaterial PRIVATE
             walberla::blockforest walberla::core walberla::field
-            walberla::stencil walberla::timeloop walberla::vtk walberla::pde)
+            walberla::stencil walberla::timeloop walberla::vtk walberla::pde
+            MPI::MPI_CXX)
     walberla_generate_sources(HeatEquationWithMaterial
             SCRIPTS HeatEquationKernelWithMaterial.py
             FILE_EXTENSIONS .cpp .hpp)
@@ -99,7 +105,8 @@ if(BUILD_CPU_ONLY)
     target_sources(HeatEquationWithMaterialCPU PRIVATE CodegenHeatEquationWithMaterialCPU.cpp)
     target_link_libraries(HeatEquationWithMaterialCPU PRIVATE
             walberla::blockforest walberla::core walberla::field
-            walberla::stencil walberla::timeloop walberla::vtk walberla::pde)
+            walberla::stencil walberla::timeloop walberla::vtk walberla::pde
+            MPI::MPI_CXX)
     walberla_generate_sources(HeatEquationWithMaterialCPU
             SCRIPTS HeatEquationKernelWithMaterialCPU.py
             FILE_EXTENSIONS .cpp .hpp)
@@ -108,26 +115,28 @@ if(BUILD_CPU_ONLY)
     target_sources(CodegenHeatEquationCPUScaling PRIVATE CodegenHeatEquationCPUScaling.cpp)
     target_link_libraries(CodegenHeatEquationCPUScaling PRIVATE
             walberla::blockforest walberla::core walberla::field
-            walberla::stencil walberla::timeloop walberla::vtk walberla::pde)
+            walberla::stencil walberla::timeloop walberla::vtk walberla::pde
+            MPI::MPI_CXX)
     walberla_generate_sources(CodegenHeatEquationCPUScaling
             SCRIPTS HeatEquationKernelWithMaterialCPU.py
             FILE_EXTENSIONS .cpp .hpp)
 
     add_executable(CouetteFlowCodegen)
-    target_sources(CouetteFlowCodegen PRIVATE CouetteFlowSimulation.cpp)
+    target_sources(CouetteFlowCodegen PRIVATE CouetteFlow.cpp)
     target_link_libraries(CouetteFlowCodegen PRIVATE
-            walberla::blockforest walberla::boundary walberla::core walberla::field 
+            walberla::blockforest walberla::boundary walberla::core walberla::experimental walberla::field 
             walberla::lbm walberla::postprocessing walberla::stencil 
-            walberla::timeloop walberla::vtk walberla::sqlite)
+            walberla::timeloop walberla::vtk walberla::sqlite
+            MPI::MPI_CXX)
     walberla_generate_sources(CouetteFlowCodegen
-            SCRIPTS CouetteFlowKernel.py
+            SCRIPTS CouetteFlowSweeps.py
             FILE_EXTENSIONS .cpp .hpp)
 
     message(STATUS "CPU executables will be built: HeatEquationWithMaterial, HeatEquationWithMaterialCPU, CodegenHeatEquationCPUScaling, CouetteFlowCodegen")
 
 else()
     if(GPU_TYPE STREQUAL "HIP")
-        find_package(MPI REQUIRED)
+        # find_package(MPI REQUIRED)
         message(STATUS "MPI_CXX_INCLUDE_DIRS: ${MPI_CXX_INCLUDE_DIRS}")
         
         # Get GTL library information from environment
