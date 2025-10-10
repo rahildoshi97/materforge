@@ -48,6 +48,7 @@ pip install materforge
 ```bash
 git clone https://i10git.cs.fau.de/rahil.doshi/materforge.git
 cd materforge
+git submodule update --init --recursive
 pip install -e .[dev]
 ```
 
@@ -129,7 +130,26 @@ Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) 
 - **Regression**: Maximum 8 segments recommended for stability
 
 ## 📄 License
-This project is licensed under the BSD 3-Clause License. See the [LICENSE](LICENSE) file for details.
+### Core Library (BSD-3-Clause)
+The MaterForge library itself (`src/materforge/`, `examples/`, `tests/`, `docs/`) is licensed under the **BSD 3-Clause License**. You can use, modify, and distribute it freely under permissive terms. See the root [LICENSE](LICENSE) file for full details.
+
+### Application Examples (GPL-3.0-or-later)
+The `apps/` directory contains demonstration applications that integrate MaterForge with [waLBerla](https://i10git.cs.fau.de/walberla/walberla) and [pystencils](https://pypi.org/project/pystencils/). Because these dependencies are GPLv3-licensed, the apps directory and its contents are licensed under **GPLv3 or later**. See [apps/LICENSE](apps/LICENSE) for full details.
+
+### PyPI Distribution
+The `pip install materforge` package includes **only the BSD-3-Clause licensed core library**. The GPL-licensed apps are excluded from the PyPI distribution and are available only in the source repository for developers who clone it.
+
+### Summary Table
+
+| Component | Location | License | Included in PyPI |
+|-----------|----------|---------|------------------|
+| Core library | `src/materforge/` | BSD-3-Clause | ✅ Yes |
+| Example scripts | `examples/` | BSD-3-Clause | ❌ No |
+| Tests | `tests/` | BSD-3-Clause | ❌ No |
+| Documentation | `docs/` | BSD-3-Clause | ❌ No |
+| Apps (waLBerla/pystencils demos) | `apps/` | GPL-3.0-or-later | ❌ No |
+
+For questions about licensing, contact [rahil.doshi@fau.de](mailto:rahil.doshi@fau.de).
 
 ## 📖 Citation
 If you use MaterForge in your research, please cite it using the information in our [CITATION.cff](CITATION.cff) file.
