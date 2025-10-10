@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
+# SPDX-License-Identifier: BSD-3-Clause
+
 """Material configuration files and data."""
 
 # This module contains material configuration files organized by type:

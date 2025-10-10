@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
+# SPDX-License-Identifier: BSD-3-Clause
+
 import logging
 from typing import Dict, List, Union
 import numpy as np

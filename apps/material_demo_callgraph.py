@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2025 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This application depends on waLBerla and pystencils (GPLv3), requiring GPL licensing.
+
 """Visualize material properties demo functionality with robust error handling."""
 import os
 import sys

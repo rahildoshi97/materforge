@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Main API module for MaterForge material property library.
 

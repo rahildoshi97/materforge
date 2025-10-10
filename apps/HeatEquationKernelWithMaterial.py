@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2025 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This application depends on waLBerla and pystencils (GPLv3), requiring GPL licensing.
+
 import logging
 import sympy as sp
 import pystencils as ps

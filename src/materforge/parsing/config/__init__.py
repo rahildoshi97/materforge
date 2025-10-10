@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
+# SPDX-License-Identifier: BSD-3-Clause
+
 """Configuration parsing and YAML key definitions."""
 
 from .material_yaml_parser import MaterialYAMLParser, YAMLFileParser, BaseFileParser
