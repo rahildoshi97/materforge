@@ -145,7 +145,7 @@ int main(int argc, char** argv)
                   << AfterFunction([blocks, uFieldId, uTmpFieldId]() { swapFields(*blocks, uFieldId, uTmpFieldId); },
                                    "Swap");
 
-   auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, "vtk", 200, 0, false, "vtk_out",
+   auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, "vtk_CodegenHeatEquationWithMaterial", 200, 0, false, "vtk_out_CodegenHeatEquationWithMaterial",
                                                    "simulation_step", false, true, true, false, 0);
 
    auto tempWriter =
