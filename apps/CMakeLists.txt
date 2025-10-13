@@ -132,7 +132,18 @@ if(BUILD_CPU_ONLY)
             SCRIPTS CouetteFlowSweeps.py
             FILE_EXTENSIONS .cpp .hpp)
 
-    message(STATUS "CPU executables will be built: HeatEquationWithMaterial, HeatEquationWithMaterialCPU, CodegenHeatEquationCPUScaling, CouetteFlowCodegen")
+    add_executable(CouetteFlowCPUScaling)
+    target_sources(CouetteFlowCPUScaling PRIVATE CouetteFlowCPUScaling.cpp)
+    target_link_libraries(CouetteFlowCPUScaling PRIVATE
+            walberla::blockforest walberla::boundary walberla::core 
+            walberla::experimental walberla::field walberla::lbm 
+            walberla::stencil walberla::timeloop walberla::vtk
+            MPI::MPI_CXX)
+    walberla_generate_sources(CouetteFlowCPUScaling
+            SCRIPTS CouetteFlowSweeps.py
+            FILE_EXTENSIONS .cpp .hpp)
+
+    message(STATUS "CPU executables will be built: HeatEquationWithMaterial, HeatEquationWithMaterialCPU, CodegenHeatEquationCPUScaling, CouetteFlowCodegen, CouetteFlowCPUScaling")
 
 else()
     if(GPU_TYPE STREQUAL "HIP")
