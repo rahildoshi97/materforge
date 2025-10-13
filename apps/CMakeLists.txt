@@ -90,7 +90,9 @@ sweepgen_venv_populate()
 
 # Build targets based on configuration
 if(BUILD_CPU_ONLY)
-    # CPU-only executables
+    # ============== CPU-ONLY EXECUTABLES ==============
+    
+    # Heat Equation executables
     add_executable(HeatEquationWithMaterial)
     target_sources(HeatEquationWithMaterial PRIVATE CodegenHeatEquationWithMaterial.cpp)
     target_link_libraries(HeatEquationWithMaterial PRIVATE
@@ -121,11 +123,13 @@ if(BUILD_CPU_ONLY)
             SCRIPTS HeatEquationKernelWithMaterialCPU.py
             FILE_EXTENSIONS .cpp .hpp)
 
+    # Couette Flow executables
     add_executable(CouetteFlowCodegen)
     target_sources(CouetteFlowCodegen PRIVATE CouetteFlow.cpp)
     target_link_libraries(CouetteFlowCodegen PRIVATE
-            walberla::blockforest walberla::boundary walberla::core walberla::experimental walberla::field 
-            walberla::lbm walberla::postprocessing walberla::stencil 
+            walberla::blockforest walberla::boundary walberla::core 
+            walberla::experimental walberla::field walberla::lbm 
+            walberla::postprocessing walberla::stencil 
             walberla::timeloop walberla::vtk walberla::sqlite
             MPI::MPI_CXX)
     walberla_generate_sources(CouetteFlowCodegen
@@ -143,13 +147,17 @@ if(BUILD_CPU_ONLY)
             SCRIPTS CouetteFlowSweeps.py
             FILE_EXTENSIONS .cpp .hpp)
 
-    message(STATUS "CPU executables will be built: HeatEquationWithMaterial, HeatEquationWithMaterialCPU, CodegenHeatEquationCPUScaling, CouetteFlowCodegen, CouetteFlowCPUScaling")
+    message(STATUS "CPU executables configured:")
+    message(STATUS "  - HeatEquationWithMaterial")
+    message(STATUS "  - HeatEquationWithMaterialCPU")
+    message(STATUS "  - CodegenHeatEquationCPUScaling")
+    message(STATUS "  - CouetteFlowCodegen")
+    message(STATUS "  - CouetteFlowCPUScaling")
 
 else()
+    # ============== GPU EXECUTABLES ==============
+    
     if(GPU_TYPE STREQUAL "HIP")
-        # find_package(MPI REQUIRED)
-        message(STATUS "MPI_CXX_INCLUDE_DIRS: ${MPI_CXX_INCLUDE_DIRS}")
-        
         # Get GTL library information from environment
         set(PE_MPICH_GTL_DIR_amd_gfx90a "$ENV{PE_MPICH_GTL_DIR_amd_gfx90a}")
         set(PE_MPICH_GTL_LIBS_amd_gfx90a "$ENV{PE_MPICH_GTL_LIBS_amd_gfx90a}")
@@ -167,7 +175,8 @@ else()
         message(STATUS "GTL_LIB_DIR: ${GTL_LIB_DIR}")
         message(STATUS "GTL_LIB_NAME: ${GTL_LIB_NAME}")
         
-        # Create executables with full MPI::MPI_CXX target
+        # ========== Heat Equation GPU Executables ==========
+        
         add_executable(HeatEquationWithMaterialGPU)
         target_sources(HeatEquationWithMaterialGPU PRIVATE CodegenHeatEquationWithMaterialGPU.cpp)
         target_link_libraries(HeatEquationWithMaterialGPU PRIVATE
@@ -225,16 +234,43 @@ else()
                 ${CMAKE_CURRENT_BINARY_DIR}/_gen/CodegenHeatEquationGPUScaling/gen/HeatEquationKernelWithMaterialGPU.cpp
                 PROPERTIES LANGUAGE HIP)
 
-        message(STATUS "HIP GPU executables will be built: HeatEquationWithMaterialGPU, CodegenHeatEquationGPUScaling")
+        # ========== Couette Flow GPU Executables ==========
+        
+        add_executable(CouetteFlowGPUScaling)
+        target_sources(CouetteFlowGPUScaling PRIVATE CouetteFlowGPUScaling.cpp)
+        target_link_libraries(CouetteFlowGPUScaling PRIVATE
+                walberla::blockforest walberla::boundary walberla::core 
+                walberla::experimental walberla::gpu walberla::field 
+                walberla::lbm walberla::stencil walberla::timeloop walberla::vtk
+                hip::device
+                MPI::MPI_CXX)
+        
+        if(GTL_LIB_DIR AND GTL_LIB_NAME)
+            target_link_directories(CouetteFlowGPUScaling PRIVATE ${GTL_LIB_DIR})
+            target_link_libraries(CouetteFlowGPUScaling PRIVATE ${GTL_LIB_NAME})
+        endif()
+
+        target_compile_options(CouetteFlowGPUScaling PRIVATE 
+            $<$<COMPILE_LANGUAGE:HIP>:--offload-arch=gfx90a>)
+        
+        set_property(TARGET CouetteFlowGPUScaling PROPERTY HIP_ARCHITECTURES "gfx90a")
+        
+        walberla_generate_sources(CouetteFlowGPUScaling
+                SCRIPTS CouetteFlowSweeps.py --target gpu
+                FILE_EXTENSIONS .cpp .hpp)
+                
+        set_source_files_properties(
+                ${CMAKE_CURRENT_BINARY_DIR}/_gen/CouetteFlowGPUScaling/gen/CouetteFlowSweeps.cpp
+                PROPERTIES LANGUAGE HIP)
+
+        message(STATUS "HIP GPU executables configured:")
+        message(STATUS "  - HeatEquationWithMaterialGPU")
+        message(STATUS "  - CodegenHeatEquationGPUScaling")
+        message(STATUS "  - CouetteFlowGPUScaling")
     
     elseif(GPU_TYPE STREQUAL "CUDA")
-        # Find MPI for CUDA builds too
-        find_package(MPI REQUIRED)
-
-        # Debug: Print MPI include directories
-        message(STATUS "MPI_CXX_INCLUDE_DIRS: ${MPI_CXX_INCLUDE_DIRS}")
-
-        # Create HeatEquationWithMaterialGPU executable
+        # ========== Heat Equation GPU Executables ==========
+        
         add_executable(HeatEquationWithMaterialGPU)
         target_sources(HeatEquationWithMaterialGPU PRIVATE CodegenHeatEquationWithMaterialGPU.cpp)
         target_link_libraries(HeatEquationWithMaterialGPU PRIVATE
@@ -265,6 +301,26 @@ else()
                 ${CMAKE_CURRENT_BINARY_DIR}/_gen/CodegenHeatEquationGPUScaling/gen/HeatEquationKernelWithMaterialGPU.cu
                 PROPERTIES LANGUAGE CUDA)
 
-        message(STATUS "CUDA GPU executables will be built: HeatEquationWithMaterialGPU, CodegenHeatEquationGPUScaling")
+        # ========== Couette Flow GPU Executables ==========
+        
+        add_executable(CouetteFlowGPUScaling)
+        target_sources(CouetteFlowGPUScaling PRIVATE CouetteFlowGPUScaling.cpp)
+        target_link_libraries(CouetteFlowGPUScaling PRIVATE
+                walberla::blockforest walberla::boundary walberla::core 
+                walberla::experimental walberla::gpu walberla::field 
+                walberla::lbm walberla::stencil walberla::timeloop walberla::vtk
+                MPI::MPI_CXX)
+        set_property(TARGET CouetteFlowGPUScaling PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+        walberla_generate_sources(CouetteFlowGPUScaling
+                SCRIPTS CouetteFlowSweeps.py --target gpu
+                FILE_EXTENSIONS .cu .hpp)
+        set_source_files_properties(
+                ${CMAKE_CURRENT_BINARY_DIR}/_gen/CouetteFlowGPUScaling/gen/CouetteFlowSweeps.cu
+                PROPERTIES LANGUAGE CUDA)
+
+        message(STATUS "CUDA GPU executables configured:")
+        message(STATUS "  - HeatEquationWithMaterialGPU")
+        message(STATUS "  - CodegenHeatEquationGPUScaling")
+        message(STATUS "  - CouetteFlowGPUScaling")
     endif()
 endif()
