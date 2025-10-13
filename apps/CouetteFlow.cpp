@@ -167,7 +167,7 @@ void run(int argc, char **argv)
 
    // Add remaining time logger
    RemainingTimeLogger logger{numTimesteps};
-   loop.addFuncAfterTimeStep(logger);
+   loop.addFuncAfterTimeStep(logger, "Remaining Time Logger");
 
    // Timed simulation run
    WcTimingPool timeloopTiming;
