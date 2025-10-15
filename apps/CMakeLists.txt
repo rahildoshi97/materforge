@@ -256,7 +256,8 @@ else()
         set_property(TARGET CouetteFlowGPUScaling PROPERTY HIP_ARCHITECTURES "gfx90a")
         
         walberla_generate_sources(CouetteFlowGPUScaling
-                SCRIPTS CouetteFlowSweeps.py --target gpu
+                SCRIPTS CouetteFlowSweeps.py
+                SCRIPT_ARGS --target=gpu
                 FILE_EXTENSIONS .cpp .hpp)
                 
         set_source_files_properties(
@@ -312,7 +313,8 @@ else()
                 MPI::MPI_CXX)
         set_property(TARGET CouetteFlowGPUScaling PROPERTY CUDA_SEPARABLE_COMPILATION ON)
         walberla_generate_sources(CouetteFlowGPUScaling
-                SCRIPTS CouetteFlowSweeps.py --target gpu
+                SCRIPTS CouetteFlowSweeps.py 
+                SCRIPT_ARGS --target=gpu
                 FILE_EXTENSIONS .cu .hpp)
         set_source_files_properties(
                 ${CMAKE_CURRENT_BINARY_DIR}/_gen/CouetteFlowGPUScaling/gen/CouetteFlowSweeps.cu
