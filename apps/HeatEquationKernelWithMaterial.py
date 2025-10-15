@@ -4,7 +4,7 @@ import pystencils as ps
 from pathlib import Path
 from pystencilssfg import SourceFileGenerator
 from pystencils import SymbolCreator
-from walberla.codegen import Sweep
+from sweepgen import Sweep
 
 from materforge.parsing.api import create_material
 
