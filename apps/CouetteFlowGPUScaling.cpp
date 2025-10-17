@@ -207,12 +207,11 @@ void run(int argc, char **argv)
    }
    
    // Stream-collide sweep
-   auto streamCollide = makeSharedSweep(
-      std::make_shared<gen::Couette::StreamCollide>(
-         //rhoId, pdfsId, uId, viscId  // constant viscosity
-         rhoId, pdfsId, tempId, uId, viscId  // temperature-dependent viscosity
-      )
-   );
+   /*auto streamCollide = gen::Couette::StreamCollide{
+         rhoId, pdfsId, uId, viscId  // constant viscosity
+         //rhoId, pdfsId, tempId, uId, viscId  // temperature-dependent viscosity
+   };*/
+   gen::Couette::StreamCollide streamCollide{rhoId, pdfsId, uId, viscId};
    
    // GPU Communication
    constexpr bool cudaEnabledMPI = false;
@@ -241,7 +240,7 @@ void run(int argc, char **argv)
    
    // Timeloop
    SweepTimeloop loop{blocks->getBlockStorage(), numTimesteps};
-   loop.add() << Sweep(streamCollide, "StreamCollide") << AfterFunction(comm.getCommunicateFunctor(), "Communication");
+   loop.add() << BeforeFunction([&]() {comm.getCommunicateFunctor();}, "GPU Communication") << Sweep(std::ref(streamCollide), "StreamCollide");
    loop.add() << Sweep(noSlip, "NoSlip");
    loop.add() << Sweep(ubb, "UBB");
    
