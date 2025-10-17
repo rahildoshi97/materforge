@@ -103,7 +103,8 @@
                 "WALBERLA_BUILD_WITH_MPI": "ON",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "WALBERLA_ENABLE_SWEEPGEN": "ON",
-                "WALBERLA_SWEEPGEN_MANAGED_VENV": "ON"
+                "WALBERLA_SWEEPGEN_MANAGED_VENV": "ON",
+                "WALBERLA_BUILD_EXAMPLES": "OFF"
             }
         },
         {
@@ -126,7 +127,8 @@
                 "WALBERLA_BUILD_WITH_MPI": "ON",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "WALBERLA_ENABLE_SWEEPGEN": "ON",
-                "WALBERLA_SWEEPGEN_MANAGED_VENV": "ON"
+                "WALBERLA_SWEEPGEN_MANAGED_VENV": "ON",
+                "WALBERLA_BUILD_EXAMPLES": "OFF"
             }
         }
     ],
