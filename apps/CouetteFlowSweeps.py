@@ -28,7 +28,7 @@ from scipy.integrate import cumulative_trapezoid
 
 from pystencilssfg import SourceFileGenerator
 from sweepgen import Sweep, get_build_config
-from sweepgen.boundaries import GenericHBB
+from sweepgen.boundaries import GenericBoundary
 from sweepgen.symbolic import cell, domain
 from sweepgen.prefabs import LbmBulk
 from sweepgen.build_config import DEBUG
@@ -224,11 +224,11 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         sfg.generate(Sweep("VelocityErrorLmax", error_calc))
 
     # Boundary conditions
-    noSlip = GenericHBB(NoSlip(name="NoSlip"), lb_method, f_pdfs)
+    noSlip = GenericBoundary(NoSlip(name="NoSlip"), lb_method, f_pdfs)
     sfg.generate(noSlip)
 
     wall_velocity = (u_max, 0, 0)
-    ubb = GenericHBB(UBB(wall_velocity, name="UBB"), lb_method, f_pdfs)
+    ubb = GenericBoundary(UBB(wall_velocity, name="UBB"), lb_method, f_pdfs)
     sfg.generate(ubb)
     
 print("Code generation complete!")

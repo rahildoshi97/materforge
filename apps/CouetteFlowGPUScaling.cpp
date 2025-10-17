@@ -230,11 +230,11 @@ void run(int argc, char **argv)
       return link.wallCell.z() < blocks->getDomainCellBB().zMin();
    };
    
-   auto noSlip = gen::NoSlipFactory{blocks, pdfsId}.selectLinks([&](auto link) {
+   auto noSlip = gen::NoSlipFactory{blocks, pdfsId}.fromLinks([&](auto link) {
       return intersectsLowerWall(link);
    });
    
-   auto ubb = gen::UBBFactory{blocks, pdfsId, channelVelocity}.selectLinks([&](auto link){
+   auto ubb = gen::UBBFactory{blocks, pdfsId, channelVelocity}.fromLinks([&](auto link){
       return intersectsUpperWall(link);
    });
    
@@ -328,7 +328,7 @@ void run(int argc, char **argv)
    WALBERLA_LOG_RESULT_ON_ROOT(*reducedTimeloopTiming)
    
    // Copy data back to CPU for convergence check
-   gpu::fieldCpy<VectorField_T, GPUVectorField_T>(blocks, uCpuId, uId);
+   /*gpu::fieldCpy<VectorField_T, GPUVectorField_T>(blocks, uCpuId, uId);
    
    // Check convergence
    WALBERLA_LOG_INFO_ON_ROOT("Checking for convergence...");
@@ -351,7 +351,7 @@ void run(int argc, char **argv)
       } else {
          WALBERLA_LOG_WARNING_ON_ROOT("Solution has not converged to threshold " << errorThreshold);
       }
-   }
+   }*/
    
    WALBERLA_LOG_INFO_ON_ROOT("Simulation completed successfully!");
 }

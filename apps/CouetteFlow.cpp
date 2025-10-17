@@ -114,12 +114,12 @@ void run(int argc, char **argv)
    };
 
    // Lower wall: no-slip boundary condition
-   auto noSlip = gen::NoSlipFactory{blocks, pdfsId}.selectLinks([&](auto link) {
+   auto noSlip = gen::NoSlipFactory{blocks, pdfsId}.fromLinks([&](auto link) {
       return intersectsLowerWall(link);
    });
 
    // Upper wall: moving wall with velocity u_max (UBB - velocity bounce back)
-   auto ubb = gen::UBBFactory{blocks, pdfsId, channelVelocity}.selectLinks([&](auto link){
+   auto ubb = gen::UBBFactory{blocks, pdfsId, channelVelocity}.fromLinks([&](auto link){
       return intersectsUpperWall(link);
    });
 

@@ -212,11 +212,11 @@ void run(int argc, char **argv)
       return link.wallCell.z() < blocks->getDomainCellBB().zMin();
    };
    
-   auto noSlip = gen::NoSlipFactory{blocks, pdfsId}.selectLinks([&](auto link) {
+   auto noSlip = gen::NoSlipFactory{blocks, pdfsId}.fromLinks([&](auto link) {
       return intersectsLowerWall(link);
    });
    
-   auto ubb = gen::UBBFactory{blocks, pdfsId, channelVelocity}.selectLinks([&](auto link){
+   auto ubb = gen::UBBFactory{blocks, pdfsId, channelVelocity}.fromLinks([&](auto link){
       return intersectsUpperWall(link);
    });
    
