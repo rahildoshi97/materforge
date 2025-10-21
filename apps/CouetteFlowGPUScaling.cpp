@@ -23,7 +23,7 @@
 #include "gpu/communication/UniformGPUScheme.h"
 #include "gpu/communication/MemcpyPackInfo.h"
 
-#include "gen/CouetteFlowSweeps.hpp"
+#include "gen/CouetteFlowSweepsGPU.hpp"
 
 namespace CouetteFlow
 {
