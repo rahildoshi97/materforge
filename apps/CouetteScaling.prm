@@ -1,7 +1,7 @@
 DomainSetup {
     // For strong scaling: keep total domain fixed, increase blocks
     // For weak scaling: keep cells per block fixed, increase blocks
-    blocks < 2, 1, 1 >;           // Override this for scaling tests
+    blocks < 1, 1, 1 >;           // Override this for scaling tests
     cellsPerBlock < 64, 32, 32 >; // Base size per block
     periodic < 1, 1, 0 >;         // X and Y periodic, Z has walls
 }
