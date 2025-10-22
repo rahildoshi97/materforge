@@ -75,14 +75,25 @@ void run(int argc, char **argv)
    
    // Read parameters from config
    Config::BlockHandle simParams = config->getBlock("Parameters");
-   const std::string scalingTest = simParams.getParameter<std::string>("scalingTest", "none");
-   const uint_t problemSize = simParams.getParameter<uint_t>("problemSize", 64);
+   std::string scalingTest = simParams.getParameter<std::string>("scalingTest", "none");
+   uint_t problemSize = simParams.getParameter<uint_t>("problemSize", 64);
    const real_t channelVelocity = simParams.getParameter<real_t>("u_max");
    const real_t errorThreshold = simParams.getParameter<real_t>("errorThreshold");
    const uint_t numTimesteps = simParams.getParameter<uint_t>("timesteps");
    const real_t T_bottom = simParams.getParameter<real_t>("T_bottom");
    const real_t T_top = simParams.getParameter<real_t>("T_top");
    const real_t latticeViscosity = simParams.getParameter<real_t>("nu");
+   // ========== COMMAND-LINE OVERRIDES ==========
+   // Allow: ./executable config.prm [scaling_type] [problem_size]
+   if (argc > 2) {
+      scalingTest = std::string(argv[2]);
+      WALBERLA_LOG_INFO_ON_ROOT("Command-line override: scalingTest = " << scalingTest);
+   }
+
+   if (argc > 3) {
+      problemSize = uint_c(std::stoi(argv[3]));
+      WALBERLA_LOG_INFO_ON_ROOT("Command-line override: problemSize = " << problemSize);
+   }                   
    
    // Read base domain configuration
    Config::BlockHandle domainSetup = config->getBlock("DomainSetup");
