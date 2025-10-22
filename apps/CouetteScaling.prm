@@ -17,8 +17,8 @@ Parameters {
     T_top           600.0;
     
     // Scaling test configuration
-    scalingTest     strong;     // Options: "strong", "weak", "none"
-    problemSize     64;            // For strong: total cells; For weak: cells per block
+    scalingTest     none;         // Options: "strong", "weak", "none"
+    problemSize     64;           // For strong: total cells; For weak: cells per block
 }
 
 Output {
