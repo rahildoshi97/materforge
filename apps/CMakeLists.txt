@@ -262,7 +262,7 @@ else()
                 FILE_EXTENSIONS .cpp .hpp)
                 
         set_source_files_properties(
-                ${CMAKE_CURRENT_BINARY_DIR}/_gen/CouetteFlowGPUScaling/gen/CouetteFlowSweeps.cpp
+                ${CMAKE_CURRENT_BINARY_DIR}/_gen/CouetteFlowGPUScaling/gen/CouetteFlowSweepsGPU.cpp
                 PROPERTIES LANGUAGE HIP)
 
         message(STATUS "HIP GPU executables configured:")
@@ -318,7 +318,7 @@ else()
                 SCRIPT_ARGS --target=gpu
                 FILE_EXTENSIONS .cu .hpp)
         set_source_files_properties(
-                ${CMAKE_CURRENT_BINARY_DIR}/_gen/CouetteFlowGPUScaling/gen/CouetteFlowSweeps.cu
+                ${CMAKE_CURRENT_BINARY_DIR}/_gen/CouetteFlowGPUScaling/gen/CouetteFlowSweepsGPU.cu
                 PROPERTIES LANGUAGE CUDA)
 
         message(STATUS "CUDA GPU executables configured:")

@@ -332,9 +332,29 @@ Testing/
 *.lib
 *.exe
 
-# Benchmarking build directories
+# ========== BENCHMARKING AND SCALING TEST ARTIFACTS ==========
+# Build directories for benchmarking scripts
+build_*/
+build_couette_*/
+build_heat_equation_*/
+materforge_src/
+
+# SLURM job output files
+*.out
+couette_gpu_*.out
+couette_cpu_*.out
+benchmark_*.out
+*.slurm
+
+# Job directories
+$HOME/lss-rdm/jobs/
+lss-rdm/jobs/
+
+# Benchmarking artifacts in scripts
 benchmarking-scripts/**/build_*/
-benchmarking-scripts/**/build_materforge_*
-benchmarking-scripts/**/materforge_src
+benchmarking-scripts/**/build_couette_*
+benchmarking-scripts/**/build_heat_equation_*
+benchmarking-scripts/**/materforge_src/
 benchmarking-scripts/**/*.log
 benchmarking-scripts/**/*.out
+benchmarking-scripts/**/*.slurm

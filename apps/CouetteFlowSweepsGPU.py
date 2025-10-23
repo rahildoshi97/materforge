@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-CouetteFlowSweeps.py - 3D Thermal Couette Flow with integrated analytical solution
+CouetteFlowSweepsGPU.py - 3D Thermal Couette Flow with integrated analytical solution
 """
 
 import logging
