@@ -5,6 +5,52 @@ All notable changes to MaterForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2025-11-10
+
+### Added
+- Comprehensive piecewise function inversion algorithm for symbolic material properties
+- Support for monotonic piecewise linear functions with automatic slope detection
+- Boundary condition validation and energy-to-temperature mapping
+- `PiecewiseInverter.create_energy_density_inverse()` static method for material energy density inverse functions
+- Robust handling of constant and linear piecewise pieces
+- Monotonicity validation to prevent inverting non-monotonic functions
+- Comprehensive test suite for piecewise inversion (13+ unit tests)
+
+### Changed
+- Enhanced `piecewise_inverter.py` with two-pass boundary collection and inversion algorithm
+- Improved constant piece handling: returns SymPy expressions instead of raw floats for consistency
+- Updated boundary temperature tracking for proper inverse function domain mapping
+- Refined logging with detailed slope and monotonicity diagnostics
+- Enhanced error messages for debugging piecewise function issues
+
+### Fixed
+- **Critical bug in piecewise inversion**: Constant pieces in inverse functions now correctly map to boundary temperatures instead of constant energy values
+  - Previously: `T=300K → E=1.20e+05 → T=119597.6K (Error: 1.19e+05)`
+  - Now: `T=300K → E=1.20e+05 → T=300.0K (Error: ~0)`
+- Fixed boundary condition direction for decreasing (negative slope) piecewise pieces
+- Corrected inverse condition logic: now uses `E > boundary_energy` for decreasing functions and `E < boundary_energy` for increasing functions
+- Missing `boundary_temp` parameter in loop iteration (was causing 4500K offset errors)
+- SymPy expression type consistency: all inverse pieces now return SymPy objects via `sp.sympify()`
+- Test assertions now use `sp.simplify()` for symbolic equivalence comparison
+- Round-trip accuracy improved from ~1.19e+05 K error to <1e-10 K precision
+
+### Performance
+- Added monotonicity validation to fail fast on invalid piecewise functions
+- Efficient two-pass algorithm: first pass collects boundaries, second pass builds inverse
+- Minimal computational overhead for piecewise inversion
+
+### Testing
+- All 306 unit tests passing (100% pass rate)
+- 13 dedicated piecewise inversion tests covering:
+  - Linear piecewise functions with multiple segments
+  - Constant piece handling
+  - Boundary condition extraction
+  - Decreasing and increasing slopes
+  - Edge cases and non-linear function rejection
+  - Material energy density inverse creation
+  - Round-trip accuracy validation
+- Integration tests confirm near-zero round-trip error (<1e-13) for all temperature ranges
+
 ## [0.6.1] - 2025-10-24
 
 ### Added

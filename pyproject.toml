@@ -116,5 +116,5 @@ materforge = [
 write_to = "src/materforge/_version.py"
 version_scheme = "python-simplified-semver"
 local_scheme = "node-and-date"
-fallback_version = "0.6.1"
+fallback_version = "0.6.2"
 tag_regex = "^(?:v)?(?P<version>\\d+\\.\\d+\\.\\d+)$"
