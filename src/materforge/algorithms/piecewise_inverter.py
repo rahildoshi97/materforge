@@ -80,28 +80,100 @@ class PiecewiseInverter:
         self._validate_linear_only(piecewise_func, input_symbol)
         # Process each piece
         inverse_conditions = []
+        piece_boundaries = []  # Track (energy_value, temperature_boundary, expr, condition)
+        # First pass: collect all piece information
         for i, (expr, condition) in enumerate(piecewise_func.args):
             logger.debug("Processing piece %d: expr=%s, condition=%s", i + 1, expr, condition)
-            if condition == True:  # Final piece
-                inverse_expr = self._invert_linear_expression(expr, input_symbol, output_symbol)
-                inverse_conditions.append((inverse_expr, True))
-                logger.debug("Added final piece with universal condition")
+            if condition == True:  # Final piece (no condition)
+                # For final piece, we need to handle it specially
+                piece_boundaries.append({
+                    'index': i,
+                    'expr': expr,
+                    'condition': condition,
+                    'boundary_temp': float('inf'),
+                    'boundary_energy': float('inf'),
+                    'is_final': True,
+                    'slope': None
+                })
             else:
-                # Extract boundary and create inverse
+                # Extract temperature boundary
                 try:
-                    boundary = self._extract_boundary(condition, input_symbol)
-                    logger.debug("Extracted boundary: %.3f", boundary)
-                    inverse_expr = self._invert_linear_expression(expr, input_symbol, output_symbol)
+                    boundary_temp = self._extract_boundary(condition, input_symbol)
+                    logger.debug("Extracted boundary: %.3f", boundary_temp)
                     # Calculate energy at boundary for domain condition
-                    boundary_energy = float(expr.subs(input_symbol, boundary))
-                    inverse_conditions.append((inverse_expr, output_symbol < boundary_energy))
-                    logger.debug("Added piece %d: boundary_energy=%.3f", i + 1, boundary_energy)
+                    boundary_energy = float(expr.subs(input_symbol, boundary_temp))
+                    # Get slope to determine condition direction
+                    degree = sp.degree(expr, input_symbol)
+                    slope = None
+                    if degree == 1:
+                        coeffs = sp.Poly(expr, input_symbol).all_coeffs()
+                        slope = float(coeffs[0])
+                    piece_boundaries.append({
+                        'index': i,
+                        'expr': expr,
+                        'condition': condition,
+                        'boundary_temp': boundary_temp,
+                        'boundary_energy': boundary_energy,
+                        'is_final': False,
+                        'slope': slope
+                    })
+                    logger.debug("Boundary: T=%.3f -> E=%.3e (slope=%.6f)", boundary_temp, boundary_energy, slope if slope else 0)
                 except Exception as e:
                     logger.error("Error processing piece %d: %s", i + 1, e)
                     raise ValueError(f"Error processing piece {i + 1}: {str(e)}") from e
+        # Validate monotonicity
+        self._validate_monotonicity(piece_boundaries, input_symbol)
+        # Build inverse conditions
+        inverse_conditions = []
+        # Second pass: build inverse conditions with correct domain mapping
+        for i, piece_info in enumerate(piece_boundaries):
+            expr = piece_info['expr']
+            boundary_temp = piece_info['boundary_temp'] if not piece_info['is_final'] else None
+            boundary_energy = piece_info['boundary_energy']
+            is_final = piece_info['is_final']
+            slope = piece_info['slope']
+            inverse_expr = self._invert_linear_expression(expr, input_symbol, output_symbol, boundary_temp)
+            if is_final:
+                # Final piece: no upper bound
+                inverse_conditions.append((inverse_expr, True))
+                logger.debug("Added final piece with universal condition")
+            else:
+                # Determine condition direction based on slope
+                if slope is not None and slope < 0:
+                    # Decreasing function: use E > boundary
+                    condition = output_symbol > boundary_energy
+                    logger.debug("Added piece %d (decreasing): condition E > %.3e", i + 1, boundary_energy)
+                else:
+                    # Increasing or constant: use E < boundary
+                    condition = output_symbol < boundary_energy
+                    logger.debug("Added piece %d (increasing): condition E < %.3e", i + 1, boundary_energy)
+                inverse_conditions.append((inverse_expr, condition))
         result = sp.Piecewise(*inverse_conditions)
         logger.info("Created inverse function with %d conditions", len(inverse_conditions))
         return result
+
+    def _validate_monotonicity(self, piece_boundaries: list, input_symbol: sp.Symbol) -> None:
+        """Validate that the piecewise function is monotonic."""
+        logger.debug("Validating monotonicity")
+        non_final_pieces = [p for p in piece_boundaries if not p['is_final']]
+        if len(non_final_pieces) < 2:
+            return
+        # Get all slopes
+        slopes = []
+        for piece in non_final_pieces:
+            degree = sp.degree(piece['expr'], input_symbol)
+            if degree == 0:
+                slopes.append(0)  # Constant
+            elif degree == 1:
+                coeffs = sp.Poly(piece['expr'], input_symbol).all_coeffs()
+                slopes.append(float(coeffs[0]))
+        # Check if all slopes have the same sign (all non-negative or all non-positive)
+        positive_slopes = [s for s in slopes if s > self.tolerance]
+        negative_slopes = [s for s in slopes if s < -self.tolerance]
+        if positive_slopes and negative_slopes:
+            logger.error("Non-monotonic function detected: mixed positive and negative slopes")
+            raise ValueError("Piecewise function is not monotonic. Mix of increasing and decreasing pieces.")
+        logger.debug("Monotonicity validation passed. Slopes: %s", slopes)
 
     @staticmethod
     def _validate_linear_only(piecewise_func: sp.Piecewise, input_symbol: sp.Symbol) -> None:
@@ -145,7 +217,7 @@ class PiecewiseInverter:
             raise ValueError(f"Error extracting boundary from {condition}: {str(e)}") from e
 
     def _invert_linear_expression(self, expr: sp.Expr, input_symbol: sp.Symbol,
-                                  output_symbol: sp.Symbol) -> Union[float, sp.Expr]:
+                                  output_symbol: sp.Symbol, boundary_temp: float = None) -> sp.Expr:
         """
         Invert a linear expression: ax + b = y → x = (y - b) / a
         Args:
@@ -160,10 +232,16 @@ class PiecewiseInverter:
             degree = sp.degree(expr, input_symbol)
             logger.debug("Expression degree: %d", degree)
             if degree == 0:
-                # Constant function - return the constant as temperature
-                const_value = float(expr)
-                logger.debug("Constant expression: returning %.3f", const_value)
-                return const_value
+                # Constant function - return the boundary temperature (not the constant!)
+                # When E = C (constant), the inverse should be T = boundary_temp
+                if boundary_temp is not None:
+                    logger.debug("Constant expression: returning boundary temp %.3f", boundary_temp)
+                    return sp.sympify(boundary_temp)
+                else:
+                    # Fallback: return the constant as before
+                    const_value = float(expr)
+                    logger.debug("Constant expression (no boundary): returning %.3f", const_value)
+                    return sp.sympify(const_value)
             elif degree == 1:
                 # Linear function: ax + b = y → x = (y - b) / a
                 coeffs = sp.Poly(expr, input_symbol).all_coeffs()
@@ -178,7 +256,6 @@ class PiecewiseInverter:
             else:
                 logger.error("Unsupported expression degree: %d", degree)
                 raise ValueError(f"Expression has degree {degree}, only linear expressions are supported")
-
         except Exception as e:
             logger.error("Error inverting expression '%s': %s", expr, e, exc_info=True)
             raise ValueError(f"Failed to invert expression {expr}: {str(e)}") from e

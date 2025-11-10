@@ -176,11 +176,10 @@ class TestPiecewiseInverter:
             (2*T + 100, (E - 100) / 2),
             (T, E),
             (-T + 50, 50 - E),
-            (sp.Float(42), 42)
+            (sp.Float(42), sp.Float(42))
         ]
         for expr, expected in test_cases:
             inverse_expr = inverter._invert_linear_expression(expr, T, E)
-            if isinstance(expected, (int, float)):
-                assert inverse_expr == expected
-            else:
-                assert sp.simplify(inverse_expr - expected) == 0
+            # Use simplify to check mathematical equivalence, not structural equality
+            difference = sp.simplify(inverse_expr - expected)
+            assert difference == 0, f"Expected {expected}, got {inverse_expr}"
