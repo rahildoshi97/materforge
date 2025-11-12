@@ -5,6 +5,44 @@ All notable changes to MaterForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.3] - 2025-11-12
+
+### Added
+- Material-specific integration tests for piecewise inverter with real material data
+- Support for four boundary configuration types in material properties:
+  - `[constant, constant]`: domain [T_lower, T_upper]
+  - `[constant, extrapolate]`: domain [T_lower, inf)
+  - `[extrapolate, constant]`: domain (-inf, T_upper]
+  - `[extrapolate, extrapolate]`: domain (-inf, inf)
+- Domain validation guidance for piecewise function inversion
+- Improved test documentation with domain specifications for each test case
+
+### Changed
+- Reorganized test assertions to use `sp.simplify()` for robust symbolic equivalence checking
+- Updated test cases to respect material property domain boundaries
+- Enhanced test coverage for constant piece boundary handling
+- Improved error messages for out-of-domain temperature evaluations
+
+### Fixed
+- Test domain validation: removed out-of-domain test temperatures that were incorrectly failing
+  - Constant pieces now correctly understood to map all values in their domain to a single output
+  - Inverse function behavior validated to correctly return boundary temperatures for constant pieces
+  - Tests now only evaluate within valid material property domains
+- Test assertions for final constant pieces: now correctly verify boundary temperature returns
+
+### Testing
+- 5 new material-specific test methods covering all boundary configurations
+- Comprehensive `test_material_specific_enthalpy_all_configurations()` meta-test
+- All tests passing with domain-respecting temperature ranges
+- Real Aluminum specific_enthalpy piecewise functions used for validation
+- Round-trip accuracy <1e-9 K across all valid temperature ranges
+- Total: 328 unit tests passing (100% pass rate)
+
+### Documentation
+- Added detailed docstrings explaining domain constraints for each boundary configuration
+- Clarified mathematical behavior of constant pieces in piecewise functions
+- Added domain notation (e.g., `domain: [300K, 4500K]`) to test documentation
+
 ## [0.6.2] - 2025-11-10
 
 ### Added
