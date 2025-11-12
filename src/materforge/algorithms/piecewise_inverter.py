@@ -80,21 +80,26 @@ class PiecewiseInverter:
         self._validate_linear_only(piecewise_func, input_symbol)
         # Process each piece
         inverse_conditions = []
-        piece_boundaries = []  # Track (energy_value, temperature_boundary, expr, condition)
+        piece_boundaries = []  # Track piece information
         # First pass: collect all piece information
         for i, (expr, condition) in enumerate(piecewise_func.args):
             logger.debug("Processing piece %d: expr=%s, condition=%s", i + 1, expr, condition)
             if condition == True:  # Final piece (no condition)
-                # For final piece, we need to handle it specially
+                # For final piece, get boundary from the previous piece
+                if piece_boundaries:
+                    last_boundary_temp = piece_boundaries[-1]['boundary_temp']
+                else:
+                    last_boundary_temp = None
                 piece_boundaries.append({
                     'index': i,
                     'expr': expr,
                     'condition': condition,
-                    'boundary_temp': float('inf'),
+                    'boundary_temp': last_boundary_temp,  # Use previous piece's boundary
                     'boundary_energy': float('inf'),
                     'is_final': True,
                     'slope': None
                 })
+                logger.debug("Final piece: using boundary from previous piece T=%.3f", last_boundary_temp if last_boundary_temp else 0)
             else:
                 # Extract temperature boundary
                 try:
@@ -128,10 +133,11 @@ class PiecewiseInverter:
         # Second pass: build inverse conditions with correct domain mapping
         for i, piece_info in enumerate(piece_boundaries):
             expr = piece_info['expr']
-            boundary_temp = piece_info['boundary_temp'] if not piece_info['is_final'] else None
+            boundary_temp = piece_info['boundary_temp']
             boundary_energy = piece_info['boundary_energy']
             is_final = piece_info['is_final']
             slope = piece_info['slope']
+            # Always pass boundary_temp to _invert_linear_expression for correct handling
             inverse_expr = self._invert_linear_expression(expr, input_symbol, output_symbol, boundary_temp)
             if is_final:
                 # Final piece: no upper bound
@@ -224,6 +230,7 @@ class PiecewiseInverter:
             expr: Linear expression to invert
             input_symbol: Input variable (x)
             output_symbol: Output variable (y)
+            boundary_temp: Boundary temperature (for constant pieces)
         Returns:
             Inverted expression
         """
@@ -234,11 +241,11 @@ class PiecewiseInverter:
             if degree == 0:
                 # Constant function - return the boundary temperature (not the constant!)
                 # When E = C (constant), the inverse should be T = boundary_temp
-                if boundary_temp is not None:
+                if boundary_temp is not None and boundary_temp != float('inf'):
                     logger.debug("Constant expression: returning boundary temp %.3f", boundary_temp)
                     return sp.sympify(boundary_temp)
                 else:
-                    # Fallback: return the constant as before
+                    # Fallback: return the constant (should not happen for well-formed piecewise)
                     const_value = float(expr)
                     logger.debug("Constant expression (no boundary): returning %.3f", const_value)
                     return sp.sympify(const_value)
