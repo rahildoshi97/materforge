@@ -79,7 +79,6 @@ void run(int argc, char **argv)
    // Read base domain configuration
    Config::BlockHandle domainSetup = config->getBlock("DomainSetup");
    Vector3<uint_t> baseCellsPerBlock = domainSetup.getParameter<Vector3<uint_t>>("cellsPerBlock");
-   Vector3<bool> periodic = domainSetup.getParameter<Vector3<bool>>("periodic");
    
    // Determine if weak or strong scaling
    bool weakScaling = (scalingTest == "weak");
@@ -158,17 +157,7 @@ void run(int argc, char **argv)
    WALBERLA_LOG_INFO_ON_ROOT("Total domain: " << totalCellsX << "x" << totalCellsY << "x" << totalCellsZ << " = " << totalCells);
    
    // Block storage setup
-   const real_t dx = real_c(1.0);
-   auto blocks = blockforest::createUniformBlockGrid(
-       xBlocks, yBlocks, zBlocks,
-       xCells, yCells, zCells,
-       dx,
-       true,            // oneBlockPerProcess
-       periodic[0],     // xPeriodic (from .prm)
-       periodic[1],     // yPeriodic (from .prm)
-       periodic[2],     // zPeriodic (from .prm)
-       false            // keepGlobalBlockInformation
-   );
+   auto blocks = blockforest::createUniformBlockGridFromConfig(config);
    
    // Field setup
    BlockDataID pdfsId = field::addToStorage<PdfField_T>(blocks, "pdfs", real_c(0.0), field::fzyx, 1);
@@ -178,13 +167,13 @@ void run(int argc, char **argv)
    BlockDataID viscId = field::addToStorage<ScalarField_T>(blocks, "viscosity", latticeViscosity, field::fzyx, 0);
    
    // Initialize fields
-   auto setAnalytical = gen::Couette::SetAnalyticalSolution{blocks, rhoId, uId, channelVelocity};
+   auto zeroVelocity = gen::Couette::SetZeroVelocity{rhoId, uId};
    auto initTemperature = gen::Couette::InitializeTemperature{blocks, tempId, T_bottom, T_top};
    auto initializePdfs = gen::Couette::InitPdfs{rhoId, pdfsId, uId};
    
    WALBERLA_LOG_INFO_ON_ROOT("Initializing fields...");
    for (auto &b : *blocks) {
-      setAnalytical(&b);
+      zeroVelocity(&b);
       initTemperature(&b);
       initializePdfs(&b);
    }
@@ -192,8 +181,8 @@ void run(int argc, char **argv)
    // Stream-collide sweep
    auto streamCollide = makeSharedSweep(
       std::make_shared<gen::Couette::StreamCollide>(
-         rhoId, pdfsId, uId, viscId  // constant viscosity
-         //rhoId, pdfsId, tempId, uId, viscId  // temperature-dependent viscosity
+         //rhoId, pdfsId, uId, viscId  // constant viscosity
+         rhoId, pdfsId, tempId, uId, viscId  // temperature-dependent viscosity
       )
    );
    
