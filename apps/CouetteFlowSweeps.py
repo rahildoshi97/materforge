@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 """
-CouetteFlowSweeps.py - 3D Thermal Couette Flow with integrated analytical solution
+CouetteFlowSweeps.py - 3D Thermal Couette Flow
+Code generation script with integrated analytical solution
 """
 
 import logging
@@ -30,7 +31,7 @@ from pystencilssfg import SourceFileGenerator
 from sweepgen import Sweep, get_build_config
 from sweepgen.boundaries import GenericBoundary
 from sweepgen.symbolic import cell, domain
-from sweepgen.prefabs import LbmBulk
+#from sweepgen.prefabs import LbmBulk
 from sweepgen.build_config import DEBUG
 
 DEBUG.use_cpu_default()
@@ -38,7 +39,7 @@ logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(n
 
 print(f"Starting code generation at {Path(__file__).resolve()}")
 
-use_materforge = False
+use_materforge = True
 
 with SourceFileGenerator(keep_unknown_argv=True) as sfg:
     sfg.namespace("CouetteFlow::gen")
@@ -67,6 +68,10 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
     
     const_nu = 1./6.  # Constant viscosity if MaterForge is not used
 
+    # ========================================================================
+    # COMPUTE ANALYTICAL SOLUTION DURING CODE GENERATION
+    # ========================================================================
+    
     analytical_velocity_expr = None
     
     if use_materforge:
@@ -160,9 +165,12 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         compressible=True,
         relaxation_rate=relaxation_rate_from_lattice_viscosity(nu_expr),
     )
-    print(f"relaxation rate: {lbm_config.relaxation_rate}")
+    print(f"Relaxation rate: {lbm_config.relaxation_rate}")
     
-    # Generate LBM sweeps
+    # ========================================================================
+    # GENERATE LBM SWEEPS
+    # ========================================================================
+    
     with sfg.namespace("Couette"):
         # lbm_bulk = LbmBulk(sfg, "LBM", lbm_config)
         # sfg.generate(lbm_bulk)
@@ -184,7 +192,7 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         stream_collide.swap_fields(f_pdfs, f_pdfs_tmp)
         sfg.generate(stream_collide)
 
-        # Initialize PDFs
+        # Initialize PDFs with zero velocity
         lb_method = create_lb_method(lbm_config)
         init_rule = macroscopic_values_setter(
             lb_method=lb_method,
@@ -195,16 +203,16 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         )
         sfg.generate(Sweep("InitPdfs", init_rule))
 
-        # Set analytical solution
-        couette_analytical = [
-            ps.Assignment(f_density(), 1),
-            ps.Assignment(f_velocity(0), analytical_velocity_expr),
+        # Initialize velocity to ZERO (for actual simulation)
+        zero_velocity = [
+            ps.Assignment(f_density.center(), 1),
+            ps.Assignment(f_velocity(0), 0),  # Zero velocity everywhere
             ps.Assignment(f_velocity(1), 0),
             ps.Assignment(f_velocity(2), 0),
         ]
-        sfg.generate(Sweep("SetAnalyticalSolution", couette_analytical))
+        sfg.generate(Sweep("SetZeroVelocity", zero_velocity))
 
-        # Temperature initialization
+        # Temperature initialization - linear gradient
         temperature_init = [
             ps.Assignment(
                 f_temperature.center(), 
@@ -213,7 +221,10 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         ]
         sfg.generate(Sweep("InitializeTemperature", temperature_init))
 
-        # Error computation with analytical solution
+        # ========================================================================
+        # ERROR COMPUTATION WITH ANALYTICAL SOLUTION
+        # ========================================================================
+        
         ux_analytical = sp.Symbol("ux_analytical")
         error_ux = ps.TypedSymbol("error_ux", ps.DynamicType.NUMERIC_TYPE)
 

@@ -76,14 +76,14 @@ void run(int argc, char **argv)
    WALBERLA_LOG_INFO_ON_ROOT("Cells per process: " << totalCells / numProcesses)
 
    // Prepare sweep functors using code-generated classes
-   auto setAnalytical = gen::Couette::SetAnalyticalSolution{blocks, rhoId, uId, channelVelocity};
+   auto zeroVelocity = gen::Couette::SetZeroVelocity{rhoId, uId};
    auto initTemperature = gen::Couette::InitializeTemperature{blocks, tempId, T_bottom, T_top};
    auto initializePdfs = gen::Couette::InitPdfs{rhoId, pdfsId, uId};
 
    auto streamCollide = makeSharedSweep(
       std::make_shared<gen::Couette::StreamCollide>(
-         rhoId, pdfsId, uId, viscId  // constant viscosity
-         //rhoId, pdfsId, tempId, uId, viscId  // temperature-dependent viscosity
+         //rhoId, pdfsId, uId, viscId  // constant viscosity
+         rhoId, pdfsId, tempId, uId, viscId  // temperature-dependent viscosity
       )
    );
 
@@ -91,9 +91,9 @@ void run(int argc, char **argv)
    WALBERLA_LOG_INFO_ON_ROOT("Initializing fields...");
    for (auto &b : *blocks)
    {
-      setAnalytical(&b);
-      initTemperature(&b);
-      initializePdfs(&b);
+      zeroVelocity(&b);  // Set u=0 everywhere initially
+      initTemperature(&b);  // Set temperature gradient
+      initializePdfs(&b);  // Initialize PDFs from u=0, rho=1
    }
 
    // Set up ghost layer communication
@@ -138,9 +138,8 @@ void run(int argc, char **argv)
 
    if (vtkWriteFrequency > 0)
    {
-      auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, "vtk", vtkWriteFrequency, 0, false, 
-                                                       "vtk_out_couette", "simulation_step", 
-                                                       false, true, true, false, 0);
+      auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, "vtk", vtkWriteFrequency, 0, false, "vtk_out_couette",
+                                                       "simulation_step", false, true, true, false, 0);
       
       auto densityWriter = make_shared<field::VTKWriter<ScalarField_T>>(rhoId, "density");
       vtkOutput->addCellDataWriter(densityWriter);
@@ -224,7 +223,7 @@ void run(int argc, char **argv)
    }
 
    mpi::reduceInplace(*velocityErrorLmax, mpi::MAX);
-   WALBERLA_LOG_INFO_ON_ROOT("L-infinity error of x-velocity: " << *velocityErrorLmax);
+   WALBERLA_LOG_INFO_ON_ROOT("L-infinity error vs analytical: " << *velocityErrorLmax);
 
    WALBERLA_ROOT_SECTION() {
       //WALBERLA_CHECK_LESS(*velocityErrorLmax, errorThreshold);
