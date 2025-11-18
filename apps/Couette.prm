@@ -12,7 +12,7 @@ Parameters {
 
     // Temperature gradient parameters
     T_bottom        300.0;        // Temperature at lower wall (K)
-    T_top           600.0;        // Temperature at upper wall (K)
+    T_top           3000.0;        // Temperature at upper wall (K)
 }
 
 Output {

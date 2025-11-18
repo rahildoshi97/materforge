@@ -14,7 +14,7 @@ Parameters {
 
     // Temperature gradient parameters
     T_bottom        300.0;
-    T_top           600.0;
+    T_top           3000.0;
     
     // Scaling test configuration
     scalingTest     none;         // Options: "strong", "weak", "none"
