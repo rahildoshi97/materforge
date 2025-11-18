@@ -28,6 +28,8 @@
 namespace CouetteFlow
 {
 
+constexpr bool use_materForge = true;
+
 using namespace walberla;
 
 // Type definitions
@@ -98,7 +100,6 @@ void run(int argc, char **argv)
    // Read base domain configuration
    Config::BlockHandle domainSetup = config->getBlock("DomainSetup");
    Vector3<uint_t> baseCellsPerBlock = domainSetup.getParameter<Vector3<uint_t>>("cellsPerBlock");
-   Vector3<bool> periodic = domainSetup.getParameter<Vector3<bool>>("periodic");
    
    // Determine if weak or strong scaling
    bool weakScaling = (scalingTest == "weak");
@@ -177,17 +178,7 @@ void run(int argc, char **argv)
    WALBERLA_LOG_INFO_ON_ROOT("Total domain: " << totalCellsX << "x" << totalCellsY << "x" << totalCellsZ << " = " << totalCells);
    
    // Block storage setup
-   const real_t dx = real_c(1.0);
-   auto blocks = blockforest::createUniformBlockGrid(
-       xBlocks, yBlocks, zBlocks,
-       xCells, yCells, zCells,
-       dx,
-       true,            // oneBlockPerProcess
-       periodic[0],     // xPeriodic (from .prm)
-       periodic[1],     // yPeriodic (from .prm)
-       periodic[2],     // zPeriodic (from .prm)
-       false            // keepGlobalBlockInformation
-   );
+   auto blocks = blockforest::createUniformBlockGridFromConfig(config);
    
    // CPU fields with pinned memory
    auto allocator = make_shared<gpu::HostFieldAllocator<real_t>>();
@@ -206,13 +197,13 @@ void run(int argc, char **argv)
    BlockDataID viscId = gpu::addGPUFieldToStorage<ScalarField_T>(blocks, viscCpuId, "viscosity", true);
    
    // Initialize on GPU
-   auto setAnalytical = gen::Couette::SetAnalyticalSolution{blocks, rhoId, uId, channelVelocity};
+   auto zeroVelocity = gen::Couette::SetZeroVelocity{rhoId, uId};
    auto initTemperature = gen::Couette::InitializeTemperature{blocks, tempId, T_bottom, T_top};
    auto initializePdfs = gen::Couette::InitPdfs{rhoId, pdfsId, uId};
    
    WALBERLA_LOG_INFO_ON_ROOT("Initializing GPU fields...");
    for (auto &b : *blocks) {
-      setAnalytical(&b);
+      zeroVelocity(&b);
       initTemperature(&b);
       initializePdfs(&b);
    }
@@ -260,9 +251,15 @@ void run(int argc, char **argv)
    const uint_t vtkWriteFrequency = outputParams.getParameter<uint_t>("vtkWriteFrequency", 0);
    
    if (vtkWriteFrequency > 0) {
-      auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, "vtk", vtkWriteFrequency, 0, false, 
-                                                       "vtk_out_couette_gpu", "simulation_step", 
-                                                       false, true, true, false, 0);
+      std::string vtkName = "cf_gpu";
+      if constexpr (use_materForge) {
+         vtkName += "_mftempdep";
+      } else {
+         vtkName += "_mfconst";
+      }
+      std::string vtkOutputDir = vtkName + "_out";
+      auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, vtkName, vtkWriteFrequency, 0, false, vtkOutputDir,
+                                                       "simulation_step", false, true, true, false, 0);
       
       auto densityWriter = make_shared<field::VTKWriter<ScalarField_T>>(rhoCpuId, "density");
       vtkOutput->addCellDataWriter(densityWriter);

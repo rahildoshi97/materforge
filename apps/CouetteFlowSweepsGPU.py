@@ -38,7 +38,7 @@ logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(n
 
 print(f"Starting code generation at {Path(__file__).resolve()}")
 
-use_materforge = False
+use_materforge = True
 
 with SourceFileGenerator(keep_unknown_argv=True) as sfg:
     sfg.namespace("CouetteFlow::gen")
@@ -196,13 +196,13 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         sfg.generate(Sweep("InitPdfs", init_rule))
 
         # Set analytical solution
-        couette_analytical = [
+        zero_velocity = [
             ps.Assignment(f_density(), 1),
-            ps.Assignment(f_velocity(0), analytical_velocity_expr),
+            ps.Assignment(f_velocity(0), 0),
             ps.Assignment(f_velocity(1), 0),
             ps.Assignment(f_velocity(2), 0),
         ]
-        sfg.generate(Sweep("SetAnalyticalSolution", couette_analytical))
+        sfg.generate(Sweep("SetZeroVelocity", zero_velocity))
 
         # Temperature initialization
         temperature_init = [
