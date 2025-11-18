@@ -213,7 +213,8 @@ void run(int argc, char **argv)
          rhoId, pdfsId, uId, viscId  // constant viscosity
          //rhoId, pdfsId, tempId, uId, viscId  // temperature-dependent viscosity
    };*/
-   gen::Couette::StreamCollide streamCollide{rhoId, pdfsId, uId, viscId};
+   gen::Couette::StreamCollide streamCollide{rhoId, pdfsId, tempId, uId, viscId};
+   //gen::Couette::StreamCollide streamCollide{rhoId, pdfsId, uId, viscId};
    
    // GPU Communication
    constexpr bool cudaEnabledMPI = false;
