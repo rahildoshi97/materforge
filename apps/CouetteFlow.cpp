@@ -22,6 +22,8 @@
 namespace CouetteFlow
 {
 
+constexpr bool use_materForge = true;
+
 using namespace walberla;
 
 // Type definitions
@@ -80,12 +82,20 @@ void run(int argc, char **argv)
    auto initTemperature = gen::Couette::InitializeTemperature{blocks, tempId, T_bottom, T_top};
    auto initializePdfs = gen::Couette::InitPdfs{rhoId, pdfsId, uId};
 
-   auto streamCollide = makeSharedSweep(
-      std::make_shared<gen::Couette::StreamCollide>(
-         //rhoId, pdfsId, uId, viscId  // constant viscosity
-         rhoId, pdfsId, tempId, uId, viscId  // temperature-dependent viscosity
-      )
-   );
+   // Create streamCollide based on compile-time constant
+   auto streamCollide = [&]() {
+      if constexpr (use_materForge) {
+         WALBERLA_LOG_INFO_ON_ROOT("Using temperature-dependent viscosity (MaterForge)")
+         return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
+               rhoId, pdfsId, tempId, uId, viscId  // temperature-dependent viscosity
+         ));
+      } else {
+         WALBERLA_LOG_INFO_ON_ROOT("Using constant viscosity")
+         return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
+            rhoId, pdfsId, uId, viscId  // constant viscosity
+         ));
+      }
+   }();
 
    // Set up initial state
    WALBERLA_LOG_INFO_ON_ROOT("Initializing fields...");
@@ -138,7 +148,14 @@ void run(int argc, char **argv)
 
    if (vtkWriteFrequency > 0)
    {
-      auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, "vtk", vtkWriteFrequency, 0, false, "vtk_out_couette",
+      std::string vtkName = "cf";
+      if constexpr (use_materForge) {
+         vtkName += "_mftempdep";
+      } else {
+         vtkName += "_mfconst";
+      }
+      std::string vtkOutputDir = vtkName + "_out";
+      auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, vtkName, vtkWriteFrequency, 0, false, vtkOutputDir,
                                                        "simulation_step", false, true, true, false, 0);
       
       auto densityWriter = make_shared<field::VTKWriter<ScalarField_T>>(rhoId, "density");
