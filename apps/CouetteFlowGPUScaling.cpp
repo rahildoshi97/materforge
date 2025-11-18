@@ -100,6 +100,7 @@ void run(int argc, char **argv)
    // Read base domain configuration
    Config::BlockHandle domainSetup = config->getBlock("DomainSetup");
    Vector3<uint_t> baseCellsPerBlock = domainSetup.getParameter<Vector3<uint_t>>("cellsPerBlock");
+   Vector3<bool> periodic = domainSetup.getParameter<Vector3<bool>>("periodic");
    
    // Determine if weak or strong scaling
    bool weakScaling = (scalingTest == "weak");
@@ -178,7 +179,18 @@ void run(int argc, char **argv)
    WALBERLA_LOG_INFO_ON_ROOT("Total domain: " << totalCellsX << "x" << totalCellsY << "x" << totalCellsZ << " = " << totalCells);
    
    // Block storage setup
-   auto blocks = blockforest::createUniformBlockGridFromConfig(config);
+   //auto blocks = blockforest::createUniformBlockGridFromConfig(config);
+   const real_t dx = real_c(1.0);
+   auto blocks = blockforest::createUniformBlockGrid(
+       xBlocks, yBlocks, zBlocks,
+       xCells, yCells, zCells,
+       dx,
+       true,            // oneBlockPerProcess
+       periodic[0],     // xPeriodic (from .prm)
+       periodic[1],     // yPeriodic (from .prm)
+       periodic[2],     // zPeriodic (from .prm)
+       false            // keepGlobalBlockInformation
+   );
    
    // CPU fields with pinned memory
    auto allocator = make_shared<gpu::HostFieldAllocator<real_t>>();
