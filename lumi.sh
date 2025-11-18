@@ -6,9 +6,7 @@
 lumi_cpu() {
     module purge
     module --force purge
-    module load LUMI/24.03 partition/C
-    module load PrgEnv-gnu
-    module load buildtools/24.03 cray-python/3.11.7
+    module load LUMI/24.03 partition/C PrgEnv-gnu buildtools/24.03 cray-python/3.11.7
     
     # Activate virtual environment
     if [[ -f /project/project_465001284/venvs/materforge/bin/activate ]]; then
@@ -18,6 +16,7 @@ lumi_cpu() {
     echo "✅ LUMI CPU environment loaded!"
     echo "Partition: CPU (partition/C)"
     echo "Compiler: $(cc --version | head -1)"
+    echo "CMake: $(cmake --version | head -1)"
 }
 
 # GPU Setup (ROCm)
