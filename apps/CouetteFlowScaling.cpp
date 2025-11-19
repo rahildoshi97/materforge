@@ -218,7 +218,7 @@ void run(int argc, char **argv)
             WALBERLA_LOG_INFO_ON_ROOT("Using constant viscosity");
 #ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
             return makeSharedSweep(std::make_shared<gen::CouetteGPU::StreamCollide>(
-                gpuRhoId, gpuPdfsId, gpuUId, gpuViscId
+                gpuRhoId, gpuPdfsId, gpuTempId, gpuUId, gpuViscId
             ));
 #else
             return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
