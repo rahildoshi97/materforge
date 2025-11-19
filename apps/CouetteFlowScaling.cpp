@@ -1,7 +1,7 @@
 //======================================================================================================================
 //! \file CouetteFlowScaling.cpp
 //! \author Rahil Doshi
-//! \brief Unified scaling benchmark for Couette flow (CPU/GPU) - SuctionBucket style
+//! \brief Unified scaling benchmark for Couette flow (CPU/GPU)
 //!
 //! Usage: ./CouetteFlowScaling config.prm
 //!
