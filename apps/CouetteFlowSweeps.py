@@ -30,7 +30,7 @@ from scipy.integrate import cumulative_trapezoid
 from pystencilssfg import SourceFileGenerator
 from sweepgen import Sweep, get_build_config
 from sweepgen.boundaries import GenericBoundary
-from sweepgen.symbolic import cell, domain
+from sweepgen.symbolic import cell, domain, cell_index, domain_cell_bb
 #from sweepgen.prefabs import LbmBulk
 from sweepgen.build_config import DEBUG
 
@@ -216,7 +216,7 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         temperature_init = [
             ps.Assignment(
                 f_temperature.center(), 
-                T_bottom + (T_top - T_bottom) * cell.z() / domain.z_max()
+                T_bottom + (T_top - T_bottom) * ps.tcast.as_numeric(cell_index.z_global()) / ps.tcast.as_numeric(domain_cell_bb.z_max())
             )
         ]
         sfg.generate(Sweep("InitializeTemperature", temperature_init))
