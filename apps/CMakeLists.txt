@@ -100,9 +100,6 @@ walberla_generate_sources(CouetteFlowScaling
         SCRIPTS CouetteFlowSweeps.py
         FILE_EXTENSIONS .cpp .hpp)
 
-message(STATUS "Executable(s) configured:")
-message(STATUS "  - CouetteFlowScaling")
-
 # Build targets based on configuration
 if(BUILD_CPU_ONLY)
     # ============== CPU-ONLY EXECUTABLES ==============
