@@ -137,14 +137,14 @@ if(BUILD_CPU_ONLY)
             SCRIPTS CouetteFlowSweeps.py
             FILE_EXTENSIONS .cpp .hpp)
 
-    add_executable(CouetteFlowCPUScaling)
-    target_sources(CouetteFlowCPUScaling PRIVATE CouetteFlowCPUScaling.cpp)
-    target_link_libraries(CouetteFlowCPUScaling PRIVATE
+    add_executable(CouetteFlowScaling)
+    target_sources(CouetteFlowScaling PRIVATE CouetteFlowScaling.cpp)
+    target_link_libraries(CouetteFlowScaling PRIVATE
             walberla::blockforest walberla::boundary walberla::core 
             walberla::experimental walberla::field walberla::lbm 
             walberla::stencil walberla::timeloop walberla::vtk
             MPI::MPI_CXX)
-    walberla_generate_sources(CouetteFlowCPUScaling
+    walberla_generate_sources(CouetteFlowScaling
             SCRIPTS CouetteFlowSweeps.py
             FILE_EXTENSIONS .cpp .hpp)
 
