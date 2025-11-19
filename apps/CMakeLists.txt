@@ -89,6 +89,17 @@ walberla_link_files_to_builddir( "*.prm" )
 sweepgen_venv_require(-e ${CMAKE_SOURCE_DIR}/..)
 sweepgen_venv_populate()
 
+add_executable(CouetteFlowScaling)
+target_sources(CouetteFlowScaling PRIVATE CouetteFlowScaling.cpp)
+target_link_libraries(CouetteFlowScaling PRIVATE
+        walberla::blockforest walberla::boundary walberla::core 
+        walberla::experimental walberla::field walberla::lbm 
+        walberla::stencil walberla::timeloop walberla::vtk
+        MPI::MPI_CXX)
+walberla_generate_sources(CouetteFlowScaling
+        SCRIPTS CouetteFlowSweeps.py
+        FILE_EXTENSIONS .cpp .hpp)
+
 # Build targets based on configuration
 if(BUILD_CPU_ONLY)
     # ============== CPU-ONLY EXECUTABLES ==============
@@ -134,17 +145,6 @@ if(BUILD_CPU_ONLY)
             walberla::timeloop walberla::vtk walberla::sqlite
             MPI::MPI_CXX)
     walberla_generate_sources(CouetteFlowCodegen
-            SCRIPTS CouetteFlowSweeps.py
-            FILE_EXTENSIONS .cpp .hpp)
-
-    add_executable(CouetteFlowScaling)
-    target_sources(CouetteFlowScaling PRIVATE CouetteFlowScaling.cpp)
-    target_link_libraries(CouetteFlowScaling PRIVATE
-            walberla::blockforest walberla::boundary walberla::core 
-            walberla::experimental walberla::field walberla::lbm 
-            walberla::stencil walberla::timeloop walberla::vtk
-            MPI::MPI_CXX)
-    walberla_generate_sources(CouetteFlowScaling
             SCRIPTS CouetteFlowSweeps.py
             FILE_EXTENSIONS .cpp .hpp)
 
