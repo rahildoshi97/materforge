@@ -1,0 +1,92 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 23,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "default-dbg",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/default-dbg",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "WALBERLA_ENABLE_SWEEPGEN": "ON"
+            }
+        },
+        {
+            "name": "default-rel",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/default-rel",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "WALBERLA_ENABLE_SWEEPGEN": "ON"
+            }
+        },
+        {
+            "name": "hip-dbg",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "WALBERLA_BUILD_WITH_HIP": true,
+                "WALBERLA_ENABLE_SWEEPGEN": "ON"
+            }
+        },
+        {
+            "name": "hip-rel",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "WALBERLA_BUILD_WITH_HIP": true,
+                "WALBERLA_ENABLE_SWEEPGEN": "ON"
+            }
+        },
+        {
+            "name": "lumi-hip-rel",
+            "displayName": "LUMI GPU Release (HIP)",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "cc",
+                "CMAKE_CXX_COMPILER": "CC",
+                "CMAKE_HIP_ARCHITECTURES": "gfx90a",
+                "WALBERLA_BUILD_WITH_HIP": true,
+                "WALBERLA_BUILD_WITH_CUDA": false,
+                "WALBERLA_ENABLE_SWEEPGEN": "ON",
+                "CMAKE_PREFIX_PATH": "/opt/rocm-6.0.3",
+                "hip_DIR": "/opt/rocm-6.0.3/lib/cmake/hip",
+                "HIP_PATH": "/opt/rocm-6.0.3",
+                "ROCM_PATH": "/opt/rocm-6.0.3",
+                "MPI_CXX_INCLUDE_DIRS": "/opt/cray/pe/mpich/8.1.29/ofi/crayclang/17.0/include",
+                "Python_ROOT_DIR": "/projappl/project_465001284/venvs/materforge",
+                "Python_EXECUTABLE": "/projappl/project_465001284/venvs/materforge/bin/python"
+            }
+        },
+        {
+            "name": "cuda-dbg",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "WALBERLA_BUILD_WITH_CUDA": true,
+                "WALBERLA_ENABLE_SWEEPGEN": "ON",
+                "CMAKE_CUDA_ARCHITECTURES": "native"
+            }
+        },
+        {
+            "name": "cuda-rel",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "WALBERLA_BUILD_WITH_CUDA": true,
+                "WALBERLA_ENABLE_SWEEPGEN": "ON",
+                "CMAKE_CUDA_ARCHITECTURES": "native"
+            }
+        }
+    ]
+}

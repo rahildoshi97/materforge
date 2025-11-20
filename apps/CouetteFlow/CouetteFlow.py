@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 """
-CouetteFlowSweepsGPU.py - 3D Thermal Couette Flow with integrated analytical solution
+CouetteFlowSweeps.py - 3D Thermal Couette Flow
+Code generation script with integrated analytical solution
 """
 
 import logging
@@ -29,11 +30,14 @@ from scipy.integrate import cumulative_trapezoid
 from pystencilssfg import SourceFileGenerator
 from sweepgen import Sweep, get_build_config
 from sweepgen.boundaries import GenericBoundary
-from sweepgen.symbolic import cell, domain
-from sweepgen.prefabs import LbmBulk
-from sweepgen.build_config import DEBUG
+from sweepgen.communication import GpuPdfFieldPackInfo
+from sweepgen.symbolic import cell, domain, cell_index, domain_cell_bb
+#from sweepgen.prefabs import LbmBulk
+#from sweepgen.build_config import DEBUG
 
-DEBUG.use_cpu_default()
+from configure import configure
+
+#DEBUG.use_cpu_default()
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(name)s -> %(message)s")
 
 print(f"Starting code generation at {Path(__file__).resolve()}")
@@ -41,14 +45,9 @@ print(f"Starting code generation at {Path(__file__).resolve()}")
 use_materforge = True
 
 with SourceFileGenerator(keep_unknown_argv=True) as sfg:
-    sfg.namespace("CouetteFlow::gen")
-    
-    parser = ArgumentParser()
-    parser.add_argument("-t", "--target", choices=["cpu", "gpu"], default="cpu")
-    args = parser.parse_args(sfg.context.argv)
+    configure(sfg, add_defines=True)
 
-    build_cfg = get_build_config(sfg)
-    build_cfg.target = ps.Target[args.target.upper()]
+    sfg.namespace("CouetteFlow::gen")
     
     data_type = "float64"
     stencil = LBStencil(Stencil.D3Q19)
@@ -67,6 +66,10 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
     
     const_nu = 1./6.  # Constant viscosity if MaterForge is not used
 
+    # ========================================================================
+    # COMPUTE ANALYTICAL SOLUTION DURING CODE GENERATION
+    # ========================================================================
+    
     analytical_velocity_expr = None
     
     if use_materforge:
@@ -74,7 +77,7 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         try:
             from materforge.parsing.api import create_material
             
-            yaml_path = Path(__file__).parent / 'CouetteFlowMaterial_Updated.yaml'
+            yaml_path = Path(__file__).parent / 'params' / 'CouetteFlow.yaml'
             
             if yaml_path.exists():
                 # Create MaterForge material with temperature field dependency
@@ -160,9 +163,12 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         compressible=True,
         relaxation_rate=relaxation_rate_from_lattice_viscosity(nu_expr),
     )
-    print(f"relaxation rate: {lbm_config.relaxation_rate}")
+    print(f"Relaxation rate: {lbm_config.relaxation_rate}")
     
-    # Generate LBM sweeps
+    # ========================================================================
+    # GENERATE LBM SWEEPS
+    # ========================================================================
+    
     with sfg.namespace("Couette"):
         # lbm_bulk = LbmBulk(sfg, "LBM", lbm_config)
         # sfg.generate(lbm_bulk)
@@ -184,7 +190,7 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         stream_collide.swap_fields(f_pdfs, f_pdfs_tmp)
         sfg.generate(stream_collide)
 
-        # Initialize PDFs
+        # Initialize PDFs with zero velocity
         lb_method = create_lb_method(lbm_config)
         init_rule = macroscopic_values_setter(
             lb_method=lb_method,
@@ -195,33 +201,36 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         )
         sfg.generate(Sweep("InitPdfs", init_rule))
 
-        # Set analytical solution
+        # Initialize velocity to ZERO (for actual simulation)
         zero_velocity = [
-            ps.Assignment(f_density(), 1),
-            ps.Assignment(f_velocity(0), 0),
+            ps.Assignment(f_density.center(), 1),
+            ps.Assignment(f_velocity(0), 0),  # Zero velocity everywhere
             ps.Assignment(f_velocity(1), 0),
             ps.Assignment(f_velocity(2), 0),
         ]
         sfg.generate(Sweep("SetZeroVelocity", zero_velocity))
 
-        # Temperature initialization
+        # Temperature initialization - linear gradient
         temperature_init = [
             ps.Assignment(
                 f_temperature.center(), 
-                T_bottom + (T_top - T_bottom) * cell.z() / domain.z_max()
+                T_bottom + (T_top - T_bottom) * ps.tcast.as_numeric(cell_index.z_global()) / ps.tcast.as_numeric(domain_cell_bb.z_max())
             )
         ]
         sfg.generate(Sweep("InitializeTemperature", temperature_init))
 
-        # Error computation with analytical solution
-        # ux_analytical = sp.Symbol("ux_analytical")
-        # error_ux = ps.TypedSymbol("error_ux", ps.DynamicType.NUMERIC_TYPE)
+        # ========================================================================
+        # ERROR COMPUTATION WITH ANALYTICAL SOLUTION
+        # ========================================================================
+        
+        """ux_analytical = sp.Symbol("ux_analytical")
+        error_ux = ps.TypedSymbol("error_ux", ps.DynamicType.NUMERIC_TYPE)
 
-        """error_calc = [
+        error_calc = [
             ps.Assignment(ux_analytical, analytical_velocity_expr),
             ps.MaxReductionAssignment(error_ux, sp.Abs(f_velocity(0) - ux_analytical))
-        ]"""
-        # sfg.generate(Sweep("VelocityErrorLmax", error_calc))
+        ]
+        sfg.generate(Sweep("VelocityErrorLmax", error_calc))"""
 
     # Boundary conditions
     noSlip = GenericBoundary(NoSlip(name="NoSlip"), lb_method, f_pdfs)
@@ -231,4 +240,8 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
     ubb = GenericBoundary(UBB(wall_velocity, name="UBB"), lb_method, f_pdfs)
     sfg.generate(ubb)
     
+    # ------------------ GPU PDF Pack Info ------------------
+    if get_build_config(sfg).override.target.is_gpu():
+        sfg.generate(GpuPdfFieldPackInfo("GpuPdfsPackInfo", stencil, f_pdfs))
+
 print("Code generation complete!")

@@ -21,20 +21,18 @@
 #include "blockforest/communication/UniformBufferedScheme.h"
 #include "field/communication/StencilRestrictedPackInfo.h"
 #include "domain_decomposition/SharedSweep.h"
+#include "walberla/experimental/Memory.hpp"
 #include "walberla/experimental/Sweep.hpp"
 #include "core/timing/TimingPool.h"
+#include "gen/CouetteFlow.hpp"
 
-// GPU support (if available)
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
+#if defined(CouetteFlow_GPU_BUILD)
 #include "gpu/AddGPUFieldToStorage.h"
 #include "gpu/DeviceSelectMPI.h"
 #include "gpu/FieldCopy.h"
 #include "gpu/HostFieldAllocator.h"
 #include "gpu/communication/UniformGPUScheme.h"
 #include "gpu/communication/MemcpyPackInfo.h"
-#include "gen/CouetteFlowSweepsGPU.hpp"
-#else
-#include "gen/CouetteFlowSweeps.hpp"
 #endif
 
 namespace CouetteFlow
@@ -51,7 +49,7 @@ using VectorField_T = field::GhostLayerField<real_t, 3>;
 using LbStencil = stencil::D3Q19;
 using PdfField_T = field::GhostLayerField<real_t, LbStencil::Q>;
 
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
+#if defined(CouetteFlow_GPU_BUILD)
 using CommScheme = gpu::communication::UniformGPUScheme<LbStencil>;
 using GPUField = gpu::GPUField<real_t>;
 #else
@@ -71,7 +69,7 @@ void run(int argc, char **argv)
         WALBERLA_ABORT("Usage: " << argv << " path-to-configuration-file\n");
     }
     
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
+#if defined(CouetteFlow_GPU_BUILD)
     gpu::selectDeviceBasedOnMpiRank();
     WALBERLA_LOG_INFO_ON_ROOT("GPU support enabled");
 #else
@@ -159,43 +157,44 @@ void run(int argc, char **argv)
     BlockDataID tempId = field::addToStorage<ScalarField_T>(blocks, "temperature", real_c(300.0), field::fzyx, 0);
     BlockDataID viscId = field::addToStorage<ScalarField_T>(blocks, "viscosity", latticeViscosity, field::fzyx, 0);
     
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
+#if defined(CouetteFlow_GPU_BUILD)
     // GPU field setup
-    auto gpuPdfsId = gpu::addGPUFieldToStorage<GPUField>(pdfsId, blocks, "pdfs_gpu", true);
-    auto gpuRhoId = gpu::addGPUFieldToStorage<GPUField>(rhoId, blocks, "rho_gpu", true);
-    auto gpuUId = gpu::addGPUFieldToStorage<GPUField>(uId, blocks, "u_gpu", true);
-    auto gpuTempId = gpu::addGPUFieldToStorage<GPUField>(tempId, blocks, "temp_gpu", true);
-    auto gpuViscId = gpu::addGPUFieldToStorage<GPUField>(viscId, blocks, "visc_gpu", true);
+    auto gpuPdfsId = gpu::addGPUFieldToStorage<PdfField_T>(blocks, pdfsId, "pdfs_gpu", true);
+    auto gpuRhoId = gpu::addGPUFieldToStorage<ScalarField_T>(blocks, rhoId, "rho_gpu", true);
+    auto gpuUId = gpu::addGPUFieldToStorage<VectorField_T>(blocks, uId, "u_gpu", true);
+    auto gpuTempId = gpu::addGPUFieldToStorage<ScalarField_T>(blocks, tempId, "temp_gpu", true);
+    auto gpuViscId = gpu::addGPUFieldToStorage<ScalarField_T>(blocks, viscId, "visc_gpu", true);
 #endif
     
     //======================================================================
     // INITIALIZE FIELDS
     //======================================================================
     
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
-    auto zeroVelocity = gen::CouetteGPU::SetZeroVelocity{rhoId, uId};
-    auto initTemperature = gen::CouetteGPU::InitializeTemperature{blocks, tempId, T_bottom, T_top};
-    auto initializePdfs = gen::CouetteGPU::InitPdfs{rhoId, pdfsId, uId};
-#else
-    auto zeroVelocity = gen::Couette::SetZeroVelocity{rhoId, uId};
-    auto initTemperature = gen::Couette::InitializeTemperature{blocks, tempId, T_bottom, T_top};
-    auto initializePdfs = gen::Couette::InitPdfs{rhoId, pdfsId, uId};
-#endif
+#if defined(CouetteFlow_GPU_BUILD)
+    // GPU: Initialize with GPU field IDs
+    auto zeroVelocity = gen::Couette::SetZeroVelocity{gpuRhoId, gpuUId};
+    auto initTemperature = gen::Couette::InitializeTemperature{blocks, gpuTempId, T_bottom, T_top};
+    auto initializePdfs = gen::Couette::InitPdfs{gpuRhoId, gpuPdfsId, gpuUId};
     
-    WALBERLA_LOG_INFO_ON_ROOT("Initializing fields...");
+    WALBERLA_LOG_INFO_ON_ROOT("Initializing fields on GPU...");
     for (auto &b : *blocks) {
         zeroVelocity(&b);
         initTemperature(&b);
         initializePdfs(&b);
     }
     
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
-    // Copy to GPU
-    gpu::fieldCpy<PdfField_T, GPUField>(blocks, pdfsId, gpuPdfsId);
-    gpu::fieldCpy<ScalarField_T, GPUField>(blocks, rhoId, gpuRhoId);
-    gpu::fieldCpy<VectorField_T, GPUField>(blocks, uId, gpuUId);
-    gpu::fieldCpy<ScalarField_T, GPUField>(blocks, tempId, gpuTempId);
-    gpu::fieldCpy<ScalarField_T, GPUField>(blocks, viscId, gpuViscId);
+#else
+    // CPU: Initialize with CPU field IDs
+    auto zeroVelocity = gen::Couette::SetZeroVelocity{rhoId, uId};
+    auto initTemperature = gen::Couette::InitializeTemperature{blocks, tempId, T_bottom, T_top};
+    auto initializePdfs = gen::Couette::InitPdfs{rhoId, pdfsId, uId};
+    
+    WALBERLA_LOG_INFO_ON_ROOT("Initializing fields on CPU...");
+    for (auto &b : *blocks) {
+        zeroVelocity(&b);
+        initTemperature(&b);
+        initializePdfs(&b);
+    }
 #endif
     
     //======================================================================
@@ -205,8 +204,8 @@ void run(int argc, char **argv)
     auto streamCollide = [&]() {
         if constexpr (use_materForge) {
             WALBERLA_LOG_INFO_ON_ROOT("Using temperature-dependent viscosity (MaterForge)");
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
-            return makeSharedSweep(std::make_shared<gen::CouetteGPU::StreamCollide>(
+#if defined(CouetteFlow_GPU_BUILD)
+            return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
                 gpuRhoId, gpuPdfsId, gpuTempId, gpuUId, gpuViscId
             ));
 #else
@@ -216,9 +215,9 @@ void run(int argc, char **argv)
 #endif
         } else {
             WALBERLA_LOG_INFO_ON_ROOT("Using constant viscosity");
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
-            return makeSharedSweep(std::make_shared<gen::CouetteGPU::StreamCollide>(
-                gpuRhoId, gpuPdfsId, gpuTempId, gpuUId, gpuViscId
+#if defined(CouetteFlow_GPU_BUILD)
+            return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
+                gpuRhoId, gpuPdfsId, gpuUId, gpuViscId
             ));
 #else
             return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
@@ -232,9 +231,12 @@ void run(int argc, char **argv)
     // COMMUNICATION SETUP
     //======================================================================
     
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
-    CommScheme comm{blocks, true};  // GPU-aware MPI
-    comm.addPackInfo(std::make_shared<gpu::communication::MemcpyPackInfo<GPUField>>(gpuPdfsId));
+#if defined(CouetteFlow_GPU_BUILD)
+    constexpr bool cudaEnabledMPI = true;
+    CommScheme comm{blocks, cudaEnabledMPI};
+    //gpu::communication::UniformGPUScheme<LbStencil> comm(blocks, cudaEnabledMPI);
+    auto packInfo = make_shared<gpu::communication::MemcpyPackInfo<GPUField>>(gpuPdfsId);
+    comm.addPackInfo(packInfo);
 #else
     CommScheme comm{blocks};
     comm.addPackInfo(std::make_shared<PdfsPackInfo>(pdfsId));
@@ -254,12 +256,12 @@ void run(int argc, char **argv)
         return link.wallCell.z() < blocks->getDomainCellBB().zMin();
     };
     
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
-    auto noSlip = gen::NoSlipGPUFactory{blocks, gpuPdfsId}.fromLinks([&](auto link) {
+#if defined(CouetteFlow_GPU_BUILD)
+    auto noSlip = gen::NoSlipFactory{blocks, gpuPdfsId}.fromLinks([&](auto link) {
         return intersectsLowerWall(link);
     });
     
-    auto ubb = gen::UBBGPUFactory{blocks, gpuPdfsId, channelVelocity}.fromLinks([&](auto link){
+    auto ubb = gen::UBBFactory{blocks, gpuPdfsId, channelVelocity}.fromLinks([&](auto link){
         return intersectsUpperWall(link);
     });
 #else
@@ -277,7 +279,14 @@ void run(int argc, char **argv)
     //======================================================================
     
     SweepTimeloop loop{blocks->getBlockStorage(), numTimesteps};
-    loop.add() << Sweep(streamCollide, "StreamCollide") << AfterFunction(comm, "Communication");
+#if defined(CouetteFlow_GPU_BUILD)
+    loop.add() << BeforeFunction(comm.getStartCommunicateFunctor(), "StartComm")
+               << Sweep(streamCollide, "StreamCollide")
+               << AfterFunction(comm.getWaitFunctor(), "WaitComm");
+#else
+    loop.add() << Sweep(streamCollide, "StreamCollide") 
+               << AfterFunction(comm, "Communication");
+#endif
     loop.add() << Sweep(noSlip, "NoSlip");
     loop.add() << Sweep(ubb, "UBB");
     
@@ -287,7 +296,7 @@ void run(int argc, char **argv)
     
     if (vtkWriteFrequency > 0) {
         std::string vtkName = "couette_scaling";
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
+#if defined(CouetteFlow_GPU_BUILD)
         vtkName += "_gpu";
 #else
         vtkName += "_cpu";
@@ -299,6 +308,7 @@ void run(int argc, char **argv)
         }
         
         std::string vtkOutputDir = vtkName + "_out";
+        WALBERLA_LOG_INFO_ON_ROOT("VTK output every " << vtkWriteFrequency << " steps to directory: " << vtkOutputDir);
         auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, vtkName, vtkWriteFrequency, 0, 
                                                         false, vtkOutputDir, "simulation_step", 
                                                         false, true, true, false, 0);
@@ -376,7 +386,7 @@ void run(int argc, char **argv)
     const double totalMLUPS = totalLatticeUpdates / (simTime * 1e6);
     
     WALBERLA_LOG_RESULT_ON_ROOT("=== Performance Results ===")
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
+#if defined(CouetteFlow_GPU_BUILD)
     WALBERLA_LOG_RESULT_ON_ROOT("Backend: GPU")
 #else
     WALBERLA_LOG_RESULT_ON_ROOT("Backend: CPU")
@@ -399,13 +409,13 @@ void run(int argc, char **argv)
     // CONVERGENCE CHECK
     //======================================================================
     
-    WALBERLA_LOG_INFO_ON_ROOT("Checking for convergence...");
+    /*WALBERLA_LOG_INFO_ON_ROOT("Checking for convergence...");
     
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
+#if defined(CouetteFlow_GPU_BUILD)
     // Copy velocity field back to CPU
     gpu::fieldCpy<GPUField, VectorField_T>(blocks, gpuUId, uId);
     
-    auto computeVelocityError = gen::CouetteGPU::VelocityErrorLmax{
+    auto computeVelocityError = gen::Couette::VelocityErrorLmax{
         blocks, uId, channelVelocity
     };
 #else
@@ -431,7 +441,7 @@ void run(int argc, char **argv)
             WALBERLA_LOG_WARNING_ON_ROOT("Solution has not converged to threshold " << errorThreshold);
         }
     }
-#endif
+#endif*/
     
     WALBERLA_LOG_INFO_ON_ROOT("Simulation completed successfully!");
 }

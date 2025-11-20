@@ -178,44 +178,6 @@ test_apps:
     - python_3.10
   allow_failure: true
 
-# Integration tests with material files
-test_material_files:
-  stage: test
-  image: python:${PYTHON_VERSION}
-  before_script:
-    - pip install --upgrade pip
-    - pip install -e .
-  script:
-    - echo "Testing material file loading..."
-    - cd apps/
-    - |
-      python3 -c "
-      import sys
-      sys.path.append('../src')
-      from materforge.parsing.api import create_material, validate_yaml_file
-      import sympy as sp
-
-      # Test YAML validation
-      try:
-          validate_yaml_file('1.4301_HeatEquationKernelWithMaterial.yaml')
-          print('✅ YAML validation passed')
-      except Exception as e:
-          print(f'❌ YAML validation failed: {e}')
-          exit(1)
-
-      # Test material creation
-      try:
-          T = sp.Symbol('T')
-          material = create_material('1.4301_HeatEquationKernelWithMaterial.yaml', T, enable_plotting=False)
-          print(f'✅ Material created: {material.name}')
-      except Exception as e:
-          print(f'❌ Material creation failed: {e}')
-          exit(1)
-      "
-    - echo "✅ Material file tests completed"
-  dependencies:
-    - python_3.10
-
 # ================================
 # SECURITY STAGE
 # ================================

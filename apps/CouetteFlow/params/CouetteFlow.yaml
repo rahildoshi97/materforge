@@ -2,7 +2,6 @@
 # MATERFORGE MATERIAL CONFIGURATION FILE
 # ====================================================================================================
 # Material properties for Couette flow simulation with temperature-dependent viscosity
-# Higher viscosity values for numerical stability
 # ====================================================================================================
 
 name: "CouetteFlowSteel"
@@ -134,20 +133,3 @@ properties:
       simplify: post
       degree: 2
       segments: 2
-
-# ====================================================================================================
-# KEY CHANGES FOR NUMERICAL STABILITY:
-#
-# 1. HIGHER BASE VISCOSITY: 0.02 Pa·s (20 mPa·s) instead of 0.001 Pa·s (1 mPa·s)
-# 2. SMALLER TEMPERATURE COEFFICIENT: -0.0005 instead of -0.002
-# 3. REDUCED TEMPERATURE RANGE: 300-600K instead of 300-1200K  
-# 4. GRADUAL VISCOSITY VARIATION: ~15% change (20→17 mPa·s) instead of 500% change
-# 5. CONSISTENT VALUES: C++ initial values match YAML base values
-#
-# EXPECTED VISCOSITY VALUES:
-# - At 300K: μ = 0.020 Pa·s (20.0 mPa·s)
-# - At 400K: μ = 0.019 Pa·s (19.0 mPa·s) 
-# - At 500K: μ = 0.018 Pa·s (18.1 mPa·s)
-# - At 600K: μ = 0.017 Pa·s (17.1 mPa·s)
-#
-# ====================================================================================================
