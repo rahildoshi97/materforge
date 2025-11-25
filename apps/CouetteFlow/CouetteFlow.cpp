@@ -232,7 +232,7 @@ void run(int argc, char **argv)
     //======================================================================
     
 #if defined(CouetteFlow_GPU_BUILD)
-    constexpr bool cudaEnabledMPI = true;
+    constexpr bool cudaEnabledMPI = false;
     CommScheme comm{blocks, cudaEnabledMPI};
     //gpu::communication::UniformGPUScheme<LbStencil> comm(blocks, cudaEnabledMPI);
     auto packInfo = make_shared<gpu::communication::MemcpyPackInfo<GPUField>>(gpuPdfsId);
