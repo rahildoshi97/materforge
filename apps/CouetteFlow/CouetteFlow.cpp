@@ -38,7 +38,7 @@
 namespace CouetteFlow
 {
 
-constexpr bool use_materForge = true;
+#define use_materForge 1
 
 using namespace walberla;
 
@@ -110,7 +110,7 @@ void run(int argc, char **argv)
     //======================================================================
 
     WALBERLA_CHECK_EQUAL(numBlocks[0] * numBlocks[1] * numBlocks[2], numProcesses,
-                        "Number of blocks (" << numBlocks << "x" << numBlocks << "x" << numBlocks
+                        "Number of blocks (" << numBlocks[0] << "x" << numBlocks[1] << "x" << numBlocks[2]
                         << " = " << numBlocks[0] * numBlocks[1] * numBlocks[2]
                         << ") must equal number of MPI processes (" << numProcesses << ")");
     
@@ -202,29 +202,29 @@ void run(int argc, char **argv)
     //======================================================================
     
     auto streamCollide = [&]() {
-        if constexpr (use_materForge) {
-            WALBERLA_LOG_INFO_ON_ROOT("Using temperature-dependent viscosity (MaterForge)");
-#if defined(CouetteFlow_GPU_BUILD)
+#if use_materForge
+        WALBERLA_LOG_INFO_ON_ROOT("Using temperature-dependent viscosity (MaterForge)");
+        #if defined(CouetteFlow_GPU_BUILD)
             return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
                 gpuRhoId, gpuPdfsId, gpuTempId, gpuUId, gpuViscId
             ));
-#else
+        #else
             return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
                 rhoId, pdfsId, tempId, uId, viscId
             ));
-#endif
-        } else {
-            WALBERLA_LOG_INFO_ON_ROOT("Using constant viscosity");
-#if defined(CouetteFlow_GPU_BUILD)
+        #endif
+#else
+        WALBERLA_LOG_INFO_ON_ROOT("Using constant viscosity");
+        #if defined(CouetteFlow_GPU_BUILD)
             return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
                 gpuRhoId, gpuPdfsId, gpuUId, gpuViscId
             ));
-#else
+        #else
             return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
                 rhoId, pdfsId, uId, viscId
             ));
+        #endif
 #endif
-        }
     }();
     
     //======================================================================
@@ -301,11 +301,11 @@ void run(int argc, char **argv)
 #else
         vtkName += "_cpu";
 #endif
-        if constexpr (use_materForge) {
-            vtkName += "_tempdep";
-        } else {
-            vtkName += "_const";
-        }
+#if use_materForge
+        vtkName += "_tempdep";
+#else
+        vtkName += "_const";
+#endif
         
         std::string vtkOutputDir = vtkName + "_out";
         WALBERLA_LOG_INFO_ON_ROOT("VTK output every " << vtkWriteFrequency << " steps to directory: " << vtkOutputDir);
