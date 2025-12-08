@@ -2,14 +2,14 @@ DomainSetup {
     // For strong scaling: keep total domain fixed, increase blocks
     // For weak scaling: keep cells per block fixed, increase blocks
     blocks < 1, 1, 1 >;           // Number of MPI processes (override via -DomainSetup.blocks)
-    cellsPerBlock < 64, 32, 32 >; // Cells per block (override via -DomainSetup.cellsPerBlock)
+    cellsPerBlock < 128, 64, 64 >; // Cells per block (override via -DomainSetup.cellsPerBlock)
     periodic < 1, 1, 0 >;         // X and Y periodic, Z has walls
 }
 
 Parameters {
-    nu              0.1667; // 1/6 for BGK
+    nu              1/6; // 1/6 for BGK
     u_max           0.025;
-    timesteps       10000;          // Override via -Parameters.timesteps
+    timesteps       1000;          // Override via -Parameters.timesteps
     errorThreshold  1e-15;
 
     // Temperature gradient parameters
@@ -18,9 +18,9 @@ Parameters {
 }
 
 Output {
-    vtkWriteFrequency   100;  // Disable for benchmarking
+    vtkWriteFrequency   0;  // Disable for benchmarking
 }
 
 Performance {
-    performanceLogFrequency  100;  // Log performance every N timesteps
+    performanceLogFrequency  0;  // Log performance every N timesteps
 }

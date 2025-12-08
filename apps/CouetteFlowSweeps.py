@@ -79,7 +79,7 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         try:
             from materforge.parsing.api import create_material
             
-            yaml_path = Path(__file__).parent / 'CouetteFlowMaterial_Updated.yaml'
+            yaml_path = Path(__file__).parent / 'CouetteFlowMaterial.yaml'
             
             if yaml_path.exists():
                 # Create MaterForge material with temperature field dependency
@@ -216,23 +216,11 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         temperature_init = [
             ps.Assignment(
                 f_temperature.center(), 
-                T_bottom + (T_top - T_bottom) * ps.tcast.as_numeric(cell_index.z_global()) / ps.tcast.as_numeric(domain_cell_bb.z_max())
+                T_bottom + (T_top - T_bottom) * cell.z() / domain.z_max()
+                #T_bottom + (T_top - T_bottom) * ps.tcast.as_numeric(cell_index.z_global()) / ps.tcast.as_numeric(domain_cell_bb.z_max())
             )
         ]
         sfg.generate(Sweep("InitializeTemperature", temperature_init))
-
-        # ========================================================================
-        # ERROR COMPUTATION WITH ANALYTICAL SOLUTION
-        # ========================================================================
-        
-        ux_analytical = sp.Symbol("ux_analytical")
-        error_ux = ps.TypedSymbol("error_ux", ps.DynamicType.NUMERIC_TYPE)
-
-        error_calc = [
-            ps.Assignment(ux_analytical, analytical_velocity_expr),
-            ps.MaxReductionAssignment(error_ux, sp.Abs(f_velocity(0) - ux_analytical))
-        ]
-        sfg.generate(Sweep("VelocityErrorLmax", error_calc))
 
     # Boundary conditions
     noSlip = GenericBoundary(NoSlip(name="NoSlip"), lb_method, f_pdfs)
