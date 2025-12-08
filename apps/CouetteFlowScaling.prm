@@ -7,9 +7,9 @@ DomainSetup {
 }
 
 Parameters {
-    nu              0.16666666666; // 1/6 for BGK
+    nu              0.1667; // 1/6 for BGK
     u_max           0.025;
-    timesteps       1000;          // Override via -Parameters.timesteps
+    timesteps       10000;          // Override via -Parameters.timesteps
     errorThreshold  1e-15;
 
     // Temperature gradient parameters
