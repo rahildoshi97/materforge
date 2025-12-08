@@ -40,7 +40,7 @@
 namespace CouetteFlow
 {
 
-constexpr bool use_materForge = true;
+#define use_materForge 1
 
 using namespace walberla;
 
@@ -203,29 +203,29 @@ void run(int argc, char **argv)
     //======================================================================
     
     auto streamCollide = [&]() {
-        if constexpr (use_materForge) {
+        #if use_materForge
             WALBERLA_LOG_INFO_ON_ROOT("Using temperature-dependent viscosity (MaterForge)");
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
-            return makeSharedSweep(std::make_shared<gen::CouetteGPU::StreamCollide>(
-                gpuRhoId, gpuPdfsId, gpuTempId, gpuUId, gpuViscId
-            ));
-#else
-            return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
-                rhoId, pdfsId, tempId, uId, viscId
-            ));
-#endif
-        } else {
+            #if defined(CouetteFlow_GPU_BUILD)
+                return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
+                    gpuRhoId, gpuPdfsId, gpuTempId, gpuUId, gpuViscId
+                ));
+            #else
+                return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
+                    rhoId, pdfsId, tempId, uId, viscId
+                ));
+            #endif
+        #else
             WALBERLA_LOG_INFO_ON_ROOT("Using constant viscosity");
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
-            return makeSharedSweep(std::make_shared<gen::CouetteGPU::StreamCollide>(
-                gpuRhoId, gpuPdfsId, gpuTempId, gpuUId, gpuViscId
-            ));
-#else
-            return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
-                rhoId, pdfsId, uId, viscId
-            ));
-#endif
-        }
+            #if defined(CouetteFlow_GPU_BUILD)
+                return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
+                    gpuRhoId, gpuPdfsId, gpuUId, gpuViscId
+                ));
+            #else
+                return makeSharedSweep(std::make_shared<gen::Couette::StreamCollide>(
+                    rhoId, pdfsId, uId, viscId
+                ));
+            #endif
+        #endif
     }();
     
     //======================================================================
@@ -287,16 +287,16 @@ void run(int argc, char **argv)
     
     if (vtkWriteFrequency > 0) {
         std::string vtkName = "couette_scaling";
-#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
+    #if defined(CouetteFlow_GPU_BUILD)
         vtkName += "_gpu";
-#else
+    #else
         vtkName += "_cpu";
-#endif
-        if constexpr (use_materForge) {
-            vtkName += "_tempdep";
-        } else {
-            vtkName += "_const";
-        }
+    #endif
+    #if use_materForge
+        vtkName += "_tempdep";
+    #else
+        vtkName += "_const";
+    #endif
         
         std::string vtkOutputDir = vtkName + "_out";
         auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, vtkName, vtkWriteFrequency, 0, 
