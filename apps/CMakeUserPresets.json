@@ -2,63 +2,77 @@
     "version": 6,
     "configurePresets": [
         {
-            "name": "lumi-cpu",
+            "name": "lumi-release-cpu",
             "displayName": "LUMI CPU Build",
-            "description": "Production CPU build on LUMI",
+            "description": "Production CPU build on LUMI (LUMI/25.03, ROCm 6.3.4, CCE 19.0.0)",
             "inherits": "local-release-cpu",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "TARGET_PLATFORM": "CPU",
                 "CMAKE_C_COMPILER": "cc",
                 "CMAKE_CXX_COMPILER": "CC",
-                "Python_ROOT_DIR": "/pfs/lustrep1/projappl/project_465001284/venvs/materforge",
-                "Python_EXECUTABLE": "/pfs/lustrep1/projappl/project_465001284/venvs/materforge/bin/python"
+                "Python_ROOT_DIR": "/projappl/project_465002382/venvs/materforge",
+                "Python_EXECUTABLE": "/projappl/project_465002382/venvs/materforge/bin/python",
+                "Python_INCLUDE_DIR": "/opt/cray/pe/python/3.11.7/include/python3.11",
+                "Python_LIBRARY": "/opt/cray/pe/python/3.11.7/lib/libpython3.11.so"
             },
-            "binaryDir": "${sourceDir}/build/lumi-cpu"
+            "binaryDir": "${sourceDir}/build/lumi-release-cpu"
         },
         {
-            "name": "lumi-gpu",
+            "name": "lumi-release-gpu",
             "displayName": "LUMI GPU Build (HIP gfx90a)",
-            "description": "Production GPU build on LUMI-G with ROCm HIP",
+            "description": "Production GPU build on LUMI-G (LUMI/25.03, ROCm 6.3.4, CCE 19.0.0)",
             "inherits": "local-release-gpu",
             "environment": {
-                "ROCM_PATH": "/opt/rocm-6.0.3",
-                "HIP_PATH": "/opt/rocm-6.0.3",
-                "CMAKE_PREFIX_PATH": "/opt/rocm-6.0.3:/opt/rocm-6.0.3/lib/cmake",
-                "HIP_PLATFORM": "amd"
+                "ROCM_PATH": "/opt/rocm-6.3.4",
+                "HIP_PATH": "/opt/rocm-6.3.4",
+                "DEVICE_LIB_PATH": "/opt/rocm-6.3.4/amdgcn/bitcode",
+                "HIP_DEVICE_LIB_PATH": "/opt/rocm-6.3.4/amdgcn/bitcode",
+                "CMAKE_PREFIX_PATH": "/opt/rocm-6.3.4:/opt/rocm-6.3.4/lib/cmake",
+                "HIP_PLATFORM": "amd",
+                "MPICH_GPU_SUPPORT_ENABLED": "1"
             },
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "TARGET_PLATFORM": "GPU-HIP",
                 "CMAKE_C_COMPILER": "hipcc",
                 "CMAKE_CXX_COMPILER": "hipcc",
-                "CMAKE_CXX_FLAGS": "--offload-arch=gfx90a",
+                "CMAKE_HIP_COMPILER_ROCM_ROOT": "/opt/rocm-6.3.4",
+                "CMAKE_CXX_FLAGS": "-fno-gpu-rdc --offload-arch=gfx90a",
                 "CMAKE_HIP_ARCHITECTURES": "gfx90a",
-                "Python_ROOT_DIR": "/project/project_465001284/venvs/materforge",
-                "Python_EXECUTABLE": "/project/project_465001284/venvs/materforge/bin/python"
+                "Python_ROOT_DIR": "/projappl/project_465002382/venvs/materforge",
+                "Python_EXECUTABLE": "/projappl/project_465002382/venvs/materforge/bin/python",
+                "Python_INCLUDE_DIR": "/opt/cray/pe/python/3.11.7/include/python3.11",
+                "Python_LIBRARY": "/opt/cray/pe/python/3.11.7/lib/libpython3.11.so"
             },
-            "binaryDir": "${sourceDir}/build/lumi-gpu"
+            "binaryDir": "${sourceDir}/build/lumi-release-gpu"
         },
         {
             "name": "lumi-debug-gpu",
             "displayName": "LUMI GPU Debug Build (HIP gfx90a)",
-            "description": "Debug GPU build on LUMI-G with ROCm HIP",
+            "description": "Debug GPU build on LUMI-G (LUMI/25.03, ROCm 6.3.4, CCE 19.0.0)",
             "inherits": "local-debug-gpu",
             "environment": {
-                "ROCM_PATH": "/opt/rocm-6.0.3",
-                "HIP_PATH": "/opt/rocm-6.0.3",
-                "CMAKE_PREFIX_PATH": "/opt/rocm-6.0.3:/opt/rocm-6.0.3/lib/cmake",
-                "HIP_PLATFORM": "amd"
+                "ROCM_PATH": "/opt/rocm-6.3.4",
+                "HIP_PATH": "/opt/rocm-6.3.4",
+                "DEVICE_LIB_PATH": "/opt/rocm-6.3.4/amdgcn/bitcode",
+                "HIP_DEVICE_LIB_PATH": "/opt/rocm-6.3.4/amdgcn/bitcode",
+                "CMAKE_PREFIX_PATH": "/opt/rocm-6.3.4:/opt/rocm-6.3.4/lib/cmake",
+                "HIP_PLATFORM": "amd",
+                "MPICH_GPU_SUPPORT_ENABLED": "1"
             },
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "TARGET_PLATFORM": "GPU-HIP",
                 "CMAKE_C_COMPILER": "hipcc",
                 "CMAKE_CXX_COMPILER": "hipcc",
-                "CMAKE_CXX_FLAGS": "--offload-arch=gfx90a",
+                "CMAKE_HIP_COMPILER_ROCM_ROOT": "/opt/rocm-6.3.4",
+                "CMAKE_CXX_FLAGS": "-fno-gpu-rdc --offload-arch=gfx90a",
                 "CMAKE_HIP_ARCHITECTURES": "gfx90a",
-                "Python_ROOT_DIR": "/project/project_465001284/venvs/materforge",
-                "Python_EXECUTABLE": "/project/project_465001284/venvs/materforge/bin/python"
+                "Python_ROOT_DIR": "/projappl/project_465002382/venvs/materforge",
+                "Python_EXECUTABLE": "/projappl/project_465002382/venvs/materforge/bin/python",
+                "Python_INCLUDE_DIR": "/opt/cray/pe/python/3.11.7/include/python3.11",
+                "Python_LIBRARY": "/opt/cray/pe/python/3.11.7/lib/libpython3.11.so"
             },
             "binaryDir": "${sourceDir}/build/lumi-debug-gpu"
         }
@@ -66,18 +80,18 @@
     "buildPresets": [
         {
             "name": "lumi-cpu-build",
-            "configurePreset": "lumi-cpu",
-            "jobs": 16
+            "configurePreset": "lumi-release-cpu",
+            "jobs": 32
         },
         {
             "name": "lumi-gpu-build",
-            "configurePreset": "lumi-gpu",
-            "jobs": 16
+            "configurePreset": "lumi-release-gpu",
+            "jobs": 32
         },
         {
             "name": "lumi-debug-gpu-build",
             "configurePreset": "lumi-debug-gpu",
-            "jobs": 16
+            "jobs": 32
         }
     ]
 }
