@@ -9,8 +9,8 @@ lumi_cpu() {
     module load LUMI/24.03 partition/C PrgEnv-gnu buildtools/24.03 cray-python/3.11.7
     
     # Activate virtual environment
-    if [[ -f /project/project_465001284/venvs/materforge/bin/activate ]]; then
-        source /project/project_465001284/venvs/materforge/bin/activate
+    if [[ -f /projappl/project_465002382/venvs/materforge/bin/activate ]]; then
+        source /projappl/project_465002382/venvs/materforge/bin/activate
     fi
     
     echo "✅ LUMI CPU environment loaded!"
@@ -65,8 +65,8 @@ lumi_gpu() {
     echo "PE_MPICH_GTL_LIBS_amd_gfx90a: $PE_MPICH_GTL_LIBS_amd_gfx90a"
 
     # Activate virtual environment
-    if [[ -f /project/project_465001284/venvs/materforge/bin/activate ]]; then
-        source /project/project_465001284/venvs/materforge/bin/activate
+    if [[ -f /projappl/project_465002382/venvs/materforge/bin/activate ]]; then
+        source /projappl/project_465002382/venvs/materforge/bin/activate
     fi
     
     echo "✅ ROCm 6.0.3 environment configured for materforge"
