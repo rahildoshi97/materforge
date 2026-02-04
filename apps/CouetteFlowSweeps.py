@@ -24,6 +24,7 @@ from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 
 import sympy as sp
 import pystencils as ps
+from pystencils.sympyextensions import count_operations
 import numpy as np
 from scipy.integrate import cumulative_trapezoid
 
@@ -39,7 +40,7 @@ logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(n
 
 print(f"Starting code generation at {Path(__file__).resolve()}")
 
-use_materforge = True
+use_materforge = False
 
 with SourceFileGenerator(keep_unknown_argv=True) as sfg:
     sfg.namespace("CouetteFlow::gen")
@@ -143,7 +144,7 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
                     nu_expr = const_nu
                     analytical_velocity_expr = u_max * cell.z() / domain.z_max()
             else:
-                print(f"Warning: Material file not found")
+                print("Warning: Material file not found")
                 nu_expr = const_nu
                 analytical_velocity_expr = u_max * cell.z() / domain.z_max()
                 
@@ -189,6 +190,16 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
                                                        subexpressions=collision_rule.subexpressions)
 
         stream_collide = Sweep("StreamCollide", combined_assignments)
+        ops_total = count_operations(combined_assignments.all_assignments, only_type=None)
+        ops_main = count_operations(combined_assignments.main_assignments, only_type=None)
+        ops_collision_main = count_operations(collision_rule.main_assignments, only_type=None)
+        ops_sub = count_operations(combined_assignments.subexpressions, only_type=None)
+        print(f"\n=== StreamCollide operation count with "
+            f"{'temperature-dependent' if use_materforge else 'constant'} viscosity (symbolic) ===")        
+        print("Collision main only:", ops_collision_main)
+        print("Subexpressions only:", ops_sub)
+        print("Main (incl. collision main + viscosity):", ops_main)
+        print("Total (incl. subexpressions):", ops_total)
         stream_collide.swap_fields(f_pdfs, f_pdfs_tmp)
         sfg.generate(stream_collide)
 
