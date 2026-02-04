@@ -42,7 +42,7 @@
 namespace CouetteFlow
 {
 
-#define use_materForge 1
+#define use_materForge 0
 
 using namespace walberla;
 
@@ -287,6 +287,7 @@ void run(int argc, char **argv)
     /*if (numProcesses > 1) {
         loop.addFuncBeforeTimeStep(communication.getCommunicateFunctor(), "LBM Communication");
     }*/
+    loop.addFuncBeforeTimeStep([&]() { WALBERLA_MPI_BARRIER(); }, "Barrier before Communication");
     loop.addFuncBeforeTimeStep(communication.getCommunicateFunctor(), "LBM Communication");
     loop.add() << Sweep(deviceSyncWrapper(streamCollide), "StreamCollide");
     loop.add() << Sweep(deviceSyncWrapper(noSlip), "NoSlip");
