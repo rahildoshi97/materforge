@@ -40,7 +40,7 @@ logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(n
 
 print(f"Starting code generation at {Path(__file__).resolve()}")
 
-use_materforge = False
+use_materforge = True
 
 with SourceFileGenerator(keep_unknown_argv=True) as sfg:
     sfg.namespace("CouetteFlow::gen")

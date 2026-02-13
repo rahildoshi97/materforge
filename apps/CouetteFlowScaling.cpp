@@ -42,7 +42,7 @@
 namespace CouetteFlow
 {
 
-#define use_materForge 0
+#define use_materForge 1
 
 using namespace walberla;
 
@@ -60,6 +60,10 @@ using GPUField = gpu::GPUField<real_t>;
 using CommScheme = blockforest::communication::UniformBufferedScheme<LbStencil>;
 #endif
 using PdfsPackInfo = field::communication::StencilRestrictedPackInfo<PdfField_T, LbStencil>;
+
+void mysleep(IBlock*){
+    sleep(5);
+}
 
 //======================================================================
 // MAIN FUNCTION
@@ -289,7 +293,8 @@ void run(int argc, char **argv)
     }*/
     loop.addFuncBeforeTimeStep([&]() { WALBERLA_MPI_BARRIER(); }, "Barrier before Communication");
     loop.addFuncBeforeTimeStep(communication.getCommunicateFunctor(), "LBM Communication");
-    loop.add() << Sweep(deviceSyncWrapper(streamCollide), "StreamCollide");
+    //loop.add() << Sweep(deviceSyncWrapper(streamCollide), "StreamCollide");
+    loop.add() << Sweep(deviceSyncWrapper([](IBlock*){sleep(5);}), "StreamCollide");
     loop.add() << Sweep(deviceSyncWrapper(noSlip), "NoSlip");
     loop.add() << Sweep(deviceSyncWrapper(ubb), "UBB");
     
@@ -324,7 +329,7 @@ void run(int argc, char **argv)
         vtkName += "_const";
     #endif
         
-        std::string vtkOutputDir = vtkName + "_out";
+        std::string vtkOutputDir = "testvtk";
         auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, vtkName, vtkWriteFrequency, 0, 
                                                         false, vtkOutputDir, "simulation_step", 
                                                         false, true, true, false, 0);
