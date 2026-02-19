@@ -45,6 +45,8 @@ Let's create a simple steel alloy definition:
 ```yaml
 name: SimpleSteel
 
+material_type: alloy
+
 composition:
     Fe: 0.98
     C: 0.02
