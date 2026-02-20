@@ -369,17 +369,28 @@ class MaterialYAMLParser(YAMLFileParser):
 
     # --- Processing Methods ---
     def _get_elements(self) -> List:
-        """Get element objects from composition keys."""
-        from materforge.data.elements.element_data import element_map
+        """Get element objects from composition keys, validated for material type."""
+        from materforge.data.elements.element_data import get_element
+        from materforge.core.elements import validate_element_completeness
         element_symbols = list(self.config[COMPOSITION_KEY].keys())
+        material_type = self.config[MATERIAL_TYPE_KEY]
         logger.debug("Looking up elements: %s", element_symbols)
-        try:
-            elements = [element_map[sym] for sym in element_symbols]
-            logger.debug("Successfully found all %d elements", len(elements))
-            return elements
-        except KeyError as e:
-            logger.error("Invalid element symbol: %s", e)
-            raise ValueError(f"Invalid element symbol: {str(e)}") from e
+        elements = []
+        for sym in element_symbols:
+            try:
+                el = get_element(sym)
+            except KeyError as e:
+                logger.error("Invalid element symbol: %s", sym)
+                raise ValueError(f"Invalid element symbol: '{sym}'") from e
+            if material_type == PURE_METAL_KEY:
+                try:
+                    validate_element_completeness(el, context="pure_metal")
+                except ValueError as e:
+                    logger.error("Incomplete element data for pure metal: %s", sym)
+                    raise ValueError(str(e)) from e
+            elements.append(el)
+        logger.debug("Successfully loaded %d elements", len(elements))
+        return elements
 
     @staticmethod
     def _analyze_and_categorize_properties(properties: Dict[str, Any]) -> Dict[PropertyType, List[Tuple[str, Any]]]:

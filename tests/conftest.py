@@ -11,7 +11,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 from materforge.core.materials import Material
-from materforge.data.elements.element_data import element_map
+from materforge.data import get_element
 
 @pytest.fixture
 def test_data_dir():
@@ -33,12 +33,12 @@ def steel_yaml_path():
 @pytest.fixture
 def sample_aluminum_element():
     """Sample aluminum element for testing."""
-    return element_map['Al']
+    return get_element('Al')
 
 @pytest.fixture
 def sample_steel_elements():
     """Sample steel alloy elements."""
-    return [element_map['Fe'], element_map['C'], element_map['Cr'], element_map['Ni']]
+    return [get_element('Fe'), get_element('C'), get_element('Cr'), get_element('Ni')]
 
 @pytest.fixture
 def temp_symbol():
