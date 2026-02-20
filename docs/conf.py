@@ -20,8 +20,8 @@ try:
     version = __version__
     release = __version__
 except ImportError:
-    version = "0.5.5"
-    release = "0.5.5"
+    version = "0.6.3"
+    release = "0.6.3"
 
 # -- General configuration ---------------------------------------------------
 extensions = [
