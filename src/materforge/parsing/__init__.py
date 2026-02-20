@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 """
-Parsing and configuration modules for PyMatLib.
+Parsing and configuration modules for MaterForge.
 
 This package handles YAML parsing, property type detection, validation,
 and material creation from configuration files.

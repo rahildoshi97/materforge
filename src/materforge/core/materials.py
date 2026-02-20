@@ -328,10 +328,8 @@ class Material:
             temperature: Temperature value in Kelvin
             properties: List of specific property names to evaluate. If None, evaluates all properties.
             include_constants: Whether to include constant properties in the result
-
         Returns:
             Dictionary mapping property names to their evaluated values
-
         Examples:
             # Evaluate all properties
             values = material.evaluate_properties_at_temperature(500.0)
@@ -361,7 +359,10 @@ class Material:
             'specific_enthalpy': self.specific_enthalpy,
             'surface_tension': self.surface_tension,
             'thermal_diffusivity': self.thermal_diffusivity,
-            'thermal_expansion_coefficient': self.thermal_expansion_coefficient
+            'thermal_expansion_coefficient': self.thermal_expansion_coefficient,
+            'viscosity': self.viscosity,
+            'yield_strength': self.yield_strength,
+             # Add more properties as needed
         }
         # Filter to only properties that exist (not None)
         existing_properties = {name: prop for name, prop in all_properties.items() if prop is not None}

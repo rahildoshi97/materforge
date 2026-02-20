@@ -1,8 +1,8 @@
 # ====================================================================================================
-# PYMATLIB MATERIAL CONFIGURATION FILE - PURE METAL
+# MaterForge MATERIAL CONFIGURATION FILE - PURE METAL
 # ====================================================================================================
 # This file defines material properties for pure Aluminum using the materforge format.
-# Pymatlib supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA, PIECEWISE_EQUATION, and COMPUTED_PROPERTY
+# MaterForge supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA, PIECEWISE_EQUATION, and COMPUTED_PROPERTY
 # Pure metals require 'melting_temperature' and 'boiling_temperature' instead of solidus/liquidus
 #
 # IMPORTANT: All property configurations must include 'bounds' parameter (except CONSTANT properties)

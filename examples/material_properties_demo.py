@@ -47,7 +47,7 @@ def demonstrate_material_properties():
     material_symbols = {}  # Dictionary to track which symbol goes with which material
 
     print(f"\n{'=' * 80}")
-    print("PYMATLIB MATERIAL PROPERTY DEMONSTRATION")
+    print("MaterForge MATERIAL PROPERTY DEMONSTRATION")
     print(f"{'=' * 80}")
 
     # ===================================================================
@@ -124,7 +124,7 @@ def demonstrate_material_properties():
     print(f"{'-' * 50}")
 
     supported_props = get_supported_properties()
-    print(f"PyMatLib supports {len(supported_props)} property types:")
+    print(f"MaterForge supports {len(supported_props)} property types:")
     for i, prop in enumerate(sorted(supported_props), 1):
         print(f"  {i:2d}. {prop}")
 
