@@ -1,4 +1,4 @@
-"""Performance benchmarks for PyMatLib."""
+"""Performance benchmarks for MaterForge."""
 
 import pytest
 import time

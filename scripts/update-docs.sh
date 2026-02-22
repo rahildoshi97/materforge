@@ -14,7 +14,7 @@ echo "Checking for documentation changes..."
 cd ..
 
 # Add any new files and check if there are changes
-git add docs/ update-docs.sh
+git add docs/ scripts/update-docs.sh
 
 if git diff --cached --quiet; then
     echo "No documentation changes to commit."
@@ -26,7 +26,7 @@ else
     git push github main
     
     echo "Syncing to GitLab..."
-    ./sync-repos.sh
+    ./scripts/sync-repos.sh
     
     echo "Done! Check https://materforge.readthedocs.io/ in a few minutes for updated online docs."
 fi

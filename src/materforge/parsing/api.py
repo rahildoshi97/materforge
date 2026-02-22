@@ -246,7 +246,8 @@ def get_material_property_names(material: Material) -> List[str]:
         'density', 'dynamic_viscosity', 'energy_density', 'heat_capacity',
         'heat_conductivity', 'kinematic_viscosity', 'latent_heat_of_fusion',
         'latent_heat_of_vaporization', 'specific_enthalpy', 'surface_tension',
-        'thermal_diffusivity', 'thermal_expansion_coefficient'
+        'thermal_diffusivity', 'thermal_expansion_coefficient', 'ultimate_tensile_strength',
+        'viscosity', 'yield_strength'
     ]
     # Return only properties that exist and are not None
     return [name for name in property_names if getattr(material, name, None) is not None]

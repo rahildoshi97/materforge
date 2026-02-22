@@ -5,7 +5,7 @@
 Material data, constants, and element definitions.
 
 This package provides access to physical constants, processing constants,
-chemical element data, and material property databases used throughout PyMatLib.
+chemical element data, and material property databases used throughout MaterForge.
 """
 
 from .constants.physical_constants import PhysicalConstants

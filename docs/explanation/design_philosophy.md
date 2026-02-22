@@ -23,10 +23,10 @@ MaterForge follows a layered architecture to separate concerns clearly:
 
 ### 2. Parsing Layer (Python)
 
-- **Configuration Processing**: Handles YAML parsing and validation through `MaterialConfigParser`
-- **Property Type Detection**: Automatically determines property definition types using `PropertyConfigAnalyzer`
+- **Configuration Processing**: Handles YAML parsing and validation through `MaterialYAMLParser`
+- **Property Type Detection**: Automatically determines property definition types using `PropertyTypeDetector`
 - **Dependency Resolution**: Processes various dependency definition formats via `DependencyResolver`
-- **Data Handling**: Manages file I/O for external data sources through `read_data_from_file`
+- **Data Handling**: Manages file I/O for external data sources through `load_property_data`
 
 ### 3. Symbolic Representation Layer (SymPy)
 
@@ -37,7 +37,7 @@ MaterForge follows a layered architecture to separate concerns clearly:
 ### 4. Algorithms Layer (Python)
 
 - **Interpolation**: Robust interpolation methods for evaluating temperature-dependent properties
-- **Regression**: Data simplification and piecewise function generation via `RegressionManager`
+- **Regression**: Data simplification and piecewise function generation via `RegressionProcessor`
 - **Piecewise Functions**: Creating piecewise expressions through `PiecewiseBuilder`
 - **Inversion**: Creating inverse functions for specialized applications
 
@@ -66,14 +66,14 @@ MaterForge's architecture is organized into distinct modules:
 
 ### Parsing Module (`materforge.parsing`)
 - **API**: Main entry points (`create_material`, `validate_yaml_file`, `get_supported_properties`)
-- **Configuration**: YAML parsing and validation through `MaterialConfigParser`
-- **Processors**: Property and dependency processing (`PropertyManager`, `DependencyResolver`)
-- **I/O**: File handling for external data (`read_data_from_file`)
-- **Validation**: Type detection and error handling (`PropertyConfigAnalyzer`)
+- **Configuration**: YAML parsing and validation through `MaterialYAMLParser`
+- **Processors**: Property and dependency processing (`PropertyProcessor`, `DependencyResolver`)
+- **I/O**: File handling for external data (`load_property_data`)
+- **Validation**: Type detection and error handling (`PropertyTypeDetector`)
 
 ### Algorithms Module (`materforge.algorithms`)
 - **Interpolation**: Temperature-dependent property evaluation
-- **Regression**: Data simplification and fitting through `RegressionManager`
+- **Regression**: Data simplification and fitting through `RegressionProcessor`
 - **Piecewise**: Piecewise function construction via `PiecewiseBuilder`
 - **Inversion**: Inverse function creation for specialized applications
 
@@ -125,7 +125,7 @@ MaterForge uses a sophisticated property type detection system with six distinct
 
 ### Automatic Type Detection
 
-The `PropertyConfigAnalyzer` automatically detects property types based on configuration structure:
+The `PropertyTypeDetector` automatically detects property types based on configuration structure:
 - Rule-based detection with priority ordering
 - Comprehensive validation for each type
 - Clear error messages for invalid configurations
@@ -165,7 +165,7 @@ MaterForge emphasizes clear, actionable error messages:
 
 ### Validation at Every Layer
 - YAML syntax and structure validation
-- Property configuration validation through `PropertyConfigAnalyzer`
+- Property configuration validation through `PropertyTypeDetector`
 - Data quality validation in file processing
 - Dependency validation with circular dependency detection
 

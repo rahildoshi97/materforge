@@ -40,9 +40,9 @@ class Material:
 
 Properties are processed through a sophisticated pipeline:
 
-1. **Type Detection**: `PropertyConfigAnalyzer` automatically determines property definition type
+1. **Type Detection**: `PropertyTypeDetector` automatically determines property definition type
 2. **Validation**: Ensures configuration is valid for the detected type
-3. **Processing**: `PropertyManager` converts configuration to SymPy expressions
+3. **Processing**: `PropertyProcessor` converts configuration to SymPy expressions
 4. **Dependency Resolution**: Handles property interdependencies automatically
 
 ## Property Definition Methods
@@ -82,7 +82,7 @@ density:
     bounds: [constant, constant]
 ```
 
-Data is loaded via `read_data_from_file` and converted to piecewise interpolation functions.
+Data is loaded via `load_property_data` and converted to piecewise interpolation functions.
 
 ### 4. Tabular Data
 
@@ -169,7 +169,7 @@ The system automatically:
 ### Circular Dependency Prevention
 
 Sophisticated checking prevents circular dependencies:
-- Tracks dependency chains during processing in `PropertyManager`
+- Tracks dependency chains during processing in `PropertyProcessor`
 - Detects cycles before they cause infinite loops
 - Provides clear error messages through `CircularDependencyError`
 
@@ -186,14 +186,14 @@ Properties are processed in dependency order:
 
 Comprehensive validation includes:
 - Temperature monotonicity checking through `is_monotonic`
-- Energy density monotonicity validation via `validate_energy_density_monotonicity`
+- Energy density monotonicity validation via `validate_monotonic_energy_density`
 - Physical reasonableness checks
 - Data quality assessment in file processing
 
 ### Error Handling
 
 Clear, actionable error messages for:
-- Invalid property configurations through `PropertyConfigAnalyzer`
+- Invalid property configurations through `PropertyTypeDetector`
 - Missing dependencies via `DependencyError`
 - Data quality issues in file processing
 - Physical inconsistencies in material properties
@@ -226,7 +226,7 @@ Properties can be used in:
 ### Performance Optimization
 
 1. **Use Appropriate Property Types**: Choose the most efficient definition method
-2. **Consider Regression**: Use regression for large datasets via `RegressionManager`
+2. **Consider Regression**: Use regression for large datasets via `RegressionProcessor`
 3. **Optimize Temperature Arrays**: Balance accuracy and performance
 
 ### Maintainability

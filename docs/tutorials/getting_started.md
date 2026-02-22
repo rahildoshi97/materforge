@@ -15,16 +15,16 @@ Before starting, ensure you have:
 Install materforge using pip:
 
 ```bash
-pip install "git+https://i10git.cs.fau.de/rahil.doshi/materforge.git"
+pip install materforge
 ```
 
 
-For development, clone the repository and install in development mode:
+For development, clone the repository and install in editable mode:
 
 ```bash
 git clone https://i10git.cs.fau.de/rahil.doshi/materforge.git
 cd materforge
-pip install -e .
+pip install -e .  # installs in editable mode: changes to source files take effect immediately without reinstalling
 ```
 
 

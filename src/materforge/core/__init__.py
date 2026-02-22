@@ -6,7 +6,7 @@ Core data structures and material definitions.
 
 This module contains the fundamental classes and interfaces that define
 materials, chemical elements, and the core abstractions used throughout
-the PyMatLib library.
+the MaterForge library.
 """
 
 from .materials import Material

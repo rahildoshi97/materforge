@@ -91,7 +91,7 @@ class MaterialPropertyDemonstrator:
     def run_all_tests(self):
         """Run all enabled tests."""
         print(f"\n{'=' * 80}")
-        print("PYMATLIB MATERIAL PROPERTY DEMONSTRATION")
+        print("MaterForge MATERIAL PROPERTY DEMONSTRATION")
         print(f"{'=' * 80}")
 
         # Print configuration summary
@@ -218,7 +218,7 @@ class MaterialPropertyDemonstrator:
         print(f"{'-' * 50}")
 
         supported_props = get_supported_properties()
-        print(f"PyMatLib supports {len(supported_props)} property types:")
+        print(f"MaterForge supports {len(supported_props)} property types:")
         for i, prop in enumerate(sorted(supported_props), 1):
             print(f"  {i:2d}. {prop}")
 
@@ -664,7 +664,7 @@ def run_everything():
 
 if __name__ == "__main__":
     # Enhanced menu with "Run Everything" option
-    print("PyMatLib Material Property Demonstration")
+    print("MaterForge Material Property Demonstration")
     print("="*50)
     print("Available test configurations:")
     print("1. Quick test (minimal, fast execution)")
