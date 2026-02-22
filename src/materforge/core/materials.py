@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
 # SPDX-License-Identifier: BSD-3-Clause
 
+import dataclasses
 import logging
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Union
@@ -15,70 +16,81 @@ from materforge.core.exceptions import MaterialCompositionError, MaterialTempera
 
 logger = logging.getLogger(__name__)
 
+def _prop(**kwargs) -> dataclasses.Field:
+    """Declare a material property field, discoverable via property_field_names()."""
+    return field(default=None, metadata={"is_material_property": True}, **kwargs)
 
 @dataclass
 class Material:
     """
-    Represents a material with its composition and properties.
+    Represents a material with its composition and thermophysical properties.
 
-    This class supports both pure metals and alloys with comprehensive
-    temperature validation and property calculation.
+    Supports pure metals and alloys. All physical property fields are tagged
+    with metadata so property_field_names() can discover them automatically
+    without a separate registry.
     """
     # Basic material information
     name: str
     material_type: str  # 'pure_metal' or 'alloy'
     elements: List[ChemicalElement]
     composition: Union[np.ndarray, List[float], Tuple]  # List of fractions summing to 1.0
-    # Temperature properties for pure metals
+    # Temperature bounds - pure metals
     melting_temperature: Optional[sp.Float] = None
     boiling_temperature: Optional[sp.Float] = None
-    # Temperature properties for alloys
+    # Temperature bounds - alloys
     solidus_temperature: Optional[sp.Float] = None
     liquidus_temperature: Optional[sp.Float] = None
     initial_boiling_temperature: Optional[sp.Float] = None
     final_boiling_temperature: Optional[sp.Float] = None
-    # Optional properties with default values
-    bulk_modulus: Optional[sp.Float] = None
-    density: sp.Expr = None
-    dynamic_viscosity: sp.Expr = None
-    elastic_modulus: Optional[sp.Expr] = None  # Young's modulus
-    electrical_conductivity: Optional[sp.Expr] = None
-    electrical_resistivity: Optional[sp.Expr] = None
-    energy_density: Optional[Union[sp.Piecewise, sp.Expr]] = None
-    energy_density_solidus: sp.Float = None
-    energy_density_liquidus: sp.Float = None
-    fracture_toughness: Optional[sp.Expr] = None
-    hardness: Optional[sp.Expr] = None
-    heat_capacity: sp.Expr = None
-    heat_conductivity: sp.Expr = None
-    kinematic_viscosity: sp.Expr = None
-    latent_heat_of_fusion: sp.Expr = None
-    latent_heat_of_vaporization: sp.Expr = None
-    magnetic_permeability: Optional[sp.Expr] = None
-    melting_point_pressure: Optional[sp.Float] = None
-    poisson_ratio: Optional[sp.Float] = None
-    shear_modulus: Optional[sp.Expr] = None
-    specific_enthalpy: sp.Expr = None
-    surface_tension: sp.Expr = None
-    thermal_diffusivity: sp.Expr = None
-    thermal_expansion_coefficient: sp.Expr = None
-    ultimate_tensile_strength: Optional[sp.Expr] = None
-    viscosity: sp.Expr = None
-    yield_strength: Optional[sp.Expr] = None
-    # Calculated properties (set during initialization)
+    # Thermophysical properties
+    bulk_modulus: Optional[sp.Float] = _prop()
+    density: Optional[sp.Expr] = _prop()
+    dynamic_viscosity: Optional[sp.Expr] = _prop()
+    elastic_modulus: Optional[sp.Expr] = _prop()
+    electrical_conductivity: Optional[sp.Expr] = _prop()
+    electrical_resistivity: Optional[sp.Expr] = _prop()
+    energy_density: Optional[Union[sp.Piecewise, sp.Expr]] = _prop()
+    energy_density_solidus: Optional[sp.Float] = _prop()
+    energy_density_liquidus: Optional[sp.Float] = _prop()
+    fracture_toughness: Optional[sp.Expr] = _prop()
+    hardness: Optional[sp.Expr] = _prop()
+    heat_capacity: Optional[sp.Expr] = _prop()
+    heat_conductivity: Optional[sp.Expr] = _prop()
+    kinematic_viscosity: Optional[sp.Expr] = _prop()
+    latent_heat_of_fusion: Optional[sp.Expr] = _prop()
+    latent_heat_of_vaporization: Optional[sp.Expr] = _prop()
+    magnetic_permeability: Optional[sp.Expr] = _prop()
+    melting_point_pressure: Optional[sp.Float] = _prop()
+    poisson_ratio: Optional[sp.Float] = _prop()
+    shear_modulus: Optional[sp.Expr] = _prop()
+    specific_enthalpy: Optional[sp.Expr] = _prop()
+    surface_tension: Optional[sp.Expr] = _prop()
+    thermal_diffusivity: Optional[sp.Expr] = _prop()
+    thermal_expansion_coefficient: Optional[sp.Expr] = _prop()
+    ultimate_tensile_strength: Optional[sp.Expr] = _prop()
+    viscosity: Optional[sp.Expr] = _prop()
+    yield_strength: Optional[sp.Expr] = _prop()
+    # Derived - computed in __post_init__, not user-supplied
     atomic_number: Optional[float] = field(default=None, init=False)
     atomic_mass: Optional[float] = field(default=None, init=False)
-    # Pure metal ranges (based on periodic table data)
-    MIN_MELTING_TEMP = 302.0  # Cesium (lowest solid metal at room conditions)
-    MAX_MELTING_TEMP = 3695.0  # Tungsten (highest melting point)
-    MIN_BOILING_TEMP = 630.0  # Mercury (lowest, but practical metals ~1000K)
-    MAX_BOILING_TEMP = 6203.0  # Tungsten (highest boiling point)
-    # Alloy ranges (engineering alloys have wider practical ranges)
-    MIN_SOLIDUS_TEMP = 250.0  # Low-temperature solders (Bi-based alloys)
-    MAX_SOLIDUS_TEMP = 2000.0  # High-temperature superalloys
+    # Validation bounds - pure metals (K)
+    MIN_MELTING_TEMP = 302.0   # Cs, lowest solid metal at room conditions
+    MAX_MELTING_TEMP = 3695.0  # W
+    MIN_BOILING_TEMP = 630.0   # Hg
+    MAX_BOILING_TEMP = 6203.0  # W
+    # Validation bounds - alloys (K)
+    MIN_SOLIDUS_TEMP = 250.0   # Bi-based solders
+    MAX_SOLIDUS_TEMP = 2000.0  # Ni superalloys
     MIN_LIQUIDUS_TEMP = 300.0  # Low-melting alloys
-    MAX_LIQUIDUS_TEMP = 2200.0  # Refractory alloys (Mo-Re, W-Re systems)
+    MAX_LIQUIDUS_TEMP = 2200.0  # Mo-Re, W-Re systems
     # Extend to include other material properties as needed
+
+    @classmethod
+    def property_field_names(cls) -> List[str]:
+        return [
+            f.name for f in dataclasses.fields(cls)
+            if f.metadata.get("is_material_property", False)
+        ]
 
     def __post_init__(self) -> None:
         """
@@ -115,7 +127,7 @@ class Material:
             elif self.material_type == 'alloy':
                 self._validate_alloy_temperatures()
             else:
-                available_types = ['pure_metal', 'alloy',]  # Extend with other types as needed
+                available_types = ['pure_metal', 'alloy',]  # Extend with other material types as needed
                 raise MaterialTemperatureError(f"Unknown material type: {self.material_type}. "
                                                f"Supported types: {available_types}")
             logger.debug(f"Temperature validation passed for {self.material_type}: {self.name}")
@@ -259,7 +271,7 @@ class Material:
             logger.debug("Alloy properties - atomic_number: %.3f, atomic_mass: %.3f",
                          self.atomic_number, self.atomic_mass)
         else:
-            available_types = ['pure_metal', 'alloy',]  # Extend with other types as needed
+            available_types = ['pure_metal', 'alloy',]  # Extend with other material types as needed
             raise ValueError(f"Unknown material type: {self.material_type}. "
                              f"Supported types: {available_types}")
 
@@ -347,23 +359,7 @@ class Material:
         if temperature <= 0:
             raise ValueError(f"Temperature must be positive, got {temperature}")
         # Get all property attributes
-        all_properties = {
-            'density': self.density,
-            'dynamic_viscosity': self.dynamic_viscosity,
-            'energy_density': self.energy_density,
-            'heat_capacity': self.heat_capacity,
-            'heat_conductivity': self.heat_conductivity,
-            'kinematic_viscosity': self.kinematic_viscosity,
-            'latent_heat_of_fusion': self.latent_heat_of_fusion,
-            'latent_heat_of_vaporization': self.latent_heat_of_vaporization,
-            'specific_enthalpy': self.specific_enthalpy,
-            'surface_tension': self.surface_tension,
-            'thermal_diffusivity': self.thermal_diffusivity,
-            'thermal_expansion_coefficient': self.thermal_expansion_coefficient,
-            'viscosity': self.viscosity,
-            'yield_strength': self.yield_strength,
-             # Add more properties as needed
-        }
+        all_properties = {name: getattr(self, name) for name in self.property_field_names()}
         # Filter to only properties that exist (not None)
         existing_properties = {name: prop for name, prop in all_properties.items() if prop is not None}
         # Filter to requested properties if specified
