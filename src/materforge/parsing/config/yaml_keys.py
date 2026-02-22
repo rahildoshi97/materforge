@@ -4,8 +4,6 @@
 """Constants used for YAML parsing and property processing."""
 
 # ── TOP-LEVEL KEYS ───────────────────────────────────────────────
-INDEPENDENT_VARIABLES_KEY = "independent_variables"  # Note: plural for multi-dependency
-
 # Property structure keys
 DEPENDENCIES_KEY = "dependencies"
 RANGES_KEY = "ranges"
