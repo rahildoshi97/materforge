@@ -4,15 +4,17 @@ A high-performance Python library for material simulation and analysis. MaterFor
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Latest Release](https://i10git.cs.fau.de/rahil.doshi/materforge/-/badges/release.svg)](https://i10git.cs.fau.de/rahil.doshi/materforge/-/releases)
-[![License](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg)](LICENSE)
-[![Documentation Status](https://readthedocs.org/projects/materforge/badge/)](https://materforge.readthedocs.io/)
+[![License](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg)](https://github.com/rahildoshi97/materforge/blob/main/LICENSE)
+[![Documentation Status](https://readthedocs.org/projects/materforge/badge/?version=latest)](https://materforge.readthedocs.io/)
 [![Pipeline Status](https://i10git.cs.fau.de/rahil.doshi/materforge/badges/master/pipeline.svg)](https://i10git.cs.fau.de/rahil.doshi/materforge/-/pipelines)
 [![Code Coverage](https://i10git.cs.fau.de/rahil.doshi/materforge/badges/master/coverage.svg)](https://i10git.cs.fau.de/rahil.doshi/materforge/-/commits/master)
+
+**Documentation:** https://materforge.readthedocs.io
 
 ## Table of Contents
 - [Key Features](#-key-features)
 - [Installation](#-installation)
-- [Quick Sart](#-quick-start)
+- [Quick Start](#-quick-start)
 - [YAML Configuration Format](#-yaml-configuration-format)
 - [Documentation](#-documentation)
 - [Contributing](#-contributing)
@@ -31,28 +33,36 @@ A high-performance Python library for material simulation and analysis. MaterFor
 - **Piecewise Functions**: Advanced piecewise function support with regression capabilities
 - **Property Inversion**: Create inverse functions for energy density and other properties
 - **Visualization**: Automatic plotting of material properties with customizable options
-- **Material Types**: Support for both pure metals and alloys with appropriate phase transition temperatures
-- **Multiple Property Types**: Support for constants, step functions, file-based data, key-value pairs, and computed properties
+- **Multiple Property Types**: Constants, step functions, file-based data, key-value pairs,
+  piecewise equations, and computed properties
 - **Regression Analysis**: Built-in piecewise linear fitting with configurable parameters
 
 ## 📦 Installation
-### Prerequisites
-- Python 3.10 or higher
-- Required dependencies: `numpy`, `sympy`, `matplotlib`, `pandas`, `ruamel.yaml`
 
-### Install using pip
-```
+### Install from PyPI
+
+```bash
 pip install materforge
 ```
-### Development Installation
+
+All required dependencies are installed automatically.
+
+### For contributors
+
+Clone the repository and install in editable mode:
+
 ```bash
 git clone https://i10git.cs.fau.de/rahil.doshi/materforge.git
 cd materforge
-git submodule update --init --recursive
-pip install -e .[dev]
+pip install -e .
 ```
 
+**Note:** The `-e` flag (`--editable`) installs the package by symlinking directly to the source directory.
+Changes to source files take effect immediately without reinstalling - intended for development only. 
+Use `pip install materforge` for regular use.
+
 ## 🏃 Quick Start
+
 ### Basic Material Creation
 
 ```python
@@ -61,25 +71,24 @@ from materforge.parsing.api import create_material
 
 # Create a material with symbolic temperature
 T = sp.Symbol('T')
-material_T = create_material('path/to/material.yaml', T)
 
-# Access properties
-print(f"Heat capacity: {material_T.heat_capacity}")
+# Load an example material (see examples/myAlloy.yaml)
+material = create_material('examples/myAlloy.yaml', T, enable_plotting=True)
 
-# Evaluate at specific temperature
-temp_value = 1500.0  # Kelvin
-density_at_temp = material_T.evaluate_properties_at_temperature(temp_value)
-print(f"Density at {temp_value}K: {density_at_temp:.2f} kg/m³")
-
-# For symbolic expressions with automatic plotting
-material_with_plot = create_material('steel.yaml', T, enable_plotting=True)
+# Access symbolic property expressions
+print(f"Heat capacity: {material.heat_capacity}")
+print(f"Density:       {material.density}")
 ```
+
 ### Working with Piecewise Inverse Functions
 
 ```python
 from materforge.algorithms.piecewise_inverter import PiecewiseInverter
+import sympy as sp
 
-# Create inverse energy density function: T = f_inv(E)
+T = sp.Symbol('T')
+material = create_material('examples/myAlloy.yaml', T)
+
 if hasattr(material, 'energy_density'):
     E = sp.Symbol('E')
     inverse_func = PiecewiseInverter.create_energy_density_inverse(material, 'E')
@@ -92,6 +101,7 @@ if hasattr(material, 'energy_density'):
 ```
 
 ## 📋 YAML Configuration Format
+
 ### Supported Property Types
 - **CONSTANT_VALUE**: Simple numeric values
 - **FILE_IMPORT**: Data loaded from CSV/Excel/text files
@@ -100,28 +110,32 @@ if hasattr(material, 'energy_density'):
 - **PIECEWISE_EQUATION**: Symbolic equations over temperature ranges
 - **COMPUTED_PROPERTY**: Properties calculated from other properties
 
-See [the YAML schema documentation](docs/reference/yaml_schema.md) for detailed configuration options.
-YAML configuration examples can be found here:
-- [Pure Metals](src/materforge/data/materials/pure_metals/Al/Al.yaml)
-- [Alloys](src/materforge/data/materials/alloys/1.4301/1.4301.yaml)
+See the [YAML schema documentation](https://materforge.readthedocs.io/en/latest/reference/yaml_schema.html)
+for detailed configuration options.
+
+YAML configuration examples:
+- [Test alloy (standalone example)](https://github.com/rahildoshi97/materforge/blob/main/examples/myAlloy.yaml)
+- [Pure metal - Aluminum](https://github.com/rahildoshi97/materforge/blob/main/src/materforge/data/materials/pure_metals/Al/Al.yaml)
+- [Alloy - Steel 1.4301 (full data)](https://github.com/rahildoshi97/materforge/blob/main/src/materforge/data/materials/alloys/1.4301/1.4301.yaml)
 
 ## 📚 Documentation
-Our documentation follows the _Diátaxis_ framework with four distinct types:
-### Tutorials - Learning-oriented guides
-- [Getting Started with materforge](docs/tutorials/getting_started.md)
-- [Creating Your First Material Simulation](docs/tutorials/first_simulation.md)
-### How-to Guides - Problem-oriented instructions
-- [Defining Custom Material Properties](docs/how-to/define_materials.md)
-- [Converting Between Energy Density and Temperature](docs/how-to/energy_temperature_conversion.md)
-### Reference - Information-oriented documentation
-- [API Reference](docs/reference/api)
-- [YAML Configuration Schema](docs/reference/yaml_schema.md)
-### Explanation - Understanding-oriented discussions
-- [Material Properties Concepts](docs/explanation/material_properties.md)
-- [Design Philosophy](docs/explanation/design_philosophy.md)
+
+Full documentation is available at **https://materforge.readthedocs.io**
+
+The documentation follows the [Diátaxis](https://diataxis.fr/) framework:
+
+| Type | Content |
+|------|---------|
+| **Tutorials** | [Getting Started](https://materforge.readthedocs.io/en/latest/tutorials/getting_started.html) · [First Simulation](https://materforge.readthedocs.io/en/latest/tutorials/first_simulation.html) |
+| **How-to Guides** | [Defining Material Properties](https://materforge.readthedocs.io/en/latest/how-to/define_materials.html) · [Energy-Temperature Conversion](https://materforge.readthedocs.io/en/latest/how-to/energy_temperature_conversion.html) |
+| **Reference** | [API Reference](https://materforge.readthedocs.io/en/latest/reference/api.html) · [YAML Schema](https://materforge.readthedocs.io/en/latest/reference/yaml_schema.html) |
+| **Explanation** | [Design Philosophy](https://materforge.readthedocs.io/en/latest/explanation/design_philosophy.html) · [Material Properties](https://materforge.readthedocs.io/en/latest/explanation/material_properties.html) |
 
 ## 🤝 Contributing
-Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to get started.
+
+Contributions are welcome! Please see our
+[Contributing Guide](https://github.com/rahildoshi97/materforge/blob/main/CONTRIBUTING.md)
+for details on how to get started.
 
 ## 🐛 Known Limitations
 - **Piecewise Inverter**: Currently supports only linear piecewise functions
@@ -130,35 +144,46 @@ Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) 
 - **Regression**: Maximum 8 segments recommended for stability
 
 ## 📄 License
+
 ### Core Library (BSD-3-Clause)
-The MaterForge library itself (`src/materforge/`, `examples/`, `tests/`, `docs/`) is licensed under the **BSD 3-Clause License**. You can use, modify, and distribute it freely under permissive terms. See the root [LICENSE](LICENSE) file for full details.
+
+The MaterForge library itself (`src/materforge/`, `examples/`, `tests/`, `docs/`) is licensed
+under the **BSD 3-Clause License**. See the
+[LICENSE](https://github.com/rahildoshi97/materforge/blob/main/LICENSE) file for full details.
 
 ### Application Examples (GPL-3.0-or-later)
-The `apps/` directory contains demonstration applications that integrate MaterForge with [waLBerla](https://i10git.cs.fau.de/walberla/walberla) and [pystencils](https://pypi.org/project/pystencils/). Because these dependencies are GPLv3-licensed, the apps directory and its contents are licensed under **GPLv3 or later**. See [apps/LICENSE](apps/LICENSE) for full details.
+
+The `apps/` directory contains demonstration applications that integrate MaterForge with
+[waLBerla](https://i10git.cs.fau.de/walberla/walberla) and
+[pystencils](https://pypi.org/project/pystencils/). Because these dependencies are
+GPLv3-licensed, the apps directory is licensed under **GPL-3.0-or-later**. See
+[apps/LICENSE](https://github.com/rahildoshi97/materforge/blob/main/apps/LICENSE) for
+full details.
 
 ### PyPI Distribution
-The `pip install materforge` package includes **only the BSD-3-Clause licensed core library**. The GPL-licensed apps are excluded from the PyPI distribution and are available only in the source repository for developers who clone it.
 
-### Summary Table
+`pip install materforge` includes **only the BSD-3-Clause licensed core library**. The
+GPL-licensed apps are excluded from the PyPI distribution.
 
-| Component | Location | License | Included in PyPI |
-|-----------|----------|---------|------------------|
-| Core library | `src/materforge/` | BSD-3-Clause | ✅ Yes |
-| Example scripts | `examples/` | BSD-3-Clause | ❌ No |
-| Tests | `tests/` | BSD-3-Clause | ❌ No |
-| Documentation | `docs/` | BSD-3-Clause | ❌ No |
-| Apps (waLBerla/pystencils demos) | `apps/` | GPL-3.0-or-later | ❌ No |
-
-For questions about licensing, contact [rahil.doshi@fau.de](mailto:rahil.doshi@fau.de).
+| Component | Location | License | In PyPI |
+|-----------|----------|---------|---------|
+| Core library | `src/materforge/` | BSD-3-Clause | ✅ |
+| Example scripts | `examples/` | BSD-3-Clause | ❌ |
+| Tests | `tests/` | BSD-3-Clause | ❌ |
+| Documentation | `docs/` | BSD-3-Clause | ❌ |
+| Apps | `apps/` | GPL-3.0-or-later | ❌ |
 
 ## 📖 Citation
-If you use MaterForge in your research, please cite it using the information in our [CITATION.cff](CITATION.cff) file.
+
+If you use MaterForge in your research, please cite it using the information in our
+[CITATION.cff](https://github.com/rahildoshi97/materforge/blob/main/CITATION.cff) file.
 
 ## 📞 Support
 - **Author**: Rahil Doshi
-- **Email**: rahil.doshi@fau.de
-- **Project Homepage**: [materforge](https://i10git.cs.fau.de/rahil.doshi/materforge)
-- **Bug Tracker**: [Issues](https://i10git.cs.fau.de/rahil.doshi/materforge/-/issues)
+- **Email**: [rahil.doshi@fau.de](mailto:rahil.doshi@fau.de)
+- **Documentation**: [materforge.readthedocs.io](https://materforge.readthedocs.io)
+- **Bug Tracker**: [GitHub Issues](https://github.com/rahildoshi97/materforge/issues)
+- **GitLab**: [i10git.cs.fau.de](https://i10git.cs.fau.de/rahil.doshi/materforge)
 
 ## 🙏 Acknowledgments
 - Built with [SymPy](https://www.sympy.org/) for symbolic mathematics
@@ -167,6 +192,6 @@ If you use MaterForge in your research, please cite it using the information in 
 - Visualization powered by [Matplotlib](https://matplotlib.org/)
 - YAML parsing with [ruamel.yaml](https://yaml.dev/doc/ruamel.yaml/)
 
-#### MaterForge - Empowering material simulation with Python 🚀
-
 ---
+
+*MaterForge — Empowering material simulation with Python*

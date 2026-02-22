@@ -58,6 +58,18 @@ validate_python_syntax:
     - echo "✅ Python syntax validation passed"
   allow_failure: true
 
+validate_code_formatting:
+  stage: validate
+  image: python:${PYTHON_VERSION}
+  before_script:
+    - pip install --upgrade pip
+    - pip install ruff
+  script:
+    - echo "Checking code style with ruff..."
+    - ruff check ${PACKAGE_DIR}/
+    - echo "✅ Ruff checks passed"
+  #allow_failure: true
+
 validate_yaml_files:
   stage: validate
   image: python:${PYTHON_VERSION}

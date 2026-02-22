@@ -37,7 +37,7 @@ class DependencyResolver:
             INITIAL_BOILING_TEMPERATURE_KEY: "initial_boiling_temperature",
             FINAL_BOILING_TEMPERATURE_KEY: "final_boiling_temperature",
         }
-        # Add extensions for other material types
+        # Extend to include other material types as needed
         extension_map = {}
         return {**base_map, **extension_map}
 
