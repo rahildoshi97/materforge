@@ -77,9 +77,6 @@ performance = [
 simulation = [
     "pystencils>=1.3.0",
 ]
-all = [
-    "materforge[dev,test,docs,performance,simulation]"
-]
 
 [project.urls]
 Homepage = "https://github.com/rahildoshi97/materforge"
