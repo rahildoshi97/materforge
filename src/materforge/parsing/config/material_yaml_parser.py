@@ -16,8 +16,7 @@ from materforge.parsing.validation.property_type_detector import PropertyType, P
 from materforge.visualization.plotters import PropertyVisualizer
 from materforge.parsing.config.yaml_keys import PROPERTIES_KEY, MATERIAL_TYPE_KEY, \
     COMPOSITION_KEY, PURE_METAL_KEY, MELTING_TEMPERATURE_KEY, BOILING_TEMPERATURE_KEY, SOLIDUS_TEMPERATURE_KEY, \
-    LIQUIDUS_TEMPERATURE_KEY, INITIAL_BOILING_TEMPERATURE_KEY, FINAL_BOILING_TEMPERATURE_KEY, ALLOY_KEY, NAME_KEY, \
-    INDEPENDENT_VARIABLES_KEY
+    LIQUIDUS_TEMPERATURE_KEY, INITIAL_BOILING_TEMPERATURE_KEY, FINAL_BOILING_TEMPERATURE_KEY, ALLOY_KEY, NAME_KEY
 
 logger = logging.getLogger(__name__)
 
