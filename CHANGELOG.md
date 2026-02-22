@@ -5,6 +5,38 @@ All notable changes to MaterForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.4] - 2026-02-22
+
+### Added
+- User example for a hypothetical alloy demonstrating custom material definition workflow
+- Ruff linter validation added to CI pipeline for code quality enforcement
+
+### Changed
+- Replaced hardcoded property lists with metadata-tagged fields for cleaner, more maintainable property registration
+- Replaced hardcoded physical constants with values sourced from `scipy.constants` (CODATA 2022) for accuracy and traceability
+- Migrated `setuptools_scm` `write_to` directive to `version_file` (new setuptools_scm >=8 API)
+- Consolidated all dependencies into `pyproject.toml`; removed standalone `docs/requirements.txt`
+- Moved shell scripts from root into `/scripts` folder for cleaner project structure
+- Removed `[all]` optional dependency group from `pyproject.toml`
+- Clean PyPI distribution: excluded `materforge_plots` plot assets and updated license metadata to SPDX string format
+
+### Fixed
+- Piecewise inverter final piece detection: replaced `== True` identity check with `is sp.true` for correct SymPy `Piecewise` condition evaluation
+- Fixed internal script paths after moving `.sh` scripts to `/scripts` folder
+- Fixed inconsistent package naming across modules
+- Removed unused imports and non-f-string `f` prefixes (flagged by Ruff)
+- Removed unused YAML key from material configuration
+
+### Documentation
+- Updated `getting_started.md` with missing `material_type` field and walberla integration notes
+- Updated `index.rst` to reflect current module structure
+- Added hypothetical alloy example to tutorials
+- General documentation refresh across how-to guides and reference pages
+- Updated `README.md` with current usage patterns
+
+### Testing
+- All unit tests passing
+
 ## [0.6.3] - 2025-11-12
 
 ### Added
