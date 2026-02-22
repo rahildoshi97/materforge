@@ -84,7 +84,7 @@ class PiecewiseInverter:
         # First pass: collect all piece information
         for i, (expr, condition) in enumerate(piecewise_func.args):
             logger.debug("Processing piece %d: expr=%s, condition=%s", i + 1, expr, condition)
-            if condition == True:  # Final piece (no condition)
+            if condition is True:  # Final piece (no condition)
                 # For final piece, get boundary from the previous piece
                 if piece_boundaries:
                     last_boundary_temp = piece_boundaries[-1]['boundary_temp']
