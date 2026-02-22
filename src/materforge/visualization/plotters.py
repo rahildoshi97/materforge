@@ -257,7 +257,7 @@ class PropertyVisualizer:
                             midpoint = (lower_bound + upper_bound) / 2
                             _y_value = f_current(midpoint)
                         except (ValueError, TypeError, AttributeError) as e:
-                            logger.error(f"Could not evaluate function at midpoint for '%s': %s", prop_name, e)
+                            logger.error("Could not evaluate function at midpoint for '%s': %s", prop_name, e)
                             _y_value = 0.0
                     # Post-regression overlay
                     if has_regression and simplify_type == POST_KEY and x_data is not None and y_data is not None:
