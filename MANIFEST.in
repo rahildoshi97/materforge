@@ -5,56 +5,47 @@ include CHANGELOG.md
 include CITATION.cff
 include pyproject.toml
 
-# Include all source code and data files
+# Source code and package data
 graft src
 
-# Include documentation
+# Documentation source only - not the compiled build output
 graft docs
+prune docs/_build
 
-# Exclude applications directory - not part of the library
+# Exclusions - not part of the library distribution
 prune apps
-
-# Exclude examples directory - not part of the library  
 prune examples
-
-# Exclude tests directory - not needed in distribution
 prune tests
+prune scripts
 
-# Exclude materforge_plots directory - not part of the library
-global-exclude */materforge_plots/*
-global-exclude materforge_plots/*
+# Exclude generated plots anywhere in the tree
+global-exclude *.png
 prune */materforge_plots
-recursive-exclude * materforge_plots
 
-# Exclude specific files
-exclude sync-repos.sh
-exclude update-docs.sh
-
-# Global exclusions - bytecode and cache files
-global-exclude *.py[co]
-global-exclude __pycache__
-global-exclude .DS_Store
-global-exclude *.so
-global-exclude .git*
-global-exclude .pytest_cache
-
-# Exclude build artifacts
+# Build artefacts
 prune build
 prune dist
-prune *.egg-info
 prune src/*.egg-info
 
-# Exclude IDE and editor files
+# Bytecode and caches
+global-exclude *.py[co]
+global-exclude __pycache__
+global-exclude .pytest_cache
+
+# OS and editor noise
+global-exclude .DS_Store
+global-exclude .git*
 global-exclude .vscode
 global-exclude .idea
 global-exclude *.swp
 global-exclude *.swo
 global-exclude *~
+global-exclude *.so
 
-# Exclude virtual environment directory
+# Virtual environments
 prune venv
 prune env
 prune .venv
 
-# Exclude output directories
+# Simulation output
 prune vtk*
