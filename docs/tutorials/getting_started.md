@@ -106,6 +106,10 @@ print(f" Density: {density:.2f} kg/m³")
 print(f" Thermal Conductivity: {conductivity:.2f} W/(m·K)")
 print(f" Heat Capacity: {heat_capacity:.2f} J/(kg·K)")
 print(f" Thermal Diffusivity: {diffusivity:.2e} m²/s")
+
+# Evaluate properties at a specific temperature
+properties = material.evaluate_properties_at_temperature(500.0)
+print(properties)
 ```
 
 
