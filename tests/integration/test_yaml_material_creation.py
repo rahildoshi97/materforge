@@ -3,7 +3,7 @@ import pytest
 import sympy as sp
 from pathlib import Path
 
-from materforge.parsing.api import create_material, get_supported_properties
+from materforge.parsing.api import create_material
 
 class TestYAMLMaterialCreation:
     """Integration tests for creating materials from YAML files."""
@@ -64,24 +64,24 @@ class TestYAMLMaterialCreation:
         if not aluminum_yaml_path.exists():
             pytest.skip(f"Aluminum YAML file not found: {aluminum_yaml_path}")
         mat_Al = create_material(yaml_path=aluminum_yaml_path, dependency=temp_symbol, enable_plotting=False)
-        # Test property evaluation if properties exist
         test_temp = 300.0
-        valid_properties = get_supported_properties()
-        for prop_name in valid_properties:
-            if hasattr(mat_Al, prop_name):
-                prop_value = getattr(mat_Al, prop_name)
-                if isinstance(prop_value, sp.Expr):
-                    try:
-                        numerical_value = float(prop_value.subs(temp_symbol, test_temp))
-                        assert isinstance(numerical_value, float)
-                        assert not sp.nan(numerical_value)
-                    except (TypeError, ValueError):
-                        # Some expressions might not be temperature-dependent
-                        try:
-                            numerical_value = float(prop_value.evalf())
-                            assert isinstance(numerical_value, float)
-                        except:
-                            pass  # Skip if can't evaluate
+        available_props = mat_Al.property_names()
+        # Sanity check: material must have at least one property
+        assert len(available_props) > 0, "Material has no processed properties"
+        for prop_name in available_props:
+            prop_value = getattr(mat_Al, prop_name)
+            assert prop_value is not None, f"Property '{prop_name}' is None after processing"
+            if isinstance(prop_value, sp.Expr) and prop_value.free_symbols:
+                evaluated = prop_value.subs(temp_symbol, test_temp)
+                numerical_value = float(evaluated.evalf())
+                assert isinstance(numerical_value, float), \
+                    f"'{prop_name}' did not evaluate to float"
+                assert not (numerical_value != numerical_value), \
+                    f"'{prop_name}' evaluated to NaN at T={test_temp}"
+            elif isinstance(prop_value, (sp.Float, sp.Integer, int, float)):
+                numerical_value = float(prop_value)
+                assert isinstance(numerical_value, float), \
+                    f"Constant '{prop_name}' is not numeric"
 
     def test_comprehensive_material_properties(self, aluminum_yaml_path, temp_symbol):
         """Test comprehensive material property evaluation."""

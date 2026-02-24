@@ -164,14 +164,6 @@ energy_value = 1.5e9  # J/m³
 temperature = float(inverse_func.subs(E, energy_value))
 ```
 
-## 🔍 Supported Properties
-
-```python
-from materforge.parsing.api import get_supported_properties
-
-print(get_supported_properties())
-```
-
 ## Validation Rules
 
 1. All required top-level fields must be present

@@ -262,6 +262,7 @@ package_build:
   image: python:${PYTHON_VERSION}
   script:
     - pip install build twine
+    - rm -rf dist/ build/
     - python -m build
     - twine check dist/*
     - echo "✅ Package build completed"
@@ -291,7 +292,6 @@ performance_benchmarks:
 # ================================
 # DEPLOYMENT STAGE
 # ================================
-
 deploy_package_test:
   stage: deploy
   image: python:${PYTHON_VERSION}
@@ -303,10 +303,34 @@ deploy_package_test:
       import materforge
       print(f'✅ Package installation successful: {materforge.__version__}')
 
-      # Test basic functionality
-      from materforge.parsing.api import get_supported_properties
-      props = get_supported_properties()
-      print(f'✅ Supported properties: {len(props)} properties available')
+      # Verify core API surface is importable and callable
+      from materforge.parsing.api import (
+          create_material,
+          validate_yaml_file,
+          get_material_info,
+          get_material_property_names,
+          evaluate_material_properties,
+      )
+      print('✅ All public API symbols imported successfully')
+
+      # Smoke-test API behaviour without needing a YAML file
+      try:
+          validate_yaml_file('nonexistent.yaml')
+      except FileNotFoundError:
+          print('✅ validate_yaml_file raises FileNotFoundError as expected')
+
+      import sympy as sp
+      try:
+          create_material('nonexistent.yaml', sp.Symbol('T'), enable_plotting=False)
+      except FileNotFoundError:
+          print('✅ create_material raises FileNotFoundError as expected')
+
+      try:
+          get_material_property_names('not_a_material')
+      except ValueError:
+          print('✅ get_material_property_names raises ValueError as expected')
+
+      print('✅ Package API smoke test passed')
       "
     - echo "✅ Package ready for distribution"
   dependencies:

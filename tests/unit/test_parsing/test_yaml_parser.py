@@ -132,25 +132,3 @@ class TestMaterialYAMLParser:
                 MaterialYAMLParser(yaml_path)
         finally:
             yaml_path.unlink()
-
-    def test_yaml_parser_property_validation(self):
-        """Test property name validation."""
-        config_with_invalid_property = {
-            'name': 'Invalid Property Material',
-            'material_type': 'pure_metal',
-            'composition': {'Al': 1.0},
-            'melting_temperature': 933.47,
-            'boiling_temperature': 2792.0,
-            'properties': {
-                'invalid_property_name': 2700.0  # Not in VALID_YAML_PROPERTIES
-            }
-        }
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml = YAML()
-            yaml.dump(config_with_invalid_property, f)
-            yaml_path = Path(f.name)
-        try:
-            with pytest.raises(ValueError, match="Invalid properties found"):
-                MaterialYAMLParser(yaml_path)
-        finally:
-            yaml_path.unlink()

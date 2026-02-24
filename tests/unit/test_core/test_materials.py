@@ -1,4 +1,5 @@
 """Unit tests for Material class."""
+import re
 import pytest
 import numpy as np
 import sympy as sp
@@ -318,7 +319,7 @@ class TestMaterial:
 
     def test_temperature_validation_alloy_solidus_liquidus_order(self, sample_steel_elements):
         """Test that solidus temperature must be less than liquidus temperature."""
-        with pytest.raises(MaterialTemperatureError, match=r"solidus_temperature.*must be less than.*liquidus_temperature"):
+        with pytest.raises(MaterialTemperatureError, match=re.escape("solidus_temperature (1500.0K) must be <= liquidus_temperature (1400.0K)")):
             Material(
                 name="Test Alloy",
                 material_type="alloy",
@@ -332,7 +333,7 @@ class TestMaterial:
 
     def test_temperature_validation_alloy_boiling_order(self, sample_steel_elements):
         """Test that initial boiling must be less than final boiling temperature."""
-        with pytest.raises(MaterialTemperatureError, match=r"initial_boiling_temperature.*must be less than.*final_boiling_temperature"):
+        with pytest.raises(MaterialTemperatureError,  match=re.escape("initial_boiling_temperature (2900.0K) must be <= final_boiling_temperature (2800.0K)")):
             Material(
                 name="Test Alloy",
                 material_type="alloy",
@@ -346,7 +347,7 @@ class TestMaterial:
 
     def test_temperature_validation_liquidus_boiling_order(self, sample_steel_elements):
         """Test that liquidus temperature must be less than initial boiling temperature."""
-        with pytest.raises(MaterialTemperatureError, match=r"liquidus_temperature.*must be less than.*initial_boiling_temperature"):
+        with pytest.raises(MaterialTemperatureError,  match=re.escape("liquidus_temperature (2100.0K) must be < initial_boiling_temperature (2000.0K)")):
             Material(
                 name="Test Alloy",
                 material_type="alloy",

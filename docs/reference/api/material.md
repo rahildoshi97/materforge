@@ -145,23 +145,6 @@ u_C = sp.Symbol('u_C')
 material = create_material('copper.yaml', u_C)
 ```
 
-### get_supported_properties
-
-Returns a list of all supported material properties.
-```python
-from materforge.parsing.api import get_supported_properties
-
-def get_supported_properties() -> list:
-```
-**Returns:**
-- `list`: List of strings representing valid property names
-
-**Example:**
-```python
-properties = get_supported_properties()
-print("Supported properties:", properties)
-```
-
 ### validate_yaml_file
 
 Validate a YAML file without creating the material.

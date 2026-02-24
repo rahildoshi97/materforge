@@ -65,7 +65,7 @@ MaterForge's architecture is organized into distinct modules:
 - **Symbol Registry**: SymPy symbol management to ensure uniqueness
 
 ### Parsing Module (`materforge.parsing`)
-- **API**: Main entry points (`create_material`, `validate_yaml_file`, `get_supported_properties`)
+- **API**: Main entry points (`create_material`, `validate_yaml_file`)
 - **Configuration**: YAML parsing and validation through `MaterialYAMLParser`
 - **Processors**: Property and dependency processing (`PropertyProcessor`, `DependencyResolver`)
 - **I/O**: File handling for external data (`load_property_data`)

@@ -43,7 +43,6 @@ from .core.symbol_registry import SymbolRegistry
 # Main API functions
 from .parsing.api import (
     create_material,
-    get_supported_properties,
     validate_yaml_file,
     get_material_info,
 )
@@ -69,7 +68,6 @@ __all__ = [
     "SymbolRegistry",
     # Main API
     "create_material",
-    "get_supported_properties",
     "validate_yaml_file",
     "get_material_info",
     # Processing

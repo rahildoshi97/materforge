@@ -129,7 +129,7 @@ class TestPiecewiseInverterComprehensive:
             melting_temperature=sp.Float(1811),
             boiling_temperature=sp.Float(3134)
         )
-        with pytest.raises(ValueError, match="Energy density must be a piecewise function.*NoneType"):
+        with pytest.raises(ValueError, match="Material does not have energy_density property"):
             PiecewiseInverter.create_energy_density_inverse(material)
 
     def test_create_energy_density_inverse_non_piecewise(self):
