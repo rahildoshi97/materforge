@@ -25,7 +25,7 @@ Main Components:
 - Data: Material databases and physical constants
 """
 
-# Version handling — Python >=3.10 guarantees importlib.metadata is available
+# Version handling - Python >=3.10 guarantees importlib.metadata is available
 try:
     from ._version import version as __version__
 except ImportError:
@@ -37,7 +37,6 @@ except ImportError:
 
 # Core material definitions
 from .core.materials import Material
-from .core.elements import ChemicalElement
 from .core.symbol_registry import SymbolRegistry
 
 # Main API functions
@@ -64,7 +63,6 @@ __all__ = [
     "__version__",
     # Core classes
     "Material",
-    "ChemicalElement",
     "SymbolRegistry",
     # Main API
     "create_material",

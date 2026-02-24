@@ -4,7 +4,6 @@
 # This application depends on waLBerla and pystencils (GPLv3), requiring GPL licensing.
 
 """Visualize material properties demo functionality with robust error handling."""
-import os
 import sys
 from pathlib import Path
 from pycallgraph2 import PyCallGraph, Config
@@ -36,7 +35,6 @@ def create_robust_inverse_visualization():
             'PiecewiseInverter.*',
             'create_material',
             'create_inverse',
-            'create_energy_density_inverse',
         ],
         exclude=[
             'pycallgraph2.*',
@@ -73,14 +71,6 @@ def create_robust_inverse_visualization():
                     print(f"Created material: {mat.name}")
 
                     if hasattr(mat, 'energy_density'):
-                        # Method 1: Try convenience function (may fail)
-                        try:
-                            E = sp.Symbol('E')
-                            inverse_func1 = PiecewiseInverter.create_energy_density_inverse(mat, 'E')
-                            print(f"Method 1 succeeded for {mat.name}")
-                        except ValueError as e:
-                            print(f"Method 1 failed for {mat.name}: {e}")
-
                         # Method 2: Try direct approach (more likely to work)
                         try:
                             energy_symbols = mat.energy_density.free_symbols # type: ignore

@@ -11,9 +11,7 @@ import sympy as sp
 
 from materforge.core.materials import Material
 from materforge.parsing.config.material_yaml_parser import MaterialYAMLParser
-from materforge.parsing.config.yaml_keys import (
-    NAME_KEY, MATERIAL_TYPE_KEY, COMPOSITION_KEY, PROPERTIES_KEY,
-)
+from materforge.parsing.config.yaml_keys import NAME_KEY, PROPERTIES_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +23,7 @@ logger = logging.getLogger(__name__)
 def create_material(yaml_path: Union[str, Path], dependency: sp.Symbol,
                     enable_plotting: bool = True) -> Material:
     """Create a Material from a YAML configuration file.
+
     Args:
         yaml_path: Path to the YAML configuration file.
         dependency: SymPy symbol for property evaluation (e.g. sp.Symbol('T')).
@@ -109,13 +108,11 @@ def get_material_info(yaml_path: Union[str, Path]) -> Dict:
         config = parser.config
         info: Dict = {
             'name': config.get(NAME_KEY, 'Unknown'),
-            'material_type': config.get(MATERIAL_TYPE_KEY, 'Unknown'),
-            'composition': config.get(COMPOSITION_KEY, {}),
         }
         properties = config.get(PROPERTIES_KEY, {})
         info['properties'] = list(properties.keys())
         info['total_properties'] = len(properties)
-        reserved_keys = {NAME_KEY, MATERIAL_TYPE_KEY, COMPOSITION_KEY, PROPERTIES_KEY}
+        reserved_keys = {NAME_KEY, PROPERTIES_KEY}
         for key, value in config.items():
             if key not in reserved_keys:
                 info[key] = value
@@ -141,7 +138,7 @@ def get_material_info(yaml_path: Union[str, Path]) -> Dict:
 def get_material_property_names(material: Material) -> List[str]:
     """Return all thermophysical property names assigned to a material instance.
 
-    Uses the dynamic property tracker — works for any name, including
+    Uses the dynamic property tracker - works for any name, including
     user-defined ones absent from any predefined list.
     Args:
         material: A fully processed Material instance.

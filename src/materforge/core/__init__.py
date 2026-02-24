@@ -10,13 +10,11 @@ the MaterForge library.
 """
 
 from .materials import Material
-from .elements import ChemicalElement
 from .symbol_registry import SymbolRegistry
 from .exceptions import MaterialError, MaterialCompositionError, MaterialTemperatureError
 
 __all__ = [
     "Material",
-    "ChemicalElement",
     "SymbolRegistry",
     "MaterialError",
     "MaterialCompositionError",

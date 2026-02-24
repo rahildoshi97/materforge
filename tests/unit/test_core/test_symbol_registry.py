@@ -1,6 +1,5 @@
 """Unit tests for SymbolRegistry class."""
 
-import pytest
 import sympy as sp
 from materforge.core.symbol_registry import SymbolRegistry
 

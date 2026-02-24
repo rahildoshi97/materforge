@@ -1,6 +1,5 @@
 """Unit tests for constants modules."""
 
-import pytest
 import scipy.constants as sc
 from materforge.data.constants.processing_constants import ProcessingConstants
 from materforge.data.constants.physical_constants import PhysicalConstants
@@ -113,7 +112,7 @@ class TestPhysicalConstants:
         assert PhysicalConstants.GRAVITY == sc.g
 
     # -------------------------------------------------------------------------
-    # Physical relationships — internal consistency checks
+    # Physical relationships - internal consistency checks
     # -------------------------------------------------------------------------
 
     def test_gas_constant_is_kb_times_na(self):

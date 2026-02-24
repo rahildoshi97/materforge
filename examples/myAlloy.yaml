@@ -11,21 +11,6 @@
 # ====================================================================================================
 
 name: "myAlloy"
-material_type: alloy  # Must be 'alloy' or 'pure_metal'
-
-# Composition fractions must sum to 1.0
-composition:
-  Fe: 0.675
-  Cr: 0.170
-  Ni: 0.120
-  Mo: 0.025
-  Mn: 0.01
-
-# Required temperature properties for alloys
-solidus_temperature: 1605.          # Temperature where melting begins (K)
-liquidus_temperature: 1735.         # Temperature where material is completely melted (K)
-initial_boiling_temperature: 3090.  # Temperature where boiling begins (K)
-final_boiling_temperature: 3200.    # Temperature where material is completely vaporized (K)
 
 properties:
 
@@ -44,7 +29,7 @@ properties:
   # ====================================================================================================
 
   latent_heat_of_fusion1:
-    dependency: solidus_temperature
+    dependency: solidus_temp1 + 5
     value: [0.0, 171401.0]
     bounds: [constant, constant]
 
@@ -96,6 +81,15 @@ properties:
     dependency: (3000, 300, -5.0)
     equation: heat_conductivity1 /(density1 * heat_capacity1)
     bounds: [extrapolate, extrapolate]
+    regression:
+      simplify: post
+      degree: 3
+      segments: 7
+
+  solidus_temp1: 1605.          # Temperature where melting begins (K)
+  liquidus_temp1: 1735.         # Temperature where material is completely melted (K)
+  initial_boiling_temp1: 3090.  # Temperature where boiling begins (K)
+  final_boiling_temp1: 3200.    # Temperature where material is completely vaporized (K)
 
 # ====================================================================================================
 # TEMPERATURE DEFINITION FORMATS:

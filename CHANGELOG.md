@@ -95,8 +95,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Critical bug in piecewise inversion**: Constant pieces in inverse functions now correctly map to boundary temperatures instead of constant energy values
-  - Previously: `T=300K → E=1.20e+05 → T=119597.6K (Error: 1.19e+05)`
-  - Now: `T=300K → E=1.20e+05 → T=300.0K (Error: ~0)`
+  - Previously: `T=300K -> E=1.20e+05 -> T=119597.6K (Error: 1.19e+05)`
+  - Now: `T=300K -> E=1.20e+05 -> T=300.0K (Error: ~0)`
 - Fixed boundary condition direction for decreasing (negative slope) piecewise pieces
 - Corrected inverse condition logic: now uses `E > boundary_energy` for decreasing functions and `E < boundary_energy` for increasing functions
 - Missing `boundary_temp` parameter in loop iteration (was causing 4500K offset errors)
@@ -179,8 +179,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Temperature-dependent property evaluation
 
 ### Changed
-- Package name: `pymatlib` → `materforge`
-- Import statements: `from pymatlib` → `from materforge`
+- Package name: `pymatlib` -> `materforge`
+- Import statements: `from pymatlib` -> `from materforge`
 - Repository structure and naming conventions
 - Enhanced error handling and validation
 - Improved logging and debugging capabilities

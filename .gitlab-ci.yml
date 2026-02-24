@@ -51,10 +51,10 @@ validate_python_syntax:
   image: python:${PYTHON_VERSION}
   before_script:
     - pip install --upgrade pip
-    - pip install flake8 black isort mypy
+    - pip install ruff
   script:
     - echo "Validating Python syntax and style..."
-    - flake8 ${PACKAGE_DIR}/ --count --select=E9,F63,F7,F82 --show-source --statistics
+    - ruff check ${PACKAGE_DIR}/ --select=E9,F63,F7,F82
     - echo "✅ Python syntax validation passed"
   allow_failure: true
 
@@ -183,6 +183,7 @@ test_apps:
   script:
     - echo "Testing application scripts..."
     - cd apps/
+    # NOTE: these scripts use the legacy Material API and are pending update
     - python material_demo_callgraph.py || echo "⚠️ Demo script may require additional dependencies"
     - python quick_visualize.py || echo "⚠️ Visualization script may require additional dependencies"
     - echo "✅ Application scripts tested"
@@ -327,8 +328,9 @@ deploy_package_test:
 
       try:
           get_material_property_names('not_a_material')
-      except ValueError:
-          print('✅ get_material_property_names raises ValueError as expected')
+          print('❌ get_material_property_names should have raised an error')
+      except (ValueError, AttributeError):
+          print('✅ get_material_property_names rejects non-Material input as expected')
 
       print('✅ Package API smoke test passed')
       "

@@ -4,20 +4,20 @@
 """Demonstration script for material property evaluation."""
 import logging
 from pathlib import Path
-import sympy as sp
 import pandas as pd
+import sympy as sp
 
+from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 from materforge.parsing.api import (
     create_material,
     evaluate_material_properties,
+    get_material_info,
     get_material_property_names,
     validate_yaml_file,
-    get_material_info,
 )
-from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 
-def setup_logging():
+def setup_logging() -> None:
     logging.basicConfig(
         level=logging.WARNING,
         format="%(asctime)s %(levelname)s %(name)s -> %(message)s",
@@ -27,7 +27,17 @@ def setup_logging():
     logging.getLogger('fontTools').setLevel(logging.WARNING)
 
 
-def demonstrate_material_properties():
+def _scalar_properties(mat) -> dict:
+    """Return all constant (non-symbolic) properties on a material."""
+    return {
+        n: getattr(mat, n)
+        for n in mat.property_names()
+        if not (hasattr(getattr(mat, n), 'free_symbols')
+                and getattr(mat, n).free_symbols)
+        and isinstance(getattr(mat, n), (int, float, sp.Float, sp.Integer))
+    }
+
+def demonstrate_material_properties() -> None:
     """Comprehensive demonstration of material property evaluation."""
     setup_logging()
 
@@ -57,11 +67,11 @@ def demonstrate_material_properties():
         if path.exists():
             try:
                 is_valid = validate_yaml_file(path)
-                print(f"✓ {name} YAML validation: {'PASSED' if is_valid else 'FAILED'}")
+                print(f"{name} YAML validation: {'PASSED' if is_valid else 'FAILED'}")
             except Exception as e:
-                print(f"✗ {name} YAML validation: FAILED - {e}")
+                print(f"{name} YAML validation: FAILED - {e}")
         else:
-            print(f"✗ {name} YAML file not found: {path}")
+            print(f"{name} YAML file not found: {path}")
 
     # ===================================================================
     # 2. MATERIAL INFO EXTRACTION
@@ -70,24 +80,21 @@ def demonstrate_material_properties():
     print(f"{'-' * 50}")
 
     for path, name in [(yaml_path_Al, "Aluminum"), (yaml_path_SS304L, "SS304L")]:
-        if path.exists():
-            try:
-                info = get_material_info(path)
-                print(f"\n{name} Information:")
-                print(f"  Name:             {info['name']}")
-                print(f"  Type:             {info['material_type']}")
-                print(f"  Total Properties: {info['total_properties']}")
-                print(f"  Composition:      {info['composition']}")
-                if info['material_type'] == 'pure_metal':
-                    print(f"  Melting Temperature: {info.get('melting_temperature', 'N/A')} K")
-                    print(f"  Boiling Temperature: {info.get('boiling_temperature', 'N/A')} K")
-                else:
-                    print(f"  Solidus Temperature:  {info.get('solidus_temperature', 'N/A')} K")
-                    print(f"  Liquidus Temperature: {info.get('liquidus_temperature', 'N/A')} K")
-                if 'property_types' in info:
-                    print(f"  Property Types: {info['property_types']}")
-            except Exception as e:
-                print(f"✗ Failed to get {name} info: {e}")
+        if not path.exists():
+            print(f"{name} YAML file not found: {path}")
+            continue
+        try:
+            info = get_material_info(path)
+            print(f"\n{name} Information:")
+            print(f"  Name:             {info['name']}")
+            print(f"  Total Properties: {info['total_properties']}")
+            print(f"  Properties:       {info['properties']}")
+            if 'property_types' in info:
+                print("  Property Types:")
+                for pt, count in info['property_types'].items():
+                    print(f"    {pt:<30}: {count}")
+        except Exception as e:
+            print(f"Failed to get {name} info: {e}")
 
     # ===================================================================
     # 3. MATERIAL CREATION
@@ -95,43 +102,36 @@ def demonstrate_material_properties():
     print(f"\n{'3. MATERIAL CREATION':<50}")
     print(f"{'-' * 50}")
 
-    if yaml_path_Al.exists():
+    for path, symbol, label in [
+        (yaml_path_Al,    T1, "Aluminum"),
+        (yaml_path_SS304L, T2, "Steel 1.4301"),
+    ]:
+        if not path.exists():
+            print(f"{label}: YAML not found")
+            continue
         try:
-            mat_Al = create_material(yaml_path=yaml_path_Al, dependency=T1, enable_plotting=True)
-            materials.append(mat_Al)
-            material_symbols[mat_Al.name] = T1
-            print(f"✓ Successfully created: {mat_Al.name} (symbol: {T1})")
+            mat = create_material(yaml_path=path, dependency=symbol, enable_plotting=True)
+            materials.append(mat)
+            material_symbols[mat.name] = symbol
+            print(f"Successfully created: {mat.name} (symbol: {symbol})")
         except Exception as e:
-            print(f"✗ Failed to create Aluminum: {e}")
-
-    if yaml_path_SS304L.exists():
-        try:
-            mat_SS304L = create_material(yaml_path=yaml_path_SS304L, dependency=T2, enable_plotting=True)
-            materials.append(mat_SS304L)
-            material_symbols[mat_SS304L.name] = T2
-            print(f"✓ Successfully created: {mat_SS304L.name} (symbol: {T2})")
-        except Exception as e:
-            print(f"✗ Failed to create SS304L: {e}")
+            print(f"Failed to create {label}: {e}")
 
     # ===================================================================
     # 4. PROPERTY TYPES OVERVIEW
     # ===================================================================
-    # Property names are no longer restricted to a fixed list — any name
-    # defined in a YAML file is valid. The 6 structural property *types*
-    # (how a property is defined) remain fixed.
     print(f"\n{'4. PROPERTY TYPES OVERVIEW':<50}")
     print(f"{'-' * 50}")
     print("MaterForge supports 6 property definition types (any property name is valid):")
-    property_type_info = [
-        ("CONSTANT_VALUE",     "Single numeric value,  e.g.  density: 7000.0"),
-        ("STEP_FUNCTION",      "Two values split at a temperature reference"),
-        ("TABULAR_DATA",       "Paired dependency/value lists"),
+    for i, (ptype, desc) in enumerate([
+        ("CONSTANT_VALUE",     "Single numeric value, e.g. density: 7000.0"),
+        ("STEP_FUNCTION",      "Two values split at a scalar-property reference"),
+        ("TABULAR_DATA",       "Paired dependency / value lists"),
         ("FILE_IMPORT",        "Load data from .csv / .xlsx / .txt"),
         ("PIECEWISE_EQUATION", "Symbolic equations over temperature breakpoints"),
         ("COMPUTED_PROPERTY",  "Derived from other properties via expression"),
-    ]
-    for i, (ptype, desc) in enumerate(property_type_info, 1):
-        print(f"  {i}. {ptype:<30} — {desc}")
+    ], 1):
+        print(f"  {i}. {ptype:<30} - {desc}")
 
     # ===================================================================
     # 5. MATERIAL PROPERTY ANALYSIS
@@ -143,33 +143,20 @@ def demonstrate_material_properties():
         T_mat = material_symbols[mat.name]
 
         print(f"\n{'=' * 80}")
-        print(f"MATERIAL: {mat.name} (Temperature symbol: {T_mat})")
+        print(f"MATERIAL: {mat.name}  (temperature symbol: {T_mat})")
         print(f"{'=' * 80}")
+        print(f"Name: {mat.name}")
 
-        print(f"Name:     {mat.name}")
-        print(f"Type:     {mat.material_type}")
-        print(f"Elements: {[elem.name for elem in mat.elements]}")
-        for elem, frac in zip(mat.elements, mat.composition):
-            print(f"  {elem.name}: {frac}")
+        # Show scalar constants (temperature references, fixed densities, etc.)
+        scalars = _scalar_properties(mat)
+        if scalars:
+            print("Scalar constants:")
+            for prop_name, val in sorted(scalars.items()):
+                print(f"  {prop_name:<35}: {val}")
 
-        # Guard with is not None — all temperature fields always exist on the
-        # dataclass even when unset, so hasattr always returns True
-        if mat.solidus_temperature is not None:
-            print(f"Solidus Temperature:         {mat.solidus_temperature} K")
-        if mat.liquidus_temperature is not None:
-            print(f"Liquidus Temperature:        {mat.liquidus_temperature} K")
-        if mat.melting_temperature is not None:
-            print(f"Melting Temperature:         {mat.melting_temperature} K")
-        if mat.boiling_temperature is not None:
-            print(f"Boiling Temperature:         {mat.boiling_temperature} K")
-        if mat.initial_boiling_temperature is not None:
-            print(f"Initial Boiling Temperature: {mat.initial_boiling_temperature} K")
-        if mat.final_boiling_temperature is not None:
-            print(f"Final Boiling Temperature:   {mat.final_boiling_temperature} K")
-
-        # ===================================================================
+        # -------------------------------------------------------------------
         # 5.1 Available Properties
-        # ===================================================================
+        # -------------------------------------------------------------------
         print(f"\n{'AVAILABLE PROPERTIES:':<50}")
         print(f"{'-' * 50}")
 
@@ -179,14 +166,14 @@ def demonstrate_material_properties():
         for prop_name in sorted(available_props):
             prop_value = getattr(mat, prop_name)
             print(f"  {prop_name:<30}: {prop_value}")
-            print(f"  {' ' * 30}  Type: {type(prop_value).__name__}")
+            print(f"  {'':30}  Type: {type(prop_value).__name__}")
             allowed_types = (sp.Piecewise, sp.Float, sp.Expr, float, int, type(None))
-            marker = "✓ Valid type" if isinstance(prop_value, allowed_types) else "! WARNING: Unexpected type"
-            print(f"  {' ' * 30}  {marker}")
+            marker = ("Valid type" if isinstance(prop_value, allowed_types) else "! WARNING: Unexpected type")
+            print(f"  {'':30}  {marker}")
 
-        # ===================================================================
+        # -------------------------------------------------------------------
         # 5.2 Manual Property Evaluation
-        # ===================================================================
+        # -------------------------------------------------------------------
         test_temp = 500.15
         print(f"\n{'PROPERTY VALUES AT ' + str(test_temp) + 'K:':<50}")
         print(f"{'-' * 50}")
@@ -201,12 +188,12 @@ def demonstrate_material_properties():
                 else:
                     print(f"  {prop_name:<30}: {prop_value} (constant)")
             except Exception as e:
-                print(f"  {prop_name:<30}: Error - {str(e)}")
+                print(f"  {prop_name:<30}: Error - {e}")
 
-        # ===================================================================
+        # -------------------------------------------------------------------
         # 5.3 API Evaluation Methods
-        # ===================================================================
-        print(f"\n{'NEW API METHODS:':<50}")
+        # -------------------------------------------------------------------
+        print(f"\n{'API METHODS:':<50}")
         print(f"{'-' * 50}")
 
         print("Method 2: material.evaluate_properties_at_temperature()")
@@ -227,7 +214,6 @@ def demonstrate_material_properties():
 
         print("\nMethod 4: Specific Properties Only")
         try:
-            # Use actual names from this material — first 3 alphabetically
             specific_props = sorted(available_props)[:3]
             if specific_props:
                 specific_values = mat.evaluate_properties_at_temperature(
@@ -252,15 +238,14 @@ def demonstrate_material_properties():
         except Exception as e:
             print(f"Error in Method 5: {e}")
 
-        # ===================================================================
+        # -------------------------------------------------------------------
         # 5.4 Batch Temperature Evaluation
-        # ===================================================================
+        # -------------------------------------------------------------------
         print(f"\n{'BATCH TEMPERATURE EVALUATION:':<50}")
         print(f"{'-' * 50}")
 
         temperatures = [300, 400, 500, 600, 700]
         batch_results = {}
-
         for temp in temperatures:
             try:
                 batch_results[temp] = mat.evaluate_properties_at_temperature(temp)
@@ -271,19 +256,16 @@ def demonstrate_material_properties():
         if batch_results:
             try:
                 df = pd.DataFrame(batch_results).T
-                # Use actual column names that exist — not hardcoded assumptions
-                display_cols = sorted(available_props)[:3]
-                existing_cols = [c for c in display_cols if c in df.columns]
-
-                if existing_cols:
-                    header = f"{'Temperature':<12}" + "".join(f"{c:<18}" for c in existing_cols)
+                display_cols = [c for c in sorted(available_props) if c in df.columns][:3]
+                if display_cols:
+                    header = f"{'Temperature':<12}" + "".join(
+                        f"{c:<18}" for c in display_cols)
                     print(header)
-                    print("-" * (12 + 18 * len(existing_cols)))
-
+                    print("-" * (12 + 18 * len(display_cols)))
                     for temp, row in df.iterrows():
                         line = f"{temp:<12.0f}"
-                        for col in existing_cols:
-                            val = row.get(col, None)
+                        for col in display_cols:
+                            val = row.get(col)
                             line += f"{val:.4e}  " if val is not None else f"{'N/A':<18}"
                         print(line)
                 else:
@@ -296,91 +278,80 @@ def demonstrate_material_properties():
     # ===================================================================
     print(f"\n{'6. INVERSE FUNCTION TESTING':<50}")
     print(f"{'-' * 50}")
-
     test_inverse_functions(materials, material_symbols)
 
 
-def test_inverse_functions(materials, material_symbols):
-    """Test inverse function creation and accuracy for materials with energy_density."""
+def test_inverse_functions(materials: list, material_symbols: dict) -> None:
+    """Tests inverse function creation and accuracy for materials with energy_density."""
     print(f"\n{'=' * 80}")
     print("INVERSE FUNCTION TESTING")
     print(f"{'=' * 80}")
 
     for mat in materials:
         T_mat = material_symbols[mat.name]
-
         print(f"\n--- Testing Inverse Functions for {mat.name} (symbol: {T_mat}) ---")
 
-        # Use property_names() — hasattr always returns True on the dataclass
-        # even when energy_density was never assigned by the processor
         if 'energy_density' not in mat.property_names():
-            print(f"  {mat.name} has no energy_density property — skipping inverse test")
+            print(f"  {mat.name} has no energy_density property - skipping")
             continue
 
         try:
-            print("  Method 1: Convenience function...")
-            try:
-                E = sp.Symbol('E')
-                inverse_func1 = PiecewiseInverter.create_energy_density_inverse(mat, 'E')
-                print("  ✓ Method 1 succeeded!")
-                test_round_trip_accuracy(mat, inverse_func1, T_mat, E, method="Method 1")
-            except Exception as e:
-                print(f"  ✗ Method 1 failed: {e}")
-
             print("  Method 2: Direct approach...")
             try:
-                energy_symbols = mat.energy_density.free_symbols
+                energy_density = getattr(mat, 'energy_density')
+                energy_symbols = energy_density.free_symbols
                 if len(energy_symbols) == 1:
-                    temp_symbol = list(energy_symbols)[0]
+                    temp_symbol = next(iter(energy_symbols))
                     E_symbol = sp.Symbol('E')
                     inverse_func2 = PiecewiseInverter.create_inverse(
-                        mat.energy_density, temp_symbol, E_symbol)
-                    print("  ✓ Method 2 succeeded!")
+                        energy_density, temp_symbol, E_symbol)
+                    print("  Method 2 succeeded!")
                     test_round_trip_accuracy(
                         mat, inverse_func2, temp_symbol, E_symbol, method="Method 2")
                 else:
-                    print(f"  ✗ Unexpected symbols in energy_density: {energy_symbols}")
+                    print(f"  Unexpected symbols in energy_density: {energy_symbols}")
             except Exception as e:
-                print(f"  ✗ Method 2 failed: {e}")
-
+                print(f"  Method 2 failed: {e}")
         except Exception as e:
-            print(f"  ✗ Inverse testing failed for {mat.name}: {e}")
+            print(f"  Inverse testing failed for {mat.name}: {e}")
 
 
-def test_round_trip_accuracy(material, inverse_func, temp_symbol, energy_symbol, method="Unknown"):
-    """Test round-trip accuracy: T -> E -> T."""
+def test_round_trip_accuracy(material, inverse_func, temp_symbol,
+                              energy_symbol, method: str = "Unknown") -> None:
+    """Tests round-trip accuracy: T -> E -> T."""
     print(f"  Round-trip accuracy test ({method}):")
 
     test_temperatures = [300, 350, 400, 450, 500,
                          600, 700, 800, 900, 1000,
                          1200, 1500, 1800, 2000, 2500, 3000]
     max_error = 0.0
-    successful_tests = 0
+    successful = 0
+    energy_density = getattr(material, 'energy_density')
 
     for temp in test_temperatures:
         try:
-            energy_val = float(material.energy_density.subs(temp_symbol, temp))
-            recovered_temp = float(inverse_func.subs(energy_symbol, energy_val))
-            error = abs(temp - recovered_temp)
+            energy_val = float(energy_density.subs(temp_symbol, temp))
+            recovered = float(inverse_func.subs(energy_symbol, energy_val))
+            error = abs(temp - recovered)
             max_error = max(max_error, error)
-            successful_tests += 1
-            print(f"    T={temp:4.0f}K -> E={energy_val:.2e} -> T={recovered_temp:6.1f}K "
-                  f"(Error: {error:.2e})")
+            successful += 1
+            print(f"    T={temp:4.0f}K -> E={energy_val:.2e} -> "
+                  f"T={recovered:6.1f}K  (error: {error:.2e})")
         except Exception as e:
             print(f"    T={temp:4.0f}K -> Error: {e}")
 
-    print(f"  Tests completed: {successful_tests}/{len(test_temperatures)}")
-    print(f"  Maximum error:   {max_error:.2e} K")
+    print(f"  Completed: {successful}/{len(test_temperatures)}")
+    print(f"  Max error: {max_error:.2e} K")
     if max_error < 1e-8:
-        print("  ✓ Excellent accuracy!")
+        print("  Excellent accuracy")
     elif max_error < 1e-4:
-        print("  ✓ Good accuracy")
+        print("  Good accuracy")
     else:
-        print("  !  Consider reviewing inverse function accuracy")
+        print("  ! Consider reviewing inverse function accuracy")
 
 
-def demonstrate_advanced_usage():
-    """Demonstrate advanced usage patterns."""
+def demonstrate_advanced_usage() -> None:
+    """Demonstrates advanced usage patterns."""
     print(f"\n{'=' * 80}")
     print("ADVANCED USAGE PATTERNS")
     print(f"{'=' * 80}")
@@ -389,43 +360,37 @@ def demonstrate_advanced_usage():
     print("-" * 50)
 
     current_file = Path(__file__)
-    yaml_path_Al = (current_file.parent.parent / "src" / "materforge" / "data"
-                    / "materials" / "pure_metals" / "Al" / "Al.yaml")
-    yaml_path_SS304L = (current_file.parent.parent / "src" / "materforge" / "data"
-                        / "materials" / "alloys" / "1.4301" / "1.4301.yaml")
+    yaml_path_Al = (current_file.parent.parent / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml")
+    yaml_path_SS304L = (current_file.parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml")
 
     T1 = sp.Symbol('T_Al')
     T2 = sp.Symbol('T_SS')
     materials_advanced = []
 
-    if yaml_path_Al.exists():
+    for path, symbol, label in [
+        (yaml_path_Al,    T1, "Aluminum"),
+        (yaml_path_SS304L, T2, "Steel 1.4301"),
+    ]:
+        if not path.exists():
+            print(f"{label}: YAML not found")
+            continue
         try:
-            mat_Al = create_material(yaml_path_Al, dependency=T1, enable_plotting=True)
-            materials_advanced.append((mat_Al, T1, "Aluminum"))
-            print(f"✓ Created {mat_Al.name} with symbol {T1}")
+            mat = create_material(path, dependency=symbol, enable_plotting=False)
+            materials_advanced.append((mat, symbol, label))
+            print(f"Created {mat.name} with symbol {symbol}")
         except Exception as e:
-            print(f"✗ Failed to create Aluminum: {e}")
-
-    if yaml_path_SS304L.exists():
-        try:
-            mat_SS = create_material(yaml_path_SS304L, dependency=T2, enable_plotting=True)
-            materials_advanced.append((mat_SS, T2, "Steel 1.4301"))
-            print(f"✓ Created {mat_SS.name} with symbol {T2}")
-        except Exception as e:
-            print(f"✗ Failed to create Steel: {e}")
+            print(f"Failed to create {label}: {e}")
 
     temp_range = range(300, 3001, 100)
 
     for mat, T_symbol, mat_name in materials_advanced:
         print(f"\n--- Temperature Sweep for {mat_name} ---")
 
-        # Use actual property names — don't assume density/heat_capacity/thermal_diffusivity exist
-        available = mat.property_names()
-        # Pick up to 3 temperature-dependent properties for the sweep
+        # Pick up to 3 temperature-dependent (symbolic) properties
         sweep_props = [
-            p for p in sorted(available)
-            if isinstance(getattr(mat, p, None), sp.Expr)
-            and getattr(mat, p).free_symbols
+            p for p in sorted(mat.property_names())
+            if (hasattr(getattr(mat, p, None), 'free_symbols')
+                and getattr(mat, p).free_symbols)
         ][:3]
 
         if not sweep_props:
@@ -444,18 +409,15 @@ def demonstrate_advanced_usage():
 
         if sweep_data:
             df = pd.DataFrame(sweep_data).set_index('temperature')
-            print(f"Temperature sweep results for {mat_name} "
-                  f"(properties: {sweep_props}):")
+            print(f"Sweep for {mat_name} (properties: {sweep_props}):")
             print(df.head(5).to_string())
-
             for col in sweep_props:
                 if col in df.columns and len(df[col].dropna()) >= 2:
-                    first = df[col].iloc[0]
-                    last = df[col].iloc[-1]
+                    first, last = df[col].iloc[0], df[col].iloc[-1]
                     if first != 0:
                         change = ((last - first) / first) * 100
                         print(f"  {col} change "
-                              f"{list(temp_range)[0]}K → {list(temp_range)[-1]}K: "
+                              f"{list(temp_range)[0]}K -> {list(temp_range)[-1]}K: "
                               f"{change:.2f}%")
 
 

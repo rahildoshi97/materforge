@@ -194,4 +194,4 @@ If you use MaterForge in your research, please cite it using the information in 
 
 ---
 
-*MaterForge — Empowering material simulation with Python*
+*MaterForge - Empowering material simulation with Python*

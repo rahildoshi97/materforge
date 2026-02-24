@@ -51,11 +51,11 @@ def analyze_material_properties(mat):
 
     # Check for energy density
     if hasattr(mat, 'energy_density') and mat.energy_density is not None:
-        print(f"✓ Energy density: {type(mat.energy_density)}")
+        print(f"Energy density: {type(mat.energy_density)}")
         print(f"  Symbols: {mat.energy_density.free_symbols}")
         return True
     else:
-        print(f"✗ Energy density: None (not defined in YAML)")
+        print("Energy density: None (not defined in YAML)")
         return False
 
 
@@ -106,7 +106,7 @@ def test_inverse_with_working_material():
                     E_symbol = sp.Symbol('E')
 
                     inverse_func = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol, E_symbol)
-                    print(f"✓ Inverse function created successfully")
+                    print("Inverse function created successfully")
 
                     # Test evaluation
                     test_temp = 300.0
@@ -114,13 +114,13 @@ def test_inverse_with_working_material():
                     recovered_temp = float(inverse_func.subs(E_symbol, energy_val)) # type: ignore
                     error = abs(test_temp - recovered_temp)
                     print(
-                        f"✓ Round-trip test: T={test_temp} -> E={energy_val:.2e} -> T={recovered_temp:.1f}, Error={error:.2e}")
+                        f"Round-trip test: T={test_temp} -> E={energy_val:.2e} -> T={recovered_temp:.1f}, Error={error:.2e}")
 
                     return inverse_func
                 else:
-                    print(f"✗ Unexpected symbols in energy density: {energy_symbols}")
+                    print(f"Unexpected symbols in energy density: {energy_symbols}")
             except Exception as e:
-                print(f"✗ Inverse creation failed: {e}")
+                print(f"Inverse creation failed: {e}")
 
     return None
 
@@ -145,7 +145,7 @@ def test_heat_equation_workflow():
     if yaml_path.exists():
         try:
             mat = create_material(yaml_path=yaml_path, dependency=u.center(), enable_plotting=True) # type: ignore
-            print(f"✓ Created material: {mat.name}")
+            print(f"Created material: {mat.name}")
 
             if hasattr(mat, 'energy_density') and mat.energy_density is not None:
                 # Create inverse function
@@ -155,17 +155,17 @@ def test_heat_equation_workflow():
                     E_symbol = sp.Symbol('E')
 
                     inverse_func = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol, E_symbol)
-                    print(f"✓ Inverse function created for heat equation")
+                    print("Inverse function created for heat equation")
 
                     # Test thermal diffusivity
                     if hasattr(mat, 'thermal_diffusivity'):
-                        print(f"✓ Thermal diffusivity available: {type(mat.thermal_diffusivity)}")
+                        print(f"Thermal diffusivity available: {type(mat.thermal_diffusivity)}")
 
                     return mat
             else:
-                print(f"✗ Material {mat.name} has no energy density")
+                print(f"Material {mat.name} has no energy density")
         except Exception as e:
-            print(f"✗ Heat equation workflow failed: {e}")
+            print(f"Heat equation workflow failed: {e}")
 
     return None
 

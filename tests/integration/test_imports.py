@@ -16,7 +16,6 @@ def test_all_imports():
         import materforge.visualization
         # Test core imports
         from materforge.core.materials import Material
-        from materforge.core.elements import ChemicalElement
         # Test parsing imports
         from materforge.parsing.validation.property_validator import validate_monotonic_energy_density
         # Test algorithm imports
@@ -41,7 +40,6 @@ def test_basic_material_creation():
             mat_Al = create_material(yaml_path=yaml_path_Al, dependency=T, enable_plotting=False)
             assert mat_Al is not None
             assert mat_Al.name == "Aluminum"
-            assert mat_Al.material_type == "pure_metal"
         except Exception as e:
             pytest.fail(f"Failed to create aluminum material: {e}")
     else:
@@ -52,7 +50,6 @@ def test_basic_material_creation():
             mat_SS304L = create_material(yaml_path=yaml_path_SS304L, dependency=T, enable_plotting=False)
             assert mat_SS304L is not None
             assert "Steel" in mat_SS304L.name or "1.4301" in mat_SS304L.name
-            assert mat_SS304L.material_type == "alloy"
         except Exception as e:
             pytest.fail(f"Failed to create steel material: {e}")
     else:

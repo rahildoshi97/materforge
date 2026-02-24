@@ -12,15 +12,6 @@
 # ====================================================================================================
 
 name: Aluminum
-material_type: pure_metal  # Must be 'pure_metal' for single-element materials
-
-# Composition must sum to 1.0 (for pure metals, single element = 1.0)
-composition:
-  Al: 1.0  # Aluminum purity (99.95%)
-
-# Required temperature properties for pure metals
-melting_temperature: 933.47   # Temperature where solid becomes liquid (K)
-boiling_temperature: 2743.0   # Temperature where liquid becomes gas (K)
 
 properties:
   
@@ -118,6 +109,9 @@ properties:
       simplify: post
       degree: 1
       segments: 2
+
+  melting_temperature: 933.47   # Temperature where solid becomes liquid (K)
+  boiling_temperature: 2743.0   # Temperature where liquid becomes gas (K)
 
 # ====================================================================================================
 # PURE METAL SPECIFIC NOTES:

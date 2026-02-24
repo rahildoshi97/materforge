@@ -240,16 +240,16 @@ def test_with_real_material():
                 status = "✓" if error < 1e-6 else "⚠" if error < 1e-3 else "✗"
                 print(f"{status} T={temp:6.1f}K -> E={energy:12.2e} -> T={recovered_temp:6.1f}K, Error={error:.2e}")
             except Exception as e:
-                print(f"✗ Error at T={temp}K: {e}")
+                print(f"Error at T={temp}K: {e}")
         print(f"\nMaximum error: {max_error:.2e}")
         if max_error < 1e-6:
-            print("✓ EXCELLENT: All tests passed with high precision")
+            print("EXCELLENT: All tests passed with high precision")
         elif max_error < 1e-3:
-            print("✓ GOOD: All tests passed with acceptable precision")
+            print("GOOD: All tests passed with acceptable precision")
         else:
-            print("⚠ WARNING: Some tests have large errors")
+            print("WARNING: Some tests have large errors")
     except Exception as e:
-        print(f"✗ Failed to create inverse: {e}")
+        print(f"Failed to create inverse: {e}")
 
 if __name__ == "__main__":
     # Set up logging

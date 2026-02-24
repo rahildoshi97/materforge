@@ -38,22 +38,6 @@ SEGMENTS_KEY = "segments"
 PRE_KEY = "pre"
 POST_KEY = "post"
 
-# Material type keys
-MATERIAL_TYPE_KEY = "material_type"
-PURE_METAL_KEY = "pure_metal"
-ALLOY_KEY = "alloy"
-
-# Composition key
-COMPOSITION_KEY = "composition"
-
-# Temperature reference keys
-MELTING_TEMPERATURE_KEY = "melting_temperature"
-BOILING_TEMPERATURE_KEY = "boiling_temperature"
-SOLIDUS_TEMPERATURE_KEY = "solidus_temperature"
-LIQUIDUS_TEMPERATURE_KEY = "liquidus_temperature"
-INITIAL_BOILING_TEMPERATURE_KEY = "initial_boiling_temperature"
-FINAL_BOILING_TEMPERATURE_KEY = "final_boiling_temperature"
-
 # Properties and material name
 PROPERTIES_KEY = "properties"
 NAME_KEY = "name"
