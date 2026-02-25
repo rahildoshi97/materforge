@@ -37,6 +37,7 @@ def _scalar_properties(mat) -> dict:
         and isinstance(getattr(mat, n), (int, float, sp.Float, sp.Integer))
     }
 
+
 def demonstrate_material_properties() -> None:
     """Comprehensive demonstration of material property evaluation."""
     setup_logging()
@@ -103,7 +104,7 @@ def demonstrate_material_properties() -> None:
     print(f"{'-' * 50}")
 
     for path, symbol, label in [
-        (yaml_path_Al,    T1, "Aluminum"),
+        (yaml_path_Al,     T1, "Aluminum"),
         (yaml_path_SS304L, T2, "Steel 1.4301"),
     ]:
         if not path.exists():
@@ -147,7 +148,6 @@ def demonstrate_material_properties() -> None:
         print(f"{'=' * 80}")
         print(f"Name: {mat.name}")
 
-        # Show scalar constants (temperature references, fixed densities, etc.)
         scalars = _scalar_properties(mat)
         if scalars:
             print("Scalar constants:")
@@ -168,7 +168,7 @@ def demonstrate_material_properties() -> None:
             print(f"  {prop_name:<30}: {prop_value}")
             print(f"  {'':30}  Type: {type(prop_value).__name__}")
             allowed_types = (sp.Piecewise, sp.Float, sp.Expr, float, int, type(None))
-            marker = ("Valid type" if isinstance(prop_value, allowed_types) else "! WARNING: Unexpected type")
+            marker = "Valid type" if isinstance(prop_value, allowed_types) else "! WARNING: Unexpected type"
             print(f"  {'':30}  {marker}")
 
         # -------------------------------------------------------------------
@@ -196,47 +196,25 @@ def demonstrate_material_properties() -> None:
         print(f"\n{'API METHODS:':<50}")
         print(f"{'-' * 50}")
 
-        print("Method 2: material.evaluate_properties_at_temperature()")
+        print("Method 2: material.evaluate_properties_at_temperature(symbol, value)")
+        all_values = None
         try:
-            all_values = mat.evaluate_properties_at_temperature(test_temp)
+            all_values = mat.evaluate_properties_at_temperature(T_mat, test_temp)
             print(f"All properties at {test_temp} K:")
             for prop, value in sorted(all_values.items()):
                 print(f"  {prop:<30}: {value:.6e}")
         except Exception as e:
             print(f"Error in Method 2: {e}")
 
-        print("\nMethod 3: evaluate_material_properties()")
+        print("\nMethod 3: evaluate_material_properties(material, symbol, value)")
         try:
-            all_values_func = evaluate_material_properties(mat, test_temp)
-            print(f"  Results match Method 2: {all_values == all_values_func}")
+            all_values_func = evaluate_material_properties(mat, T_mat, test_temp)
+            if all_values is not None:
+                print(f"  Results match Method 2: {all_values == all_values_func}")
+            else:
+                print("  Functional API evaluation completed successfully")
         except Exception as e:
             print(f"Error in Method 3: {e}")
-
-        print("\nMethod 4: Specific Properties Only")
-        try:
-            specific_props = sorted(available_props)[:3]
-            if specific_props:
-                specific_values = mat.evaluate_properties_at_temperature(
-                    test_temp, properties=specific_props)
-                print(f"  Requested: {specific_props}")
-                for prop, value in sorted(specific_values.items()):
-                    print(f"  {prop:<30}: {value:.6e}")
-            else:
-                print("  No properties available")
-        except Exception as e:
-            print(f"Error in Method 4: {e}")
-
-        print("\nMethod 5: Temperature-Dependent Properties Only")
-        try:
-            temp_dependent = mat.evaluate_properties_at_temperature(
-                test_temp, include_constants=False)
-            if temp_dependent:
-                for prop, value in sorted(temp_dependent.items()):
-                    print(f"  {prop:<30}: {value:.6e}")
-            else:
-                print("  No temperature-dependent properties found")
-        except Exception as e:
-            print(f"Error in Method 5: {e}")
 
         # -------------------------------------------------------------------
         # 5.4 Batch Temperature Evaluation
@@ -248,7 +226,7 @@ def demonstrate_material_properties() -> None:
         batch_results = {}
         for temp in temperatures:
             try:
-                batch_results[temp] = mat.evaluate_properties_at_temperature(temp)
+                batch_results[temp] = mat.evaluate_properties_at_temperature(T_mat, temp)
             except Exception as e:
                 print(f"  Error at {temp}K: {e}")
                 batch_results[temp] = {}
@@ -258,8 +236,7 @@ def demonstrate_material_properties() -> None:
                 df = pd.DataFrame(batch_results).T
                 display_cols = [c for c in sorted(available_props) if c in df.columns][:3]
                 if display_cols:
-                    header = f"{'Temperature':<12}" + "".join(
-                        f"{c:<18}" for c in display_cols)
+                    header = f"{'Temperature':<12}" + "".join(f"{c:<18}" for c in display_cols)
                     print(header)
                     print("-" * (12 + 18 * len(display_cols)))
                     for temp, row in df.iterrows():
@@ -296,30 +273,24 @@ def test_inverse_functions(materials: list, material_symbols: dict) -> None:
             continue
 
         try:
-            print("  Method 2: Direct approach...")
-            try:
-                energy_density = getattr(mat, 'energy_density')
-                energy_symbols = energy_density.free_symbols
-                if len(energy_symbols) == 1:
-                    temp_symbol = next(iter(energy_symbols))
-                    E_symbol = sp.Symbol('E')
-                    inverse_func2 = PiecewiseInverter.create_inverse(
-                        energy_density, temp_symbol, E_symbol)
-                    print("  Method 2 succeeded!")
-                    test_round_trip_accuracy(
-                        mat, inverse_func2, temp_symbol, E_symbol, method="Method 2")
-                else:
-                    print(f"  Unexpected symbols in energy_density: {energy_symbols}")
-            except Exception as e:
-                print(f"  Method 2 failed: {e}")
+            energy_density = getattr(mat, 'energy_density')
+            energy_symbols = energy_density.free_symbols
+            if len(energy_symbols) == 1:
+                temp_symbol = next(iter(energy_symbols))
+                E_symbol = sp.Symbol('E')
+                inverse_func = PiecewiseInverter.create_inverse(
+                    energy_density, temp_symbol, E_symbol)
+                print("  Inverse created successfully")
+                test_round_trip_accuracy(mat, inverse_func, temp_symbol, E_symbol)
+            else:
+                print(f"  Unexpected symbols in energy_density: {energy_symbols}")
         except Exception as e:
             print(f"  Inverse testing failed for {mat.name}: {e}")
 
 
-def test_round_trip_accuracy(material, inverse_func, temp_symbol,
-                              energy_symbol, method: str = "Unknown") -> None:
+def test_round_trip_accuracy(material, inverse_func, temp_symbol, energy_symbol) -> None:
     """Tests round-trip accuracy: T -> E -> T."""
-    print(f"  Round-trip accuracy test ({method}):")
+    print("  Round-trip accuracy test:")
 
     test_temperatures = [300, 350, 400, 450, 500,
                          600, 700, 800, 900, 1000,
@@ -368,7 +339,7 @@ def demonstrate_advanced_usage() -> None:
     materials_advanced = []
 
     for path, symbol, label in [
-        (yaml_path_Al,    T1, "Aluminum"),
+        (yaml_path_Al,     T1, "Aluminum"),
         (yaml_path_SS304L, T2, "Steel 1.4301"),
     ]:
         if not path.exists():
@@ -386,11 +357,11 @@ def demonstrate_advanced_usage() -> None:
     for mat, T_symbol, mat_name in materials_advanced:
         print(f"\n--- Temperature Sweep for {mat_name} ---")
 
-        # Pick up to 3 temperature-dependent (symbolic) properties
+        # Pick up to 3 temperature-dependent (symbolic) properties dynamically
         sweep_props = [
             p for p in sorted(mat.property_names())
-            if (hasattr(getattr(mat, p, None), 'free_symbols')
-                and getattr(mat, p).free_symbols)
+            if hasattr(getattr(mat, p, None), 'free_symbols')
+            and getattr(mat, p).free_symbols
         ][:3]
 
         if not sweep_props:
@@ -400,10 +371,10 @@ def demonstrate_advanced_usage() -> None:
         sweep_data = []
         for temp in temp_range:
             try:
-                props = mat.evaluate_properties_at_temperature(
-                    temp, properties=sweep_props, include_constants=False)
-                props['temperature'] = temp
-                sweep_data.append(props)
+                all_vals = mat.evaluate_properties_at_temperature(T_symbol, temp)
+                row = {p: all_vals[p] for p in sweep_props if p in all_vals}
+                row['temperature'] = temp
+                sweep_data.append(row)
             except Exception as e:
                 print(f"  Error at {temp}K: {e}")
 

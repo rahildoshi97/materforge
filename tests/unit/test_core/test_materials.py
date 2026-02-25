@@ -96,61 +96,41 @@ class TestMaterial:
         T = sp.Symbol('T')
         mat = Material(name="Test")
         mat.heat_capacity = 450 + 0.1*T
-        result = mat.evaluate_properties_at_temperature(500.0)
+        result = mat.evaluate_properties_at_temperature(T, 500.0)
         assert result['heat_capacity'] == pytest.approx(500.0)
 
     def test_evaluate_constant_property(self):
+        T = sp.Symbol('T')
         mat = Material(name="Test")
         mat.density = 7850.0
-        result = mat.evaluate_properties_at_temperature(500.0)
+        result = mat.evaluate_properties_at_temperature(T, 500.0)
         assert result['density'] == pytest.approx(7850.0)
 
     def test_evaluate_piecewise_below_boundary(self):
         T = sp.Symbol('T')
         mat = Material(name="Test")
         mat.heat_capacity = sp.Piecewise((400.0, T < 1000), (600.0, True))
-        result = mat.evaluate_properties_at_temperature(500.0)
+        result = mat.evaluate_properties_at_temperature(T, 500.0)
         assert result['heat_capacity'] == pytest.approx(400.0)
 
     def test_evaluate_piecewise_above_boundary(self):
         T = sp.Symbol('T')
         mat = Material(name="Test")
         mat.heat_capacity = sp.Piecewise((400.0, T < 1000), (600.0, True))
-        result = mat.evaluate_properties_at_temperature(1500.0)
+        result = mat.evaluate_properties_at_temperature(T, 1500.0)
         assert result['heat_capacity'] == pytest.approx(600.0)
 
-    def test_evaluate_specific_properties_only(self):
-        T = sp.Symbol('T')
-        mat = Material(name="Test")
-        mat.density = 7850.0
-        mat.heat_capacity = 450 + 0.1*T
-        mat.viscosity = 2.5*T
-        result = mat.evaluate_properties_at_temperature(
-            500.0, properties=['density', 'heat_capacity'])
-        assert 'density' in result
-        assert 'heat_capacity' in result
-        assert 'viscosity' not in result
-
-    def test_evaluate_exclude_constants(self):
-        T = sp.Symbol('T')
-        mat = Material(name="Test")
-        mat.density = 7850.0
-        mat.heat_capacity = 450 + 0.1*T
-        result = mat.evaluate_properties_at_temperature(
-            500.0, include_constants=False)
-        assert 'heat_capacity' in result
-        assert 'density' not in result
-
     def test_evaluate_no_properties_returns_empty(self):
+        T = sp.Symbol('T')
         mat = Material(name="Test")
-        result = mat.evaluate_properties_at_temperature(500.0)
+        result = mat.evaluate_properties_at_temperature(T, 500.0)
         assert result == {}
 
     def test_evaluate_returns_float_values(self):
         T = sp.Symbol('T')
         mat = Material(name="Test")
         mat.heat_capacity = 450 + 0.1*T
-        result = mat.evaluate_properties_at_temperature(500.0)
+        result = mat.evaluate_properties_at_temperature(T, 500.0)
         assert isinstance(result['heat_capacity'], float)
 
     def test_sample_valid_material_fixture(self, sample_valid_material):

@@ -5,7 +5,7 @@
 
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 import sympy as sp
 
@@ -159,34 +159,23 @@ def get_material_property_names(material: Material) -> List[str]:
 # PROPERTY EVALUATION
 # ====================================================================
 
-def evaluate_material_properties(material: Material, temperature: Union[float, int],
-                                  properties: Optional[List[str]] = None,
-                                  include_constants: bool = True) -> Dict[str, float]:
-    """Evaluate material properties at a specific temperature.
+def evaluate_material_properties(material: Material, symbol: sp.Symbol, value: Union[float, int]) -> Dict[str, float]:
+    """Functional wrapper around Material.evaluate_properties_at_temperature().
 
-    Functional wrapper around Material.evaluate_properties_at_temperature().
     Args:
         material: A fully processed Material instance.
-        temperature: Temperature in Kelvin.
-        properties: Property names to evaluate. None evaluates all.
-        include_constants: Include constant (non-temperature-dependent) properties (default: True).
+        symbol:   SymPy symbol to substitute (e.g. sp.Symbol('T')).
+        value:    Value in Kelvin. Must be positive.
     Returns:
-        Dict[str, float]: Property names mapped to evaluated float values.
+        Dict[str, float]: All property names mapped to evaluated float values.
     Raises:
-        ValueError: material is not a Material instance or temperature is invalid.
+        ValueError: If material is not a Material instance.
     Example:
-        >>> evaluate_material_properties(material, 500.0)
-        >>> evaluate_material_properties(material, 500.0, ['density1', 'heat_capacity1'])
-        >>> evaluate_material_properties(material, 500.0, include_constants=False)
+        >>> evaluate_material_properties(material, T, 500.0)
     """
-    logger.info("Evaluating material properties via API function")
     if not isinstance(material, Material):
         raise ValueError(f"Expected Material instance, got {type(material).__name__}")
-    return material.evaluate_properties_at_temperature(
-        temperature=temperature,
-        properties=properties,
-        include_constants=include_constants,
-    )
+    return material.evaluate_properties_at_temperature(symbol, value)
 
 
 # ====================================================================

@@ -32,7 +32,7 @@ print(f"Material: {material.name}")
 
 # Access temperature-dependent properties
 if hasattr(material, 'density'):
-    density_at_500K = material.evaluate_properties_at_temperature(500.0)
+    density_at_500K = material.evaluate_properties_at_temperature(T, 500.0)
     print(f"Density at 500K: {density_at_500K} kg/m³")
 ```
 

@@ -95,7 +95,7 @@ print(f" Heat Capacity: {heat_capacity:.2f} J/(kg·K)")
 print(f" Thermal Diffusivity: {diffusivity:.2e} m²/s")
 
 # Evaluate properties at a specific temperature
-properties = material.evaluate_properties_at_temperature(500.0)
+properties = material.evaluate_properties_at_temperature(T, 500.0)
 print(properties)
 ```
 

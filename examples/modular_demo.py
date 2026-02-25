@@ -42,8 +42,6 @@ class TestConfig:
     manual_evaluation: bool = True
     object_oriented_evaluation: bool = True
     functional_evaluation: bool = True
-    specific_properties_only: bool = True
-    temperature_dependent_only: bool = True
 
     # Material selection
     include_aluminum: bool = True
@@ -83,17 +81,16 @@ class MaterialPropertyDemonstrator:
         base = (Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials")
         self.yaml_paths: Dict[str, Path] = {}
         if self.config.include_aluminum:
-            self.yaml_paths["Aluminum"] = (base / "pure_metals" / "Al" / "Al.yaml")
+            self.yaml_paths["Aluminum"] = base / "pure_metals" / "Al" / "Al.yaml"
         if self.config.include_steel:
-            self.yaml_paths["Steel_1.4301"] = (base / "alloys" / "1.4301" / "1.4301.yaml")
+            self.yaml_paths["Steel_1.4301"] = base / "alloys" / "1.4301" / "1.4301.yaml"
 
     @staticmethod
     def _scalar_properties(mat) -> dict:
-        """Return all constant (non-symbolic) properties on the material."""
         result = {}
         for name in mat.property_names():
             val = getattr(mat, name)
-            is_symbolic = (hasattr(val, 'free_symbols') and val.free_symbols)
+            is_symbolic = hasattr(val, 'free_symbols') and val.free_symbols
             if not is_symbolic and isinstance(val, (int, float, sp.Float, sp.Integer)):
                 result[name] = val
         return result
@@ -163,8 +160,7 @@ class MaterialPropertyDemonstrator:
             if path.exists():
                 try:
                     is_valid = validate_yaml_file(path)
-                    status = 'PASSED' if is_valid else 'FAILED'
-                    print(f"{name} YAML validation: {status}")
+                    print(f"{name} YAML validation: {'PASSED' if is_valid else 'FAILED'}")
                 except Exception as e:
                     print(f"{name} YAML validation: FAILED - {e}")
             else:
@@ -254,14 +250,10 @@ class MaterialPropertyDemonstrator:
             if self.config.property_evaluation_specific_temp:
                 self._test_property_evaluation_at_specific_temp(mat, T_mat)
             if self.config.batch_temperature_evaluation:
-                self._test_batch_temperature_evaluation(mat)
+                self._test_batch_temperature_evaluation(mat, T_mat)  # ← pass T_mat
 
     def _analyze_basic_material_info(self, mat) -> None:
-        """Prints material header using only schema-agnostic attributes."""
         print(f"Name: {mat.name}")
-
-        # Show scalar constants (temperature references and fixed numeric values).
-        # Uses dynamic property lookup - no hardcoded field names.
         scalars = self._scalar_properties(mat)
         if scalars:
             print("Scalar constants:")
@@ -278,7 +270,7 @@ class MaterialPropertyDemonstrator:
             print(f"  {prop_name:<30}: {prop_value}")
             print(f"  {'':30}  Type: {type(prop_value).__name__}")
             allowed = (sp.Piecewise, sp.Float, sp.Expr, float, int, type(None))
-            marker = ("Valid type" if isinstance(prop_value, allowed)  else "! WARNING: Unexpected type")
+            marker = "Valid type" if isinstance(prop_value, allowed) else "! WARNING: Unexpected type"
             print(f"  {'':30}  {marker}")
 
     def _test_property_evaluation_at_specific_temp(self, mat, T_mat) -> None:
@@ -302,17 +294,17 @@ class MaterialPropertyDemonstrator:
                     print(f"  {prop_name:<30}: Error - {e}")
 
         if self.config.new_api_methods:
-            self._test_new_api_methods(mat, test_temp, available_props)
+            self._test_new_api_methods(mat, T_mat, test_temp)  # ← pass T_mat
 
-    def _test_new_api_methods(self, mat, test_temp: float, available_props) -> None:
+    def _test_new_api_methods(self, mat, T_mat: sp.Symbol, test_temp: float) -> None:
         print(f"\n{'NEW API METHODS:':<50}")
         print(f"{'-' * 50}")
         all_values = None
 
         if self.config.object_oriented_evaluation:
-            print("Method 2: material.evaluate_properties_at_temperature()")
+            print("Method 2: material.evaluate_properties_at_temperature(symbol, value)")
             try:
-                all_values = mat.evaluate_properties_at_temperature(test_temp)
+                all_values = mat.evaluate_properties_at_temperature(T_mat, test_temp)
                 print(f"All properties at {test_temp} K:")
                 for prop, value in sorted(all_values.items()):
                     print(f"  {prop:<30}: {value:.6e}")
@@ -320,9 +312,9 @@ class MaterialPropertyDemonstrator:
                 print(f"  Error: {e}")
 
         if self.config.functional_evaluation:
-            print("\nMethod 3: evaluate_material_properties()")
+            print("\nMethod 3: evaluate_material_properties(material, symbol, value)")
             try:
-                all_values_func = evaluate_material_properties(mat, test_temp)
+                all_values_func = evaluate_material_properties(mat, T_mat, test_temp)
                 if self.config.object_oriented_evaluation and all_values is not None:
                     print(f"  Results match Method 2: {all_values == all_values_func}")
                 else:
@@ -330,42 +322,14 @@ class MaterialPropertyDemonstrator:
             except Exception as e:
                 print(f"  Error: {e}")
 
-        if self.config.specific_properties_only:
-            print("\nMethod 4: Specific Properties Only")
-            try:
-                specific_props = sorted(available_props)[:3]
-                if specific_props:
-                    specific_values = mat.evaluate_properties_at_temperature(
-                        test_temp, properties=specific_props)
-                    print(f"  Requested: {specific_props}")
-                    for prop, value in sorted(specific_values.items()):
-                        print(f"  {prop:<30}: {value:.6e}")
-                else:
-                    print("  No properties available")
-            except Exception as e:
-                print(f"  Error: {e}")
-
-        if self.config.temperature_dependent_only:
-            print("\nMethod 5: Temperature-Dependent Properties Only")
-            try:
-                temp_dependent = mat.evaluate_properties_at_temperature(
-                    test_temp, include_constants=False)
-                if temp_dependent:
-                    for prop, value in sorted(temp_dependent.items()):
-                        print(f"  {prop:<30}: {value:.6e}")
-                else:
-                    print("  No temperature-dependent properties found")
-            except Exception as e:
-                print(f"  Error: {e}")
-
-    def _test_batch_temperature_evaluation(self, mat) -> None:
+    def _test_batch_temperature_evaluation(self, mat, T_mat: sp.Symbol) -> None:
         print(f"\n{'BATCH TEMPERATURE EVALUATION:':<50}")
         print(f"{'-' * 50}")
 
         batch_results = {}
         for temp in self.config.batch_temperatures:
             try:
-                batch_results[temp] = mat.evaluate_properties_at_temperature(temp)
+                batch_results[temp] = mat.evaluate_properties_at_temperature(T_mat, temp)
             except Exception as e:
                 print(f"  Error at {temp}K: {e}")
                 batch_results[temp] = {}
@@ -413,27 +377,20 @@ class MaterialPropertyDemonstrator:
 
             energy_density = getattr(mat, 'energy_density')
             try:
-                print("  Method 2: Direct approach...")
-                try:
-                    syms = energy_density.free_symbols
-                    if len(syms) == 1:
-                        temp_sym = next(iter(syms))
-                        E2 = sp.Symbol('E')
-                        inv2 = PiecewiseInverter.create_inverse(
-                            energy_density, temp_sym, E2)
-                        print("  Method 2 succeeded!")
-                        self._test_round_trip_accuracy(
-                            energy_density, inv2, temp_sym, E2, method="Method 2")
-                    else:
-                        print(f"  Unexpected free symbols: {syms}")
-                except Exception as e:
-                    print(f"  Method 2 failed: {e}")
+                syms = energy_density.free_symbols
+                if len(syms) == 1:
+                    temp_sym = next(iter(syms))
+                    E = sp.Symbol('E')
+                    inv = PiecewiseInverter.create_inverse(energy_density, temp_sym, E)
+                    print("  Inverse created successfully")
+                    self._test_round_trip_accuracy(energy_density, inv, temp_sym, E)
+                else:
+                    print(f"  Unexpected free symbols: {syms}")
             except Exception as e:
                 print(f"  Inverse testing failed for {mat.name}: {e}")
 
-    def _test_round_trip_accuracy(self, energy_density_expr, inverse_func, temp_symbol, energy_symbol, method: str = "Unknown") -> None:
-        """Tests round-trip accuracy: T -> E -> T."""
-        print(f"  Round-trip accuracy test ({method}):")
+    def _test_round_trip_accuracy(self, energy_density_expr, inverse_func, temp_symbol, energy_symbol) -> None:
+        print("  Round-trip accuracy test:")
         test_temps = [300, 350, 400, 450, 500, 600, 700, 800, 900, 1000,
                       1200, 1500, 1800, 2000, 2500, 3000]
         max_error = 0.0
@@ -446,8 +403,7 @@ class MaterialPropertyDemonstrator:
                 error = abs(temp - recovered)
                 max_error = max(max_error, error)
                 successful += 1
-                print(f"    T={temp:4.0f}K -> E={e_val:.2e} -> "
-                      f"T={recovered:6.1f}K  (error: {error:.2e})")
+                print(f"    T={temp:4.0f}K -> E={e_val:.2e} -> T={recovered:6.1f}K  (error: {error:.2e})")
             except Exception as e:
                 print(f"    T={temp:4.0f}K -> Error: {e}")
 
@@ -479,14 +435,14 @@ class MaterialPropertyDemonstrator:
         temp_range = range(start, stop, step)
 
         for mat in self.materials:
+            T_mat = self.material_symbols[mat.name]
             print(f"\n--- Temperature Sweep for {mat.name} ---")
 
-            # Dynamically pick up to 3 temperature-dependent (symbolic) properties.
-            # Never assume density / heat_capacity / thermal_diffusivity exist.
+            # Pick up to 3 temperature-dependent (symbolic) properties dynamically
             sweep_props = [
                 p for p in sorted(mat.property_names())
-                if (hasattr(getattr(mat, p, None), 'free_symbols')
-                    and getattr(mat, p).free_symbols)
+                if hasattr(getattr(mat, p, None), 'free_symbols')
+                and getattr(mat, p).free_symbols
             ][:3]
 
             if not sweep_props:
@@ -496,10 +452,11 @@ class MaterialPropertyDemonstrator:
             sweep_data = []
             for temp in temp_range:
                 try:
-                    props = mat.evaluate_properties_at_temperature(
-                        temp, properties=sweep_props, include_constants=False)
-                    props['temperature'] = temp
-                    sweep_data.append(props)
+                    # Evaluate all, then filter to sweep_props - no kwargs needed
+                    all_vals = mat.evaluate_properties_at_temperature(T_mat, temp)
+                    row = {p: all_vals[p] for p in sweep_props if p in all_vals}
+                    row['temperature'] = temp
+                    sweep_data.append(row)
                 except Exception as e:
                     print(f"  Error at {temp}K: {e}")
 
@@ -536,18 +493,14 @@ def create_quick_test_config() -> TestConfig:
         manual_evaluation=True,
         object_oriented_evaluation=True,
         functional_evaluation=False,
-        specific_properties_only=False,
-        temperature_dependent_only=False,
         include_aluminum=True,
         include_steel=False,
         single_test_temperature=500.0,
         batch_temperatures=[400, 500, 600],
     )
 
-
 def create_comprehensive_test_config() -> TestConfig:
     return TestConfig()
-
 
 def create_everything_config() -> TestConfig:
     return TestConfig(
@@ -555,7 +508,6 @@ def create_everything_config() -> TestConfig:
         batch_temperatures=[200, 273, 300, 400, 500, 600, 700, 800, 900, 1000, 1200, 1500, 2000],
         sweep_temp_range=(200, 3001, 50),
     )
-
 
 def create_inverse_only_config() -> TestConfig:
     return TestConfig(
@@ -567,7 +519,6 @@ def create_inverse_only_config() -> TestConfig:
         inverse_function_testing=True,
         advanced_usage=False,
     )
-
 
 def create_api_comparison_config() -> TestConfig:
     return TestConfig(
@@ -584,10 +535,7 @@ def create_api_comparison_config() -> TestConfig:
         manual_evaluation=True,
         object_oriented_evaluation=True,
         functional_evaluation=True,
-        specific_properties_only=True,
-        temperature_dependent_only=True,
     )
-
 
 def run_everything() -> None:
     print(f"\n{'#' * 80}")

@@ -192,7 +192,7 @@ def demonstrate_material_properties() -> None:
 
         print("Method 2: material.evaluate_properties_at_temperature()")
         try:
-            all_values = mat.evaluate_properties_at_temperature(test_temp)
+            all_values = mat.evaluate_properties_at_temperature(sp.Symbol('T'), test_temp)
             print(f"All properties at {test_temp} K:")
             for prop, value in sorted(all_values.items()):
                 print(f"  {prop:<30}: {value:.6e}")
@@ -201,37 +201,10 @@ def demonstrate_material_properties() -> None:
 
         print("\nMethod 3: evaluate_material_properties()")
         try:
-            all_values_func = evaluate_material_properties(mat, test_temp)
+            all_values_func = evaluate_material_properties(mat, sp.Symbol('T'), test_temp)
             print(f"  Results match Method 2: {all_values == all_values_func}")
         except Exception as e:
             raise ValueError(f"Error in Method 3: {e}")
-
-        print("\nMethod 4: Specific Properties Only")
-        try:
-            specific_props = sorted(available_props)[:2]
-            if specific_props:
-                specific_values = mat.evaluate_properties_at_temperature(
-                    test_temp, properties=specific_props)
-                print(f"  Requested: {specific_props}")
-                for prop, value in sorted(specific_values.items()):
-                    print(f"  {prop:<30}: {value:.6e}")
-            else:
-                print("  No properties available")
-        except Exception as e:
-            raise ValueError(f"Error in Method 4: {e}")
-
-        print("\nMethod 5: Temperature-Dependent Properties Only")
-        try:
-            temp_dependent = mat.evaluate_properties_at_temperature(
-                test_temp, include_constants=False)
-            if temp_dependent:
-                print(f"  Temperature-dependent properties at {test_temp} K:")
-                for prop, value in sorted(temp_dependent.items()):
-                    print(f"  {prop:<30}: {value:.6e}")
-            else:
-                print("  No temperature-dependent properties found")
-        except Exception as e:
-            raise ValueError(f"Error in Method 5: {e}")
 
 
 if __name__ == "__main__":
