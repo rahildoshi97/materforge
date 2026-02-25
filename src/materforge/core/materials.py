@@ -3,7 +3,7 @@
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 import sympy as sp
 
@@ -15,11 +15,9 @@ _CORE_FIELDS = frozenset({'name', '_dynamic_properties'})
 @dataclass
 class Material:
     """Generic material container with fully dynamic property tracking.
-    All thermophysical properties - including temperature bounds such as
-    solidus_temperature, melting_temperature, etc. - are assigned dynamically
+    All thermophysical properties are assigned dynamically
     via setattr and tracked automatically. No material_type, composition, or
-    elements required. The YAML schema drives everything; this class imposes
-    no structural constraints.
+    elements required.
 
     Attributes:
         name: Human-readable material identifier.
@@ -36,6 +34,11 @@ class Material:
             except AttributeError:
                 # Fires during dataclass __init__ before _dynamic_properties exists
                 pass
+
+    def __getattr__(self, name: str) -> Any:
+        # Only fires when normal lookup fails - dynamic properties won't hit this
+        # since they are in __dict__ via __setattr__
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
 
     def property_names(self) -> set:
         """Returns all dynamically assigned property names."""

@@ -99,6 +99,8 @@ def demonstrate_material_properties() -> None:
             materials.append(myAlloy)
             material_symbols[myAlloy.name] = T
             print(f"Successfully created: {myAlloy.name} (symbol: {T})")
+            print(f"Representation: {repr(myAlloy)}")
+            print(f"density1: {myAlloy.density1}  (type: {type(myAlloy.density1).__name__})")
         except Exception as e:
             raise ValueError(f"Failed to create myAlloy: {e}")
 
