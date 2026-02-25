@@ -45,17 +45,6 @@ Let's create a simple steel alloy definition:
 ```yaml
 name: SimpleSteel
 
-material_type: alloy
-
-composition:
-    Fe: 0.98
-    C: 0.02
-
-solidus_temperature: 1450
-liquidus_temperature: 1520
-initial_boiling_temperature: 3000
-final_boiling_temperature: 3100
-
 properties:
     density:
         dependency: [300, 800, 1300, 1800]
@@ -91,8 +80,6 @@ material = create_material("simple_steel.yaml", T)
 
 # Print basic information
 print(f"Material: {material.name}")
-print(f"Composition: {material.composition}")
-print(f"Temperature range: {material.solidus_temperature}K - {material.liquidus_temperature}K")
 
 # Evaluate properties at specific temperatures
 temperature = 500 # Kelvin

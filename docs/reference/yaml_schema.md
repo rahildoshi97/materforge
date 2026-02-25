@@ -1,21 +1,10 @@
 # YAML Schema for Material Definition
-This document defines the schema for material definition YAML files in materforge v0.5.5.
+This document defines the schema for material definition YAML files in materforge.
 
 ## Schema Overview
 
-### A valid `pure metal` definition must include:
+### A valid material definition must include:
 - `name`: String identifier for the material
-- `composition`: Map of element symbols to their mass fractions
-- `melting_temperature`: Numeric value in Kelvin
-- `boiling_temperature`: Numeric value in Kelvin
-- `properties`: Map of property names to their definitions
-### A valid `alloy` definition must include:
-- `name`: String identifier for the material
-- `composition`: Map of element symbols to their mass fractions
-- `solidus_temperature`: Numeric value in Kelvin
-- `liquidus_temperature`: Numeric value in Kelvin
-- `initial_boiling_temperature`: Numeric value in Kelvin
-- `final_boiling_temperature`: Numeric value in Kelvin
 - `properties`: Map of property names to their definitions
 
 ## 🔧 Property Definition Types
@@ -157,7 +146,7 @@ E = sp.Symbol('E')
 material = create_material('1.4301.yaml', T)
 
 # Create inverse (only for linear piecewise functions)
-inverse_func = PiecewiseInverter.create_energy_density_inverse(material, 'E')
+inverse_func = PiecewiseInverter.create_inverse(material.property, 'T', 'E')
 
 # Use inverse function
 energy_value = 1.5e9  # J/m³
@@ -167,18 +156,13 @@ temperature = float(inverse_func.subs(E, energy_value))
 ## Validation Rules
 
 1. All required top-level fields must be present
-2. Material type must be "pure_metal" or "alloy"
-3. Composition fractions must sum to approximately 1.0
-4. Pure metals must have exactly one element with composition 1.0
-5. Alloys must have at least 2 elements with non-zero composition
-6. Liquidus temperature must be greater than or equal to solidus temperature
-7. Properties cannot be defined in multiple ways or multiple times
-8. Required dependencies for computed properties must be present
-9. Dependency arrays must be monotonic
-10. Energy density arrays must be monotonic with respect to the dependency
-11. File paths must be valid and files must exist
-12. For tabular data, dependency and value arrays must have the same length
-13. When using tuple notation for dependency arrays, the increment must be non-zero
+2. Properties cannot be defined in multiple ways or multiple times
+3. Required dependencies for computed properties must be present
+4. Dependency arrays must be monotonic
+5. Energy density arrays must be monotonic with respect to the dependency
+6. File paths must be valid and files must exist
+7. For tabular data, dependency and value arrays must have the same length
+8. When using tuple notation for dependency arrays, the increment must be non-zero
 
 ## Important Notes
 

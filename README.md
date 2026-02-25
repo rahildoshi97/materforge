@@ -91,7 +91,7 @@ material = create_material('examples/myAlloy.yaml', T)
 
 if hasattr(material, 'energy_density'):
     E = sp.Symbol('E')
-    inverse_func = PiecewiseInverter.create_energy_density_inverse(material, 'E')
+    inverse_func = PiecewiseInverter.create_inverse(material.energy_density, 'T', 'E')
 
     # Test round-trip accuracy
     test_temp = 500.0

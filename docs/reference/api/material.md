@@ -4,7 +4,7 @@
 
 ### Material
 
-A dataclass representing a material (pure metal or alloy) with temperature-dependent properties.
+A dataclass representing a material with constant or dependent properties.
 
 ```python
 from materforge.core.materials import Material
@@ -14,45 +14,7 @@ from materforge.core.materials import Material
 
 **Basic Properties:**
 - `name`: String identifier for the material
-- `material_type`: Either 'pure_metal' or 'alloy'
-- `elements`: List of ChemicalElement objects
-- `composition`: List/array of element fractions (must sum to 1.0)
-
-**Temperature Properties (Pure Metals):**
-- `melting_temperature`: Melting point in Kelvin
-- `boiling_temperature`: Boiling point in Kelvin
-
-**Temperature Properties (Alloys):**
-- `solidus_temperature`: Solidus temperature in Kelvin
-- `liquidus_temperature`: Liquidus temperature in Kelvin
-- `initial_boiling_temperature`: Initial boiling temperature in Kelvin
-- `final_boiling_temperature`: Final boiling temperature in Kelvin
-
-**Computed Properties:**
-- `atomic_mass`: Composition-weighted atomic mass
-- `atomic_number`: Composition-weighted atomic number
-
-**Material Properties (Optional):**
-- `density`: Density as function of temperature
-- `dynamic_viscosity`: Dynamic viscosity as function of temperature
-- `energy_density`: Energy density as function of temperature
-- `heat_capacity`: Specific heat capacity as function of temperature
-- `heat_conductivity`: Thermal conductivity as function of temperature
-- `kinematic_viscosity`: Kinematic viscosity as function of temperature
-- `latent_heat_of_fusion`: Latent heat of fusion
-- `latent_heat_of_vaporization`: Latent heat of vaporization
-- `specific_enthalpy`: Specific enthalpy as function of temperature
-- `surface_tension`: Surface tension as function of temperature
-- `thermal_diffusivity`: Thermal diffusivity as function of temperature
-- `thermal_expansion_coefficient`: Thermal expansion coefficient
-
-#### Methods
-
-**solidification_interval()**
-```python
-def solidification_interval(self) -> Tuple[sp.Float, sp.Float]:
-```
-Returns the solidification interval (solidus, liquidus) for alloys.
+- `properties`: Dict of user-defined material properties
 
 #### Example Usage
 ```python
@@ -67,45 +29,11 @@ material = create_material('1.4301.yaml', T)
 
 # Access basic properties
 print(f"Material: {material.name}")
-print(f"Type: {material.material_type}")
-print(f"Composition: {dict(zip([e.name for e in material.elements], material.composition))}")
 
 # Access temperature-dependent properties
 if hasattr(material, 'density'):
     density_at_500K = material.evaluate_properties_at_temperature(500.0)
     print(f"Density at 500K: {density_at_500K} kg/m³")
-
-# For alloys, get solidification interval
-if material.material_type == 'alloy':
-    solidus, liquidus = material.solidification_interval()
-    print(f"Solidification range: {solidus}K - {liquidus}K")
-```
-
-### ChemicalElement
-
-A dataclass representing a chemical element with its properties.
-````python
-from materforge.core.elements import ChemicalElement
-````
-
-#### Properties
-
-- `name`: Element name (e.g., "Iron")
-- `atomic_number`: Atomic number
-- `atomic_mass`: Atomic mass in u
-- `melting_temperature`: Melting temperature in K
-- `boiling_temperature`: Boiling temperature in K
-- `latent_heat_of_fusion`: Latent heat of fusion in J/kg
-- `latent_heat_of_vaporization`: Latent heat of vaporization in J/kg
-
-#### Example Usage
-```python
-from materforge.data.elements.element_data import element_map
-
-# Access element data
-iron = element_map['Fe']
-print(f"Iron melting point: {iron.melting_temperature}K")
-print(f"Iron atomic mass: {iron.atomic_mass}u")
 ```
 
 ## Main API Functions
@@ -171,30 +99,6 @@ try:
   print(f"File is valid: {is_valid}")
   except ValueError as e:
   print(f"Validation error: {e}")
-```
-
-## Utility Functions
-
-### Element Interpolation Functions
-```python
-from materforge.core.elements import (
-interpolate_atomic_number,
-interpolate_atomic_mass,
-interpolate_melting_temperature,
-interpolate_boiling_temperature
-)
-```
-
-These functions interpolate element properties based on composition:
-
-```python
-# Example usage
-
-elements = [element_map['Fe'], element_map['C']]
-composition = [0.98, 0.02]
-
-avg_atomic_mass = interpolate_atomic_mass(elements, composition)
-avg_melting_temp = interpolate_melting_temperature(elements, composition)
 ```
 
 ## Symbol Registry

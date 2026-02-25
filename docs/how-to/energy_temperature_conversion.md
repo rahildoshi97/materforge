@@ -14,15 +14,7 @@ This conversion is essential because:
 - Phase transitions involve latent heat where temperature remains constant
 - Many numerical methods work better with energy as the primary variable
 
-## Current Implementation Status
-
-**Important Note**: The energy-temperature conversion functionality is currently under development in MaterForge v0.3.0. The following features are planned but not yet implemented:
-
-- InterpolationArrayContainer class
-- Automatic C++ code generation for interpolation
-- Binary search and double lookup methods
-
-## Basic Temperature-Energy Conversion (Current)
+## Basic Temperature-Energy Conversion
 
 ### 1. Create Material with Energy Density
 ```python
@@ -61,7 +53,7 @@ from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 # Create inverse function (when implemented)
 if hasattr(material, 'energy_density'):
     E = sp.Symbol('E')
-    inverse_func = PiecewiseInverter.create_energy_density_inverse(material, 'E')
+    inverse_func = PiecewiseInverter.create_inverse(material.energy_density, 'T', 'E')
 ```
 # Use inverse function
 ```python
