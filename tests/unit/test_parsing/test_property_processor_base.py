@@ -51,9 +51,9 @@ class TestPropertyProcessorBaseComprehensive:
         result = processor.finalize_with_data_arrays(
             material=sample_material,
             prop_name='test_prop',
-            temp_array=np.array([300, 400, 500]),
+            dep_array=np.array([300, 400, 500]),
             prop_array=np.array([100, 150, 200]),
-            T=T,
+            dependency=T,
             config=config,
             prop_type='KEY_VAL',
         )
@@ -69,9 +69,9 @@ class TestPropertyProcessorBaseComprehensive:
         result = processor.finalize_with_data_arrays(
             material=sample_material,
             prop_name='test_prop',
-            temp_array=np.array([300, 400, 500]),
+            dep_array=np.array([300, 400, 500]),
             prop_array=np.array([100, 150, 200]),
-            T=400.0,
+            dependency=400.0,
             config=config,
             prop_type='KEY_VAL',
         )
@@ -89,9 +89,9 @@ class TestPropertyProcessorBaseComprehensive:
             processor.finalize_with_data_arrays(
                 material=sample_material,
                 prop_name='test_prop',
-                temp_array=None,
+                dep_array=None,
                 prop_array=np.array([100, 150, 200]),
-                T=T,
+                dependency=T,
                 config=config,
                 prop_type='KEY_VAL',
             )
@@ -101,13 +101,13 @@ class TestPropertyProcessorBaseComprehensive:
         T = sp.Symbol('T')
         config = {'bounds': ['constant', 'constant']}
 
-        with pytest.raises(ValueError, match="same length"):
+        with pytest.raises(ValueError, match="equal length"):
             processor.finalize_with_data_arrays(
                 material=sample_material,
                 prop_name='test_prop',
-                temp_array=np.array([300, 400]),
+                dep_array=np.array([300, 400]),
                 prop_array=np.array([100, 150, 200]),
-                T=T,
+                dependency=T,
                 config=config,
                 prop_type='KEY_VAL',
             )
@@ -122,7 +122,7 @@ class TestPropertyProcessorBaseComprehensive:
             material=sample_material,
             prop_name='test_prop',
             piecewise_func=piecewise_func,
-            T=T,
+            dependency=T,
             config=config,
             prop_type='PIECEWISE_EQUATION',
         )
@@ -154,7 +154,7 @@ class TestPropertyProcessorBaseComprehensive:
         processor._visualize_if_enabled(
             material=sample_material,
             prop_name='test_prop',
-            T=sp.Symbol('T'),
+            dependency=sp.Symbol('T'),
             prop_type='CONSTANT',
         )
 
@@ -164,7 +164,7 @@ class TestPropertyProcessorBaseComprehensive:
         processor._visualize_if_enabled(
             material=sample_material,
             prop_name='test_prop',
-            T=400.0,
+            dependency=400.0,
             prop_type='CONSTANT',
         )
         assert not processor.visualizer.visualize_property.called
@@ -178,7 +178,7 @@ class TestPropertyProcessorBaseComprehensive:
         processor._visualize_if_enabled(
             material=sample_material,
             prop_name='test_prop',
-            T=sp.Symbol('T'),
+            dependency=sp.Symbol('T'),
             prop_type='CONSTANT',
         )
 
@@ -199,7 +199,7 @@ class TestPropertyProcessorBaseComprehensive:
         processor._visualize_if_enabled(
             material=sample_material,
             prop_name='test_prop',
-            T=sp.Symbol('T'),
+            dependency=sp.Symbol('T'),
             prop_type='KEY_VAL',
             config=config,
             bounds=(300, 500),

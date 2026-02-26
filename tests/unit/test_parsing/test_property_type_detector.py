@@ -25,7 +25,7 @@ class TestPropertyTypeDetector:
 
     def test_determine_property_type_unknown_pattern(self):
         """Unrecognised config dict raises ValueError."""
-        with pytest.raises(ValueError, match="doesn't match any known configuration pattern"):
+        with pytest.raises(ValueError, match="does not match any known configuration pattern"):
             PropertyTypeDetector.determine_property_type("test_prop", {"unknown_key": "unknown_value"})
 
     def test_validate_constant_property_valid(self):

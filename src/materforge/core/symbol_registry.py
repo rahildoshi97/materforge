@@ -7,7 +7,6 @@ from typing import Dict
 
 logger = logging.getLogger(__name__)
 
-
 class SymbolRegistry:
     """Registry for SymPy symbols to ensure uniqueness."""
     _symbols = {}

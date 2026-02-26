@@ -196,10 +196,10 @@ def demonstrate_material_properties() -> None:
         print(f"\n{'API METHODS:':<50}")
         print(f"{'-' * 50}")
 
-        print("Method 2: material.evaluate_properties_at_temperature(symbol, value)")
+        print("Method 2: material.evaluate(symbol, value)")
         all_values = None
         try:
-            all_values = mat.evaluate_properties_at_temperature(T_mat, test_temp)
+            all_values = mat.evaluate(T_mat, test_temp)
             print(f"All properties at {test_temp} K:")
             for prop, value in sorted(all_values.items()):
                 print(f"  {prop:<30}: {value:.6e}")
@@ -226,7 +226,7 @@ def demonstrate_material_properties() -> None:
         batch_results = {}
         for temp in temperatures:
             try:
-                batch_results[temp] = mat.evaluate_properties_at_temperature(T_mat, temp)
+                batch_results[temp] = mat.evaluate(T_mat, temp)
             except Exception as e:
                 print(f"  Error at {temp}K: {e}")
                 batch_results[temp] = {}
@@ -371,7 +371,7 @@ def demonstrate_advanced_usage() -> None:
         sweep_data = []
         for temp in temp_range:
             try:
-                all_vals = mat.evaluate_properties_at_temperature(T_symbol, temp)
+                all_vals = mat.evaluate(T_symbol, temp)
                 row = {p: all_vals[p] for p in sweep_props if p in all_vals}
                 row['temperature'] = temp
                 sweep_data.append(row)

@@ -4,10 +4,8 @@
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
-
 import sympy as sp
 from ruamel.yaml import YAML, constructor, scanner
-
 from materforge.core.materials import Material
 from materforge.parsing.processors.property_processor import PropertyProcessor
 from materforge.parsing.validation.property_type_detector import PropertyType, PropertyTypeDetector
@@ -15,7 +13,6 @@ from materforge.visualization.plotters import PropertyVisualizer
 from materforge.parsing.config.yaml_keys import NAME_KEY, PROPERTIES_KEY
 
 logger = logging.getLogger(__name__)
-
 
 class BaseFileParser:
     """Base class for parsing configuration files."""
@@ -28,7 +25,6 @@ class BaseFileParser:
 
     def _load_config(self) -> Dict[str, Any]:
         raise NotImplementedError("Subclasses must implement _load_config")
-
 
 class YAMLFileParser(BaseFileParser):
     """Parser for YAML configuration files."""
@@ -55,12 +51,10 @@ class YAMLFileParser(BaseFileParser):
             logger.error("Unexpected error parsing %s: %s", self.config_path, e, exc_info=True)
             raise ValueError(f"Error parsing {self.config_path}: {str(e)}") from e
 
-
 class MaterialYAMLParser(YAMLFileParser):
     """Parser for material YAML configuration files.
     Validates and processes a schema-agnostic YAML file containing a name
-    and a properties block. All thermophysical properties - including
-    temperature scalars such as solidus_temperature - live in the properties
+    and a properties block. All thermophysical properties live in the properties
     block and are assigned dynamically to the Material instance.
     """
     # --- Constructor ---
@@ -138,8 +132,7 @@ class MaterialYAMLParser(YAMLFileParser):
         if PROPERTIES_KEY not in self.config:
             raise ValueError(f"Missing required field: '{PROPERTIES_KEY}'")
         if not isinstance(self.config[PROPERTIES_KEY], dict):
-            raise ValueError(
-                f"'{PROPERTIES_KEY}' must be a mapping, "
+            raise ValueError(f"'{PROPERTIES_KEY}' must be a mapping, "
                 f"got {type(self.config[PROPERTIES_KEY]).__name__}")
         if not self.config[PROPERTIES_KEY]:
             raise ValueError(f"'{PROPERTIES_KEY}' block cannot be empty")
@@ -186,6 +179,5 @@ class MaterialYAMLParser(YAMLFileParser):
                 raise ValueError(f"Configuration error for property '{prop_name}': {str(e)}") from e
         for prop_type, prop_list in categorized.items():
             if prop_list:
-                logger.info("%d %s: %s",
-                            len(prop_list), prop_type.name, [p[0] for p in prop_list])
+                logger.info("%d %s: %s", len(prop_list), prop_type.name, [p[0] for p in prop_list])
         return categorized

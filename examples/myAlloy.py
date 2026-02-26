@@ -190,9 +190,9 @@ def demonstrate_material_properties() -> None:
         print(f"\n{'API METHODS:':<50}")
         print(f"{'-' * 50}")
 
-        print("Method 2: material.evaluate_properties_at_temperature()")
+        print("Method 2: material.evaluate()")
         try:
-            all_values = mat.evaluate_properties_at_temperature(sp.Symbol('T'), test_temp)
+            all_values = mat.evaluate(sp.Symbol('T'), test_temp)
             print(f"All properties at {test_temp} K:")
             for prop, value in sorted(all_values.items()):
                 print(f"  {prop:<30}: {value:.6e}")

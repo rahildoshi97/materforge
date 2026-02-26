@@ -23,8 +23,8 @@ class TestProcessingConstants:
 
     def test_temperature_epsilon(self):
         """Test temperature epsilon is a small positive fraction."""
-        if hasattr(ProcessingConstants, 'TEMPERATURE_EPSILON'):
-            assert 0 < ProcessingConstants.TEMPERATURE_EPSILON < 1.0
+        if hasattr(ProcessingConstants, 'DEPENDENCY_EPSILON'):
+            assert 0 < ProcessingConstants.DEPENDENCY_EPSILON < 1.0
 
     def test_min_data_points(self):
         """Test minimum data points is a positive integer."""

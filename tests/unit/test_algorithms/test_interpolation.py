@@ -61,7 +61,7 @@ class TestInterpolation:
         """Test ensure_ascending_order with non-monotonic array."""
         temp_array = np.array([300, 500, 400])
         prop_array = np.array([900, 1000, 950])
-        with pytest.raises(ValueError, match="not strictly ascending or strictly descending"):
+        with pytest.raises(ValueError, match="Array is neither strictly ascending nor descending"):
             ensure_ascending_order(temp_array, prop_array)
 
     def test_interpolate_value_exact_match(self):

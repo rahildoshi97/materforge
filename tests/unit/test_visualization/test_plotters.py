@@ -55,7 +55,7 @@ class TestPropertyVisualizer:
         visualizer.visualize_property(
             material=material,
             prop_name="heat_capacity",
-            T=T,
+            dependency=T,
             prop_type="TABULARDATA",
             x_data=x_data,
             y_data=y_data,
@@ -73,7 +73,7 @@ class TestPropertyVisualizer:
         visualizer.visualize_property(
             material=material,
             prop_name="heat_capacity",
-            T=T,
+            dependency=T,
             prop_type="TABULARDATA",
             x_data=x_data,
             y_data=y_data,
@@ -88,7 +88,7 @@ class TestPropertyVisualizer:
         visualizer.visualize_property(
             material=material,
             prop_name="density",
-            T=T,
+            dependency=T,
             prop_type="CONSTANTVALUE",
         )
         mock_figure.assert_not_called()
@@ -123,7 +123,7 @@ class TestPropertyVisualizer:
         visualizer.visualize_property(
             material=material,
             prop_name="heat_capacity",
-            T=T,
+            dependency=T,
             prop_type="TABULARDATA",
             x_data=x_data,
             y_data=y_data,
@@ -141,7 +141,7 @@ class TestPropertyVisualizer:
         visualizer.visualize_property(
             material=material,
             prop_name="nonexistent_prop",
-            T=T,
+            dependency=T,
             prop_type="CONSTANTVALUE",
         )
 
@@ -154,7 +154,7 @@ class TestPropertyVisualizer:
             visualizer.visualize_property(
                 material=material,
                 prop_name=prop,
-                T=T,
+                dependency=T,
                 prop_type="CONSTANTVALUE",
             )
         mock_figure.assert_not_called()

@@ -154,7 +154,7 @@ def test_heat_equation_workflow():
                     temp_symbol = list(energy_symbols)[0]
                     E_symbol = sp.Symbol('E')
 
-                    inverse_func = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol, E_symbol)
+                    _ = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol, E_symbol)
                     print("Inverse function created for heat equation")
 
                     # Test thermal diffusivity

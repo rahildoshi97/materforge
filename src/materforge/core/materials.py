@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 _CORE_FIELDS = frozenset({'name', '_dynamic_properties'})
 
-
 @dataclass
 class Material:
     """Generic material container with fully dynamic property tracking.
@@ -45,7 +44,7 @@ class Material:
         return set(self._dynamic_properties)
 
     # --- Property evaluation ---
-    def evaluate_properties_at_temperature(self, symbol: sp.Symbol, value: Union[float, int]) -> Dict[str, float]:
+    def evaluate(self, symbol: sp.Symbol, value: Union[float, int]) -> Dict[str, float]:
         """Evaluates all properties by substituting symbol=value.
 
         Args:

@@ -63,7 +63,7 @@ class TestPiecewiseBuilder:
         temp_array = np.array([300, 400, 500])
         prop_array = np.array([900, 950])  # Different length
         config = {'bounds': ['constant', 'constant']}
-        with pytest.raises(ValueError, match="must have same length"):
+        with pytest.raises(ValueError, match="Array length mismatch"):
             PiecewiseBuilder.build_from_data(
                 temp_array, prop_array, temp_symbol, config, "test_property"
             )

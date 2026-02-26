@@ -3,7 +3,6 @@
 
 import scipy.constants as _sc
 
-
 class PhysicalConstants:
     """
     Fundamental physical constants sourced from scipy.constants (CODATA 2022).
@@ -58,6 +57,4 @@ class PhysicalConstants:
             name for name in dir(cls)
             if not name.startswith('_') and not callable(getattr(cls, name))
         ]
-        raise AttributeError(
-            f"Constant '{name}' not found. Available constants: {available}"
-        )
+        raise AttributeError(f"Constant '{name}' not found. Available constants: {available}")

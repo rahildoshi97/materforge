@@ -15,14 +15,6 @@ class TestDependencyResolverEdgeCases:
         mat.boiling_temperature = 3134.0
         return mat
 
-    def test_resolve_negative_dependency(self):
-        with pytest.raises(ValueError, match="above absolute zero"):
-            DependencyResolver.resolve_dependency_definition(-100.0)
-
-    def test_resolve_zero_kelvin(self):
-        with pytest.raises(ValueError, match="above absolute zero"):
-            DependencyResolver.resolve_dependency_definition(0.0)
-
     def test_resolve_very_small_positive_dependency(self):
         result = DependencyResolver.resolve_dependency_definition(0.1)
         assert result[0] == 0.1
@@ -89,10 +81,6 @@ class TestDependencyResolverEdgeCases:
     def test_validate_dependency_array_insufficient_points(self):
         with pytest.raises(ValueError, match="at least.*points"):
             DependencyResolver.validate_dependency_array(np.array([300]), "test")
-
-    def test_validate_dependency_array_below_absolute_zero(self):
-        with pytest.raises(ValueError, match="above absolute zero"):
-            DependencyResolver.validate_dependency_array(np.array([300, -100, 500]), "test")
 
     def test_validate_dependency_array_non_finite(self):
         with pytest.raises(ValueError, match="non-finite"):

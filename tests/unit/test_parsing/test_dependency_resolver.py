@@ -47,10 +47,6 @@ class TestDependencyResolver:
         assert DependencyResolver.resolve_dependency_reference("melting_temperature + 50", mat) == pytest.approx(983.47)
         assert DependencyResolver.resolve_dependency_reference("melting_temperature - 100", mat) == pytest.approx(833.47)
 
-    def test_invalid_dependency_below_absolute_zero(self):
-        with pytest.raises(ValueError, match="above absolute zero"):
-            DependencyResolver.resolve_dependency_definition(-10.0)
-
     def test_invalid_dependency_reference(self):
         """Unknown property name raises ValueError."""
         mat = _make_material(melting_temperature=933.47, boiling_temperature=2792.0)

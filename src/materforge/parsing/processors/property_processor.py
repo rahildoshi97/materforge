@@ -3,10 +3,9 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import sympy as sp
-
 from materforge.core.materials import Material
 from materforge.parsing.validation.property_type_detector import PropertyType
 from materforge.parsing.processors.property_processor_base import PropertyProcessorBase
@@ -22,9 +21,9 @@ from materforge.parsing.processors.post_processor import PropertyPostProcessor
 
 logger = logging.getLogger(__name__)
 
-
 class PropertyProcessor(PropertyProcessorBase):
     """Orchestrates property processing by delegating to specialised handlers.
+
     Properties are processed in PropertyType enum definition order, which
     guarantees CONSTANT_VALUE is resolved before any type that may reference
     those scalars (STEP_FUNCTION, TABULAR_DATA, etc.).
@@ -47,18 +46,20 @@ class PropertyProcessor(PropertyProcessorBase):
         logger.debug("PropertyProcessor initialised with %d handlers", len(self.handlers))
 
     # --- Public API ---
-    def process_properties(self, material: Material, dependency: sp.Symbol,
+    def process_properties(self, material: Material,
+                           dependency: Union[float, sp.Symbol],
                            properties: Dict[str, Any],
                            categorized_properties: Dict[PropertyType, List[Tuple[str, Any]]],
                            base_dir: Path, visualizer) -> None:
         """Processes all properties for the material.
+
         Args:
-            material: Target Material instance.
-            dependency: SymPy symbol used as the independent variable.
-            properties: Raw properties dict from the YAML config.
+            material:               Target Material instance.
+            dependency:             SymPy symbol (symbolic mode) or float (numeric mode).
+            properties:             Raw properties dict from the YAML config.
             categorized_properties: Properties pre-grouped by PropertyType.
-            base_dir: Base directory for resolving relative file paths.
-            visualizer: PropertyVisualizer instance, or None.
+            base_dir:               Base directory for resolving relative file paths.
+            visualizer:             PropertyVisualizer instance, or None.
         """
         logger.info("Starting property processing for '%s'", material.name)
         self._initialize_processing_context(material, dependency, properties, categorized_properties, base_dir, visualizer)
@@ -73,7 +74,8 @@ class PropertyProcessor(PropertyProcessorBase):
             raise ValueError(f"Failed to process properties\n -> {str(e)}") from e
 
     # --- Private helpers ---
-    def _initialize_processing_context(self, material: Material, dependency: sp.Symbol,
+    def _initialize_processing_context(self, material: Material,
+                                       dependency: Union[float, sp.Symbol],
                                        properties: Dict[str, Any],
                                        categorized_properties: Dict[PropertyType, List[Tuple[str, Any]]],
                                        base_dir: Path, visualizer) -> None:
@@ -91,8 +93,10 @@ class PropertyProcessor(PropertyProcessorBase):
         if computed_handler:
             computed_handler.set_computed_property_processor(properties)
 
-    def _process_by_category(self, material: Material, dependency: sp.Symbol) -> None:
+    def _process_by_category(self, material: Material,
+                              dependency: Union[float, sp.Symbol]) -> None:
         """Iterates PropertyType enum order and processes each category.
+
         CONSTANT_VALUE is the first enum value, so all scalar constants are
         assigned to the material before any other type runs - enabling safe
         forward references from STEP_FUNCTION, TABULAR_DATA, etc.

@@ -34,7 +34,7 @@ class TestPerformance:
         # Time multiple interpolations
         start_time = time.time()
         for _ in range(1000):
-            result = interpolate_value(500.0, x_array, y_array, 'constant', 'constant')
+            _ = interpolate_value(500.0, x_array, y_array, 'constant', 'constant')
         end_time = time.time()
         avg_time = (end_time - start_time) / 1000
         # Adjust threshold for CI environment
@@ -60,7 +60,7 @@ class TestPerformance:
         # Test evaluation performance
         start_time = time.time()
         for temp in [350, 450, 550, 650, 750]:
-            result = float(piecewise_func.subs(T, temp))
+            _ = float(piecewise_func.subs(T, temp))
         end_time = time.time()
         eval_time = (end_time - start_time) / 5
         # Adjust threshold for CI environment
@@ -101,9 +101,7 @@ class TestPerformance:
             temp_array = np.linspace(300, 1000, 100)
             prop_array = np.random.normal(1000, 100, 100)
             config = {'bounds': ['constant', 'constant']}
-            piecewise_func = PiecewiseBuilder.build_from_data(
-                temp_array, prop_array, T, config, f"property_{i}"
-            )
+            piecewise_func = PiecewiseBuilder.build_from_data(temp_array, prop_array, T, config, f"property_{i}")
         final_memory = process.memory_info().rss / 1024 / 1024  # MB
         memory_increase = final_memory - initial_memory
         # Adjust threshold for CI environment

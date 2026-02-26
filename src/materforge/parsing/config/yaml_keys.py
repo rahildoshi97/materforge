@@ -14,10 +14,6 @@ FILE_PATH_KEY = "file_path"
 DEPENDENCY_COLUMN_KEY = "dependency_column"  # Generic column key
 PROPERTY_COLUMN_KEY = "property_column"
 
-# Legacy keys (for backward compatibility)
-TEMPERATURE_COLUMN_KEY = "temperature_column"
-TEMPERATURE_KEY = "temperature"
-
 # Generic dependency keys
 DEPENDENCY_KEY = "dependency"  # Generic dependency key for legacy format
 
@@ -41,11 +37,6 @@ POST_KEY = "post"
 # Properties and material name
 PROPERTIES_KEY = "properties"
 NAME_KEY = "name"
-
-# Supported dependency names
-SUPPORTED_DEPENDENCY_NAMES = {
-    "temperature", "strain_rate", "concentration", "pressure", "time"
-}
 
 # Automatically export all constants
 __all__ = [name for name in globals() if not name.startswith('_') and name.isupper()]

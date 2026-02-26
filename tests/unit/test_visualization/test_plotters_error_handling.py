@@ -42,7 +42,7 @@ class TestPropertyVisualizerErrorHandling:
         visualizer.visualize_property(
             material=sample_material,
             prop_name='density',
-            T=sp.Symbol('T'),
+            dependency=sp.Symbol('T'),
             prop_type='CONSTANT',
         )
         assert 'density' not in visualizer.visualized_properties
@@ -54,7 +54,7 @@ class TestPropertyVisualizerErrorHandling:
         visualizer.visualize_property(
             material=sample_material,
             prop_name='density',
-            T=500.0,
+            dependency=500.0,
             prop_type='CONSTANT',
         )
         assert 'density' not in visualizer.visualized_properties
@@ -74,7 +74,7 @@ class TestPropertyVisualizerErrorHandling:
         visualizer.visualize_property(
             material=sample_material,
             prop_name='density',
-            T=sp.Symbol('T'),
+            dependency=sp.Symbol('T'),
             prop_type='CONSTANT',
         )
         assert 'density' in visualizer.visualized_properties
@@ -95,7 +95,7 @@ class TestPropertyVisualizerErrorHandling:
         visualizer.visualize_property(
             material=sample_material,
             prop_name='invalid_prop',
-            T=sp.Symbol('T'),
+            dependency=sp.Symbol('T'),
             prop_type='COMPUTE',
         )
 
@@ -103,11 +103,11 @@ class TestPropertyVisualizerErrorHandling:
         """Non-existent property name raises ValueError."""
         visualizer = PropertyVisualizer(mock_parser)
         visualizer.initialize_plots()
-        with pytest.raises(ValueError, match="Unexpected error in property.*has no attribute"):
+        with pytest.raises(ValueError, match="Unexpected error visualizing.*has no attribute"):
             visualizer.visualize_property(
                 material=sample_material,
                 prop_name='nonexistent_property',
-                T=sp.Symbol('T'),
+                dependency=sp.Symbol('T'),
                 prop_type='CONSTANT',
             )
 

@@ -1,173 +1,284 @@
 # YAML Schema for Material Definition
-This document defines the schema for material definition YAML files in materforge.
+
+This document defines the schema for material definition YAML files in MaterForge.
+
+---
 
 ## Schema Overview
 
-### A valid material definition must include:
-- `name`: String identifier for the material
-- `properties`: Map of property names to their definitions
+A valid material definition requires exactly two top-level fields:
 
-## 🔧 Property Definition Types
-Properties can be defined in six different ways:
+```yaml
+name: "myMaterial"   # string identifier - required
+properties:          # map of property definitions - required
+  ...
+```
+
+No other top-level fields are required. Any property name is valid inside `properties`.
+The schema is fully driven by what you put there - no hardcoded material types,
+compositions, or required property names.
+
+---
+
+## Property Definition Types
+
 ### 1. Constant Value
-Simple numeric values, for properties that don't vary with any dependency:
+
+A single numeric value. Not dependency-driven.
+
 ```yaml
-thermal_expansion_coefficient: 16.3e-6 # Single numeric value
+properties:
+    density: 7000.0
+    thermal_expansion_coefficient: 16.3e-6
 ```
+
+Note: Use float notation (`7000.0` not `7000`). Scientific notation is supported (`1.71401e5`).
+
+---
+
 ### 2. Step Function
-Phase transitions with before/after values:
+
+A property that changes discontinuously at a single transition point.
+`dependency` must be a scalar property reference or arithmetic expression.
+
 ```yaml
-latent_heat_of_fusion:
-  dependency: melting_temperature - 10
-  value: [0.0, 10790.0]
-  bounds: [constant, constant]
+properties:
+    solidus_temp: 1605.
+
+    latent_heat_of_fusion:
+        dependency: solidus_temp + 5
+        value: [0.0, 171401.0]   # [before_transition, after_transition]
+        bounds: [constant, constant]
 ```
+
+---
+
 ### 3. File Import
-Import data from Excel, CSV, or text files:
+
+Data loaded from an external file. Relative paths are resolved from the YAML file location.
+
 ```yaml
-heat_capacity:
-  file_path: ./data.xlsx
-  dependency_column: T (K)
-  property_column: Cp (J/kg·K)
-  bounds: [constant, constant]
+properties:
+    # Excel
+    heat_capacity:
+        file_path: ./material_data.xlsx
+        dependency_column: T (K)
+        property_column: Specific heat (J/(Kg K))
+        bounds: [constant, constant]
+
+    # CSV
+    density:
+        file_path: ./density.csv
+        dependency_column: Temperature
+        property_column: Density
+        bounds: [constant, constant]
+
+    # Text file - headerless, use column index
+    thermal_conductivity:
+        file_path: ./conductivity.txt
+        dependency_column: 0
+        property_column: 1
+        bounds: [constant, constant]
 ```
+
+Supported formats: `.xlsx`, `.csv`, `.txt` (space/tab separated).
+
+---
+
 ### 4. Tabular Data
-Explicit dependency-property pairs:
+
+Explicit paired dependency–value lists. Both lists must have the same length.
+
 ```yaml
-thermal_expansion_coefficient:
-  dependency: [300, 400, 500, 600]
-  value: [1.2e-5, 1.4e-5, 1.6e-5, 1.8e-5]
-  bounds: [constant, constant]
+properties:
+    heat_conductivity:
+        dependency: [500, 1000, 1600, 1700, 1750, 2000, 2500]
+        value: [19.25, 25.47, 32.94, 33.52, 31.53, 35.33, 42.95]
+        bounds: [constant, constant]
+
+    # Scalar property references in dependency
+    latent_heat_of_fusion:
+        dependency: [solidus_temp - 1, liquidus_temp + 1]
+        value: [0.0, 171401.0]
+        bounds: [constant, constant]
+
+    # Tuple (start, increment) - length inferred from value list
+    heat_capacity:
+        dependency: (273.15, 100.0)
+        value: [897, 921, 950, 980, 1010, 1040, 1070, 1084]
+        bounds: [constant, constant]
+
+    # Tuple with negative increment
+    density:
+        dependency: (1735.0, -5)
+        value: [7037.47, 7060.15, 7088.80, 7110.46, 7127.68]
+        bounds: [constant, constant]
 ```
+
+---
+
 ### 5. Piecewise Equation
-Multiple equations for different dependency ranges:
+
+`n` breakpoints in `dependency` define `n-1` equations.
+
 ```yaml
-heat_conductivity:
-  dependency: [500, 1700, 3000]
-  equation: ["0.012*T + 13", "0.015*T + 5"]
-  bounds: [constant, constant]
+properties:
+    viscosity:
+        dependency: [300, 1660, 1736, 3000]
+        equation: [7877.39-0.37*T, 11816.63-2.74*T, 8596.40-0.88*T]
+        bounds: [constant, constant]
 ```
+
+`T` in equations is a **placeholder only**. MaterForge substitutes it with the symbol
+passed to `create_material(..., dependency=symbol)` at runtime. The final symbolic
+expressions use your symbol, not `T`.
+
+---
+
 ### 6. Computed Property
-Properties calculated from other properties:
+
+Derived from other properties using a symbolic expression.
+MaterForge resolves processing order automatically via topological sort -
+no manual ordering needed.
+
 ```yaml
-thermal_diffusivity:
-  dependency: (300, 3000, 5.0)
-  equation: heat_conductivity / (density * heat_capacity)
-  bounds: [extrapolate, extrapolate]
+properties:
+    thermal_diffusivity:
+        dependency: (3000, 300, -5.0)
+        equation: heat_conductivity / (density * heat_capacity)
+        bounds: [extrapolate, extrapolate]
+        regression:
+            simplify: post
+            degree: 2
+            segments: 3
+
+    energy_density:
+        dependency: (300, 3000, 5.0)
+        equation: density * specific_enthalpy
+        bounds: [extrapolate, extrapolate]
 ```
 
-## 📊 Dependency Definition Formats
-### Explicit Lists
+---
+
+## Dependency Definition Formats
+
 ```yaml
-dependency: [300, 400, 500, 600]  # Explicit values
-```
-### Tuple Formats
-```yaml
-# (start, increment) - requires matching value list length
-dependency: (300, 50)  # 300, 350, 400, ... (length from values)
+# 1. Explicit list
+dependency: [300, 500, 800, 1000]
 
-# (start, stop, step) - step size
-dependency: (300, 1000, 10.0)  # 300, 310, 320, ..., 1000
+# 2. Tuple (start, increment) - length inferred from value list
+dependency: (300, 50)
 
-# (start, stop, points) - number of points
-dependency: (300, 1000, 71)  # 71 evenly spaced points
+# 3. Tuple (start, stop, step) - step is float
+dependency: (300, 1000, 10.0)     # 300, 310, ..., 1000
 
-# Decreasing dependency
-dependency: (1000, 300, -5.0)  # 1000, 995, 990, ..., 300
-```
-### Temperature References
-```yaml
-# Direct references
-temperature: melting_temperature
-temperature: solidus_temperature
+# 4. Tuple (start, stop, points) - points is integer
+dependency: (300, 1000, 71)       # 71 evenly spaced values
 
-# Arithmetic expressions
-temperature: melting_temperature + 50
-temperature: liquidus_temperature - 10
+# 5. Decreasing range
+dependency: (1000, 300, -5.0)     # 1000, 995, ..., 300
 ```
 
-## 🎯 Advanced Features
-### Regression Configuration
-Control data simplification and memory usage:
+Scalar references and arithmetic are valid inside lists:
+
+```yaml
+dependency: [solidus_temp - 1, liquidus_temp + 1]
+dependency: solidus_temp + 5      # single reference for step functions
+```
+
+---
+
+## Bounds Options
+
+Required for all non-constant property types.
+
+```yaml
+bounds: [lower_bound, upper_bound]
+```
+
+| Option      | Behaviour                                      |
+|-------------|------------------------------------------------|
+| constant    | Clamp to the boundary value outside the range  |
+| extrapolate | Linear extrapolation beyond the range          |
+
+---
+
+## Regression Configuration
+
+Optional. Reduces expression complexity and smooths noisy input data.
+
 ```yaml
 regression:
-  simplify: pre    # Apply before symbolic processing
-  degree: 1        # Linear regression
-  segments: 3      # Number of piecewise segments
-```
-- `simplify: pre`: Apply regression to raw data before processing
-- `simplify: post`: Apply regression after symbolic expressions are evaluated
-- `degree`: Polynomial degree (1=linear, 2=quadratic, etc.)
-- `segments`: Number of segments for piecewise functions
-### Boundary Behavior
-Control extrapolation outside data range:
-```yaml
-bounds: [constant, extrapolate]
-```
-- `constant`: Use boundary values as constants outside range
-- `extrapolate`: Linear extrapolation outside range
-### Dependency Resolution
-Properties are automatically processed in correct order:
-```yaml
-# These will be processed in dependency order automatically
-specific_enthalpy:
-  equation: Integral(heat_capacity, T)
-
-energy_density:
-  equation: density * specific_enthalpy  # Depends on specific_enthalpy
-
-thermal_diffusivity:
-  equation: heat_conductivity / (density * heat_capacity)  # Multiple dependencies
+    simplify: pre    # 'pre': on raw data before symbolic processing
+                     # 'post': after symbolic expressions are evaluated
+    degree: 1        # polynomial degree per segment (1=linear, 2=quadratic, ...)
+    segments: 3      # number of piecewise segments (<=8 recommended)
 ```
 
-## 📈 Visualization
-Automatic plot generation when using symbolic temperature:
+Note: segments > 6 risk overfitting - MaterForge logs a warning.
+Use `degree: 1` for any property you intend to invert with `PiecewiseInverter`.
+
+---
+
+## Visualization
+
+Plots are generated automatically when `dependency` is a SymPy symbol:
 
 ```python
 import sympy as sp
 from materforge.parsing.api import create_material
 
-T = sp.Symbol('T')
-material = create_material('1.4301.yaml', T, enable_plotting=True)
-# Plots automatically saved to 'materforge_plots/' directory
+T = sp.Symbol('T')   # any symbol - not limited to temperature
+mat = create_material('myAlloy.yaml', dependency=T, enable_plotting=True)
+# Plots saved automatically
 ```
 
-## 🧪 Energy-Temperature Inversion
-For applications requiring temperature from energy density:
+Pass a float instead to skip plotting and evaluate immediately:
 
 ```python
-import sympy as sp
-from materforge.parsing.api import create_material
+mat = create_material('myAlloy.yaml', dependency=500.0, enable_plotting=False)
+```
+
+---
+
+## Property Inversion
+
+For any piecewise-linear property, create its inverse with `PiecewiseInverter`:
+
+```python
 from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
-# Create inverse function T = f_inv(E)
 T = sp.Symbol('T')
 E = sp.Symbol('E')
-material = create_material('1.4301.yaml', T)
 
-# Create inverse (only for linear piecewise functions)
-inverse_func = PiecewiseInverter.create_inverse(material.property, 'T', 'E')
+mat = create_material('myAlloy.yaml', dependency=T)
+inverse = PiecewiseInverter.create_inverse(mat.energy_density, 'T', 'E')
 
-# Use inverse function
-energy_value = 1.5e9  # J/m³
-temperature = float(inverse_func.subs(E, energy_value))
+# Given a property value, recover the dependency value
+recovered = float(inverse.subs(E, 1.5e9))
 ```
+
+Limitation: linear piecewise only (`degree: 1`). Higher-degree segments are not supported.
+
+---
 
 ## Validation Rules
 
-1. All required top-level fields must be present
-2. Properties cannot be defined in multiple ways or multiple times
-3. Required dependencies for computed properties must be present
-4. Dependency arrays must be monotonic
-5. Energy density arrays must be monotonic with respect to the dependency
-6. File paths must be valid and files must exist
-7. For tabular data, dependency and value arrays must have the same length
-8. When using tuple notation for dependency arrays, the increment must be non-zero
+1. `name` and `properties` are the only required top-level fields
+2. A property cannot be defined more than once
+3. All dependencies of a computed property must be defined in the same `properties` block
+4. Dependency arrays must be monotonic for interpolation
+5. For tabular data, `dependency` and `value` lists must have equal length
+6. File paths must exist and be readable; columns must match exactly
+7. Tuple increment must be non-zero
+8. `bounds` is required for all non-constant property types
+9. Regression `segments` must be a positive integer
+
+---
 
 ## Important Notes
 
-1. All numerical values must use period (.) as decimal separator, not comma
-2. Interpolation between data points is performed automatically for file-import and tabular data properties
-3. Properties will be computed in the correct order regardless of their position in the file
-4. To retrieve temperature from energy_density, use the interpolation methods from the generated InterpolationArrayContainer class
-5. The new architecture provides enhanced error messages and validation compared to previous versions
+- All numeric values must use `.` as decimal separator, not `,`
+- Interpolation between data points is automatic for tabular and file-import properties
+- Property processing order is resolved automatically - position in the file does not matter
+- The `T` placeholder in equations carries no special meaning; it is substituted at runtime

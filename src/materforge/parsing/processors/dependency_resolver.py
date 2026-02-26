@@ -5,20 +5,17 @@ import logging
 import numpy as np
 import re
 from typing import List, Union, Optional
-
 from materforge.core.materials import Material
 from materforge.parsing.io.data_handler import load_property_data
 from materforge.parsing.config.yaml_keys import FILE_PATH_KEY, DEPENDENCY_KEY, VALUE_KEY
-from materforge.data.constants import PhysicalConstants, ProcessingConstants
+from materforge.data.constants import ProcessingConstants
 
 logger = logging.getLogger(__name__)
 
-
 class DependencyResolver:
     """Handles processing of different dependency definition formats in YAML configurations."""
-    ABSOLUTE_ZERO = PhysicalConstants.ABSOLUTE_ZERO
-    EPSILON = ProcessingConstants.TEMPERATURE_EPSILON
-    MIN_POINTS = ProcessingConstants.MIN_TEMPERATURE_POINTS
+    EPSILON = ProcessingConstants.DEPENDENCY_EPSILON
+    MIN_POINTS = ProcessingConstants.MIN_DEPENDENCY_POINTS
 
     # --- Public API ---
     @staticmethod
@@ -26,13 +23,15 @@ class DependencyResolver:
                                       n_values: Optional[int] = None,
                                       material: Optional[Material] = None) -> np.ndarray:
         """Processes different dependency definition formats.
+
         Args:
             dep_def: Dependency definition. Accepted formats:
-                - list: explicit values, e.g. [300, 400, 500]
-                - str tuple: range, e.g. "(300, 3000, 50.0)"
+                - list:      explicit values, e.g. [300, 400, 500]
+                - str tuple: range with step, e.g. "(300, 3000, 50.0)"
+                - str tuple: range with points, e.g. "(300, 3000, 71)"
                 - str tuple: equidistant, e.g. "(300, 50)" (requires n_values)
                 - float/int: single value, e.g. 500.0
-                - str reference: property name or arithmetic, e.g. "solidus_temp + 5"
+                - str:       property reference or arithmetic, e.g. "solidus_temp + 5"
             n_values: Required for the 2-element equidistant tuple format.
             material: Required for string property-name references.
         Returns:
@@ -43,19 +42,16 @@ class DependencyResolver:
         if isinstance(dep_def, str):
             return DependencyResolver._resolve_string_format(dep_def, n_values, material)
         if isinstance(dep_def, (int, float)):
-            dep_val = float(dep_def)
-            if dep_val <= DependencyResolver.ABSOLUTE_ZERO:
-                raise ValueError(
-                    f"Dependency must be above absolute zero ({DependencyResolver.ABSOLUTE_ZERO}K), got {dep_val}K")
-            return np.array([dep_val], dtype=float)
+            return np.array([float(dep_def)], dtype=float)
         raise ValueError(f"Unsupported dependency definition format: {type(dep_def)}")
 
     @staticmethod
     def extract_from_config(prop_config: dict, material: Material) -> np.ndarray:
         """Extracts the dependency array from a property configuration dict.
+
         Args:
             prop_config: Property configuration dictionary.
-            material: Material instance for reference resolution.
+            material:    Material instance for reference resolution.
         Returns:
             Dependency array extracted from the configuration.
         """
@@ -69,36 +65,32 @@ class DependencyResolver:
             dep_def = prop_config[DEPENDENCY_KEY]
             n_values = (len(prop_config[VALUE_KEY]) if VALUE_KEY in prop_config else None)
             return DependencyResolver.resolve_dependency_definition(dep_def, n_values, material)
-        raise ValueError( "Cannot extract dependency array: no dependency information in config")
+        raise ValueError("Cannot extract dependency array: no dependency information in config")
 
     @staticmethod
     def resolve_dependency_reference(dep_ref: Union[str, float, int], material: Material) -> float:
         """Resolves a dependency reference to a concrete float value.
-        Handles numeric values, plain property-name references, and arithmetic expressions such as "solidus_temp + 5".
+
+        Handles numeric values, plain property-name references, and arithmetic
+        expressions such as "solidus_temp + 5".
+
         Args:
-            dep_ref: Dependency reference - numeric, a property name, or
-                an arithmetic expression (e.g. "solidus_temp + 5").
+            dep_ref: Numeric value, a property name, or an arithmetic expression.
             material: Material instance for property-name lookups.
         Returns:
             Resolved float value.
         """
         if isinstance(dep_ref, (int, float)):
-            result = float(dep_ref)
-            if result <= DependencyResolver.ABSOLUTE_ZERO:
-                raise ValueError(f"Temperature must be above absolute zero, got {result}K")
-            return result
+            return float(dep_ref)
         if isinstance(dep_ref, str):
             # Numeric string
             try:
-                result = float(dep_ref)
-                if result <= DependencyResolver.ABSOLUTE_ZERO:
-                    raise ValueError(f"Temperature must be above absolute zero, got {result}K")
-                return result
+                return float(dep_ref)
             except ValueError:
                 pass
             # Arithmetic expression: "some_ref + 50" or "some_ref - 10"
             if '+' in dep_ref or '-' in dep_ref:
-                match = re.match(ProcessingConstants.TEMP_ARITHMETIC_REGEX, dep_ref.strip())
+                match = re.match(ProcessingConstants.PROPERTY_ARITHMETIC_REGEX, dep_ref.strip())
                 if match:
                     base_name, operator, offset = match.groups()
                     base = DependencyResolver.get_dependency_value(base_name, material)
@@ -106,15 +98,16 @@ class DependencyResolver:
                     return base + offset_val if operator == '+' else base - offset_val
             # Plain property-name reference
             return DependencyResolver.get_dependency_value(dep_ref, material)
-        raise ValueError(f"Unsupported temperature reference type: {type(dep_ref)} for value {dep_ref}")
+        raise ValueError(f"Unsupported dependency reference type: {type(dep_ref)} for value '{dep_ref}'")
 
     @staticmethod
     def get_dependency_value(dep_ref: Union[str, float, int], material: Material) -> float:
         """Resolves a scalar dependency value from a numeric input or a dynamic
         property on the material.
-        This replaces the old hardcoded temperature-name whitelist. Any scalar
-        constant that has been assigned to the material (e.g. solidus_temp,
-        my_custom_ref) is resolvable here.
+
+        Any scalar constant assigned to the material (e.g. solidus_temp,
+        my_custom_ref) is resolvable here - no hardcoded name whitelist.
+
         Args:
             dep_ref: Numeric value, numeric string, or property name.
             material: Material instance to look up named references on.
@@ -124,22 +117,13 @@ class DependencyResolver:
             ValueError: If dep_ref is not numeric and not found on the material,
                 or if the found property is not a scalar constant.
         """
-        # Direct numeric
         if isinstance(dep_ref, (int, float)):
-            result = float(dep_ref)
-            if result <= DependencyResolver.ABSOLUTE_ZERO:
-                raise ValueError(f"Temperature must be above absolute zero, got {result}K")
-            return result
+            return float(dep_ref)
         if isinstance(dep_ref, str):
-            # Try numeric conversion first
             try:
-                result = float(dep_ref)
-                if result <= DependencyResolver.ABSOLUTE_ZERO:
-                    raise ValueError(f"Dependency must be above absolute zero, got {result}K")
-                return result
+                return float(dep_ref)
             except ValueError:
                 pass
-            # Dynamic property lookup - works for any user-defined scalar constant
             if dep_ref in material.property_names():
                 val = getattr(material, dep_ref)
                 try:
@@ -149,9 +133,9 @@ class DependencyResolver:
                         f"Dependency reference '{dep_ref}' exists on the material "
                         f"but is not a scalar constant (got {type(val).__name__}). "
                         f"Only CONSTANT_VALUE properties can be used as references.")
-            raise ValueError(f"Unknown dependency reference: '{dep_ref}'. "
-                f"Available scalar properties: "
-                f"{sorted(material.property_names())}")
+            raise ValueError(
+                f"Unknown dependency reference: '{dep_ref}'. "
+                f"Available scalar properties: {sorted(material.property_names())}")
         raise ValueError(f"Unsupported dependency value type: {type(dep_ref)}")
 
     # --- Private helpers ---
@@ -166,12 +150,7 @@ class DependencyResolver:
                     dep_array.append(DependencyResolver.resolve_dependency_reference(item, material))
                 else:
                     dep_array.append(float(item))
-            dep_array = np.array(dep_array)
-            if np.any(dep_array <= DependencyResolver.ABSOLUTE_ZERO):
-                invalid = dep_array[dep_array <= DependencyResolver.ABSOLUTE_ZERO]
-                raise ValueError(f"Dependency must be above absolute zero ({DependencyResolver.ABSOLUTE_ZERO}K), "
-                                 f"got {invalid}")
-            return dep_array
+            return np.array(dep_array, dtype=float)
         except (ValueError, TypeError) as e:
             raise ValueError(f"Invalid dependency list: {dep_list}\n -> {str(e)}") from e
 
@@ -181,7 +160,6 @@ class DependencyResolver:
                                material: Optional[Material] = None) -> np.ndarray:
         """Dispatches string dependency definitions to the correct sub-handler."""
         if not (dep_str.startswith('(') and dep_str.endswith(')')):
-            # Plain reference or arithmetic expression
             if material is not None:
                 return np.array([DependencyResolver.resolve_dependency_reference(dep_str, material)])
             raise ValueError(f"String dependency '{dep_str}' must be parenthesised or "
@@ -206,22 +184,14 @@ class DependencyResolver:
     def _resolve_equidistant_format(values: List[str], n_values: Optional[int]) -> np.ndarray:
         """Processes (start, increment) equidistant format."""
         if n_values is None:
-            raise ValueError(
-                "Number of values required for equidistant format (start, increment)")
+            raise ValueError("Number of values required for equidistant format (start, increment)")
         if n_values < DependencyResolver.MIN_POINTS:
             raise ValueError(f"Number of values must be at least {DependencyResolver.MIN_POINTS}, got {n_values}")
         try:
             start, increment = float(values[0]), float(values[1])
             if abs(increment) <= DependencyResolver.EPSILON:
                 raise ValueError("Increment cannot be zero")
-            if start <= DependencyResolver.ABSOLUTE_ZERO:
-                raise ValueError(f"Start must be above absolute zero "
-                    f"({DependencyResolver.ABSOLUTE_ZERO}K), got {start}K")
-            dep_array = np.array([start + i * increment for i in range(n_values)])
-            if np.any(dep_array <= DependencyResolver.ABSOLUTE_ZERO):
-                invalid = dep_array[dep_array <= DependencyResolver.ABSOLUTE_ZERO]
-                raise ValueError(f"Generated values must be above absolute zero, got {invalid}")
-            return dep_array
+            return np.array([start + i * increment for i in range(n_values)], dtype=float)
         except (ValueError, TypeError) as e:
             raise ValueError(
                 f"Invalid equidistant format: ({values[0]}, {values[1]})\n -> {str(e)}") from e
@@ -231,7 +201,7 @@ class DependencyResolver:
         """Processes (start, stop, step/points) range format."""
         try:
             start, stop = float(values[0]), float(values[1])
-            DependencyResolver._validate_range_dependencies(start, stop)
+            DependencyResolver._validate_range_endpoints(start, stop)
             fmt = DependencyResolver._determine_format_type(values[2].strip())
             if fmt == "points":
                 return DependencyResolver._resolve_points_format(values)
@@ -258,14 +228,13 @@ class DependencyResolver:
     def _resolve_step_format(values: List[str]) -> np.ndarray:
         """Processes (start, stop, step) format."""
         try:
-            start, stop, step = (float(values[0]), float(values[1]),float(values[2]))
+            start, stop, step = float(values[0]), float(values[1]), float(values[2])
             if abs(step) <= DependencyResolver.EPSILON:
                 raise ValueError("Step cannot be zero")
             if (start < stop and step <= 0) or (start > stop and step >= 0):
                 raise ValueError("Step sign must match range direction")
             if abs(step) > abs(stop - start):
-                raise ValueError(f"Step ({abs(step)}) is too large for range "
-                    f"({abs(stop - start)})")
+                raise ValueError(f"Step ({abs(step)}) is too large for range ({abs(stop - start)})")
             return np.arange(start, stop + step / 2, step)
         except (ValueError, TypeError) as e:
             raise ValueError(f"Invalid step format: ({', '.join(values)})\n -> {str(e)}") from e
@@ -285,20 +254,18 @@ class DependencyResolver:
             raise ValueError(f"Invalid points format: ({', '.join(values)})\n -> {str(e)}") from e
 
     @staticmethod
-    def _validate_range_dependencies(start: float, stop: float) -> None:
-        """Validates that start/stop are both above absolute zero and distinct."""
-        if (start <= DependencyResolver.ABSOLUTE_ZERO or stop <= DependencyResolver.ABSOLUTE_ZERO):
-            raise ValueError(f"Dependencies must be above absolute zero ({DependencyResolver.ABSOLUTE_ZERO}K), "
-                f"got start={start}K, stop={stop}K")
+    def _validate_range_endpoints(start: float, stop: float) -> None:
+        """Validates that start and stop are distinct."""
         if abs(start - stop) <= DependencyResolver.EPSILON:
-            raise ValueError(f"Start and stop must be different, got start={start}K, stop={stop}K")
+            raise ValueError(f"Start and stop must be different, got start={start}, stop={stop}")
 
     @staticmethod
     def validate_dependency_array(dep_array: np.ndarray, context: str = "") -> None:
         """Validates a dependency array for common issues.
+
         Args:
             dep_array: Array to validate.
-            context: Optional context string for error messages.
+            context:   Optional context string for error messages.
         """
         ctx = f" for {context}" if context else ""
         if len(dep_array) == 0:
@@ -306,8 +273,5 @@ class DependencyResolver:
         if len(dep_array) < DependencyResolver.MIN_POINTS:
             raise ValueError(f"Dependency array must have at least {DependencyResolver.MIN_POINTS} points, "
                 f"got {len(dep_array)}{ctx}")
-        if np.any(dep_array <= DependencyResolver.ABSOLUTE_ZERO):
-            invalid = dep_array[dep_array <= DependencyResolver.ABSOLUTE_ZERO]
-            raise ValueError(f"All dependencies must be above absolute zero ({DependencyResolver.ABSOLUTE_ZERO}K), got {invalid}{ctx}")
         if not np.all(np.isfinite(dep_array)):
             raise ValueError(f"Dependency array contains non-finite values{ctx}")

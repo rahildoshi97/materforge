@@ -17,7 +17,7 @@ def test_all_imports():
         # Test core imports
         from materforge.core.materials import Material
         # Test parsing imports
-        from materforge.parsing.validation.property_validator import validate_monotonic_energy_density
+        from materforge.parsing.validation.property_validator import validate_monotonic_property
         # Test algorithm imports
         from materforge.algorithms.interpolation import interpolate_value
         from materforge.algorithms.piecewise_builder import PiecewiseBuilder

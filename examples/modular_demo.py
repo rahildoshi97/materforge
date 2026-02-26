@@ -302,9 +302,9 @@ class MaterialPropertyDemonstrator:
         all_values = None
 
         if self.config.object_oriented_evaluation:
-            print("Method 2: material.evaluate_properties_at_temperature(symbol, value)")
+            print("Method 2: material.evaluate(symbol, value)")
             try:
-                all_values = mat.evaluate_properties_at_temperature(T_mat, test_temp)
+                all_values = mat.evaluate(T_mat, test_temp)
                 print(f"All properties at {test_temp} K:")
                 for prop, value in sorted(all_values.items()):
                     print(f"  {prop:<30}: {value:.6e}")
@@ -329,7 +329,7 @@ class MaterialPropertyDemonstrator:
         batch_results = {}
         for temp in self.config.batch_temperatures:
             try:
-                batch_results[temp] = mat.evaluate_properties_at_temperature(T_mat, temp)
+                batch_results[temp] = mat.evaluate(T_mat, temp)
             except Exception as e:
                 print(f"  Error at {temp}K: {e}")
                 batch_results[temp] = {}
@@ -453,7 +453,7 @@ class MaterialPropertyDemonstrator:
             for temp in temp_range:
                 try:
                     # Evaluate all, then filter to sweep_props - no kwargs needed
-                    all_vals = mat.evaluate_properties_at_temperature(T_mat, temp)
+                    all_vals = mat.evaluate(T_mat, temp)
                     row = {p: all_vals[p] for p in sweep_props if p in all_vals}
                     row['temperature'] = temp
                     sweep_data.append(row)

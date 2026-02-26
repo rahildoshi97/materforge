@@ -137,7 +137,7 @@ class TestInterpolationComprehensive:
         """Test ensure_ascending_order with mixed order (should raise error)."""
         temp_array = np.array([100, 300, 200])  # Neither ascending nor descending
         value_array = np.array([10, 30, 20])
-        with pytest.raises(ValueError, match="not strictly ascending or strictly descending"):
+        with pytest.raises(ValueError, match="Array is neither strictly ascending nor descending"):
             ensure_ascending_order(temp_array, value_array)
 
     def test_ensure_ascending_order_single_element(self):
@@ -162,7 +162,7 @@ class TestInterpolationComprehensive:
         """Test ensure_ascending_order with constant values."""
         temp_array = np.array([100, 100, 100])  # All same values
         value_array = np.array([10, 10, 10])
-        with pytest.raises(ValueError, match="not strictly ascending or strictly descending"):
+        with pytest.raises(ValueError, match="Array is neither strictly ascending nor descending"):
             ensure_ascending_order(temp_array, value_array)
 
     def test_ensure_ascending_order_floating_point_precision(self):
@@ -194,7 +194,7 @@ class TestInterpolationComprehensive:
         x_array = np.array([300, 400, 500])
         y_array = np.array([100, 150, 200])
         # NaN input should raise error
-        with pytest.raises(ValueError, match="Temperature T must be finite, got nan"):
+        with pytest.raises(ValueError, match="dep_value must be finite, got nan"):
             interpolate_value(np.nan, x_array, y_array, 'constant', 'constant')
 
     def test_interpolate_value_inf_input(self):
@@ -202,10 +202,10 @@ class TestInterpolationComprehensive:
         x_array = np.array([300, 400, 500])
         y_array = np.array([100, 150, 200])
         # Infinite input should raise validation error
-        with pytest.raises(ValueError, match="Temperature T must be finite"):
+        with pytest.raises(ValueError, match="dep_value must be finite"):
             interpolate_value(np.inf, x_array, y_array, 'constant', 'extrapolate')
         # Also test negative infinity
-        with pytest.raises(ValueError, match="Temperature T must be finite"):
+        with pytest.raises(ValueError, match="dep_value must be finite"):
             interpolate_value(-np.inf, x_array, y_array, 'constant', 'extrapolate')
 
     def test_interpolate_value_mismatched_array_lengths(self):

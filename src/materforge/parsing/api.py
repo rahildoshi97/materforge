@@ -6,15 +6,12 @@
 import logging
 from pathlib import Path
 from typing import Dict, List, Union
-
 import sympy as sp
-
 from materforge.core.materials import Material
 from materforge.parsing.config.material_yaml_parser import MaterialYAMLParser
 from materforge.parsing.config.yaml_keys import NAME_KEY, PROPERTIES_KEY
 
 logger = logging.getLogger(__name__)
-
 
 # ====================================================================
 # CORE MATERIAL CREATION AND VALIDATION
@@ -22,19 +19,20 @@ logger = logging.getLogger(__name__)
 
 def create_material(yaml_path: Union[str, Path], dependency: sp.Symbol,
                     enable_plotting: bool = True) -> Material:
-    """Create a Material from a YAML configuration file.
+    """Creates a Material from a YAML configuration file.
 
     Args:
-        yaml_path: Path to the YAML configuration file.
-        dependency: SymPy symbol for property evaluation (e.g. sp.Symbol('T')).
-            In YAML equations always use 'T'; it is substituted automatically.
+        yaml_path:       Path to the YAML configuration file.
+        dependency:      SymPy symbol (symbolic mode).
+                         YAML equations always use the placeholder 'T';
+                         it is substituted with this symbol automatically.
         enable_plotting: Generate visualisation plots (default: True).
     Returns:
-        Material: Fully initialised material instance.
+        Fully initialised Material instance.
     Raises:
         FileNotFoundError: YAML file does not exist.
-        TypeError: dependency is not a sp.Symbol.
-        ValueError: YAML content is invalid or material creation fails.
+        TypeError:         dependency is not a sp.Symbol
+        ValueError:        YAML content is invalid or material creation fails.
     Example:
         >>> material = create_material('steel.yaml', sp.Symbol('T'))
         >>> material = create_material('copper.yaml', sp.Symbol('u_C'), enable_plotting=False)
@@ -43,7 +41,7 @@ def create_material(yaml_path: Union[str, Path], dependency: sp.Symbol,
                 yaml_path, dependency, enable_plotting)
     if not isinstance(dependency, sp.Symbol):
         raise TypeError(
-            f"Dependency '{dependency}' must be a sympy Symbol, got {type(dependency).__name__}")
+            f"dependency '{dependency}' must be a sympy Symbol, got {type(dependency).__name__}")
     try:
         parser = MaterialYAMLParser(yaml_path=yaml_path)
         material = parser.create_material(dependency=dependency, enable_plotting=enable_plotting)
@@ -54,16 +52,16 @@ def create_material(yaml_path: Union[str, Path], dependency: sp.Symbol,
         logger.error("Failed to create material from %s: %s", yaml_path, e, exc_info=True)
         raise
 
-
 def validate_yaml_file(yaml_path: Union[str, Path]) -> bool:
-    """Validate a YAML file without creating the material.
+    """Validates a YAML file without creating the material.
+
     Args:
         yaml_path: Path to the YAML configuration file to validate.
     Returns:
-        bool: True if the file is valid.
+        True if the file is structurally valid.
     Raises:
         FileNotFoundError: File does not exist.
-        ValueError: Content is invalid.
+        ValueError:        Content is invalid.
     Example:
         >>> is_valid = validate_yaml_file('steel.yaml')
     """
@@ -82,22 +80,21 @@ def validate_yaml_file(yaml_path: Union[str, Path]) -> bool:
         logger.error("Unexpected error validating YAML %s: %s", yaml_path, e, exc_info=True)
         raise ValueError(f"Unexpected error validating YAML: {str(e)}") from e
 
-
 # ====================================================================
 # MATERIAL INFORMATION AND PROPERTIES
 # ====================================================================
 
 def get_material_info(yaml_path: Union[str, Path]) -> Dict:
-    """Extract material metadata from a YAML file without full processing.
+    """Extracts material metadata from a YAML file without full processing.
+
     Args:
         yaml_path: Path to the YAML configuration file.
     Returns:
-        Dict: Keys include name, material_type, composition, properties,
-            total_properties, property_types, and all temperature fields
-            present in the YAML (e.g. solidus_temperature).
+        Dict with keys: name, properties, total_properties, property_types,
+        and any additional top-level YAML fields (e.g. solidus_temperature).
     Raises:
         FileNotFoundError: File does not exist.
-        ValueError: Content is invalid or a required field is missing.
+        ValueError:        Content is invalid or a required field is missing.
     Example:
         >>> info = get_material_info('steel.yaml')
         >>> print(info['name'], info['total_properties'])
@@ -106,9 +103,7 @@ def get_material_info(yaml_path: Union[str, Path]) -> Dict:
     try:
         parser = MaterialYAMLParser(yaml_path=yaml_path)
         config = parser.config
-        info: Dict = {
-            'name': config.get(NAME_KEY, 'Unknown'),
-        }
+        info: Dict = {'name': config.get(NAME_KEY, 'Unknown')}
         properties = config.get(PROPERTIES_KEY, {})
         info['properties'] = list(properties.keys())
         info['total_properties'] = len(properties)
@@ -116,13 +111,13 @@ def get_material_info(yaml_path: Union[str, Path]) -> Dict:
         for key, value in config.items():
             if key not in reserved_keys:
                 info[key] = value
-        if hasattr(parser, 'categorized_properties') and parser.categorized_properties:
+        if hasattr(parser, "categorized_properties") and parser.categorized_properties:
             info['property_types'] = {
                 pt.name: len(props)
                 for pt, props in parser.categorized_properties.items()
                 if props
             }
-        logger.info("Successfully extracted info for material: %s", info['name'])
+        logger.info("Successfully extracted info for material: '%s'", info['name'])
         return info
     except FileNotFoundError as e:
         logger.error("YAML file not found: %s", yaml_path)
@@ -134,16 +129,15 @@ def get_material_info(yaml_path: Union[str, Path]) -> Dict:
         logger.error("Failed to extract material info from %s: %s", yaml_path, e, exc_info=True)
         raise ValueError(f"Failed to extract material info: {str(e)}") from e
 
-
 def get_material_property_names(material: Material) -> List[str]:
-    """Return all thermophysical property names assigned to a material instance.
+    """Returns all property names dynamically assigned to a material instance.
 
-    Uses the dynamic property tracker - works for any name, including
-    user-defined ones absent from any predefined list.
+    Uses the dynamic property tracker - works for any user-defined name.
+
     Args:
         material: A fully processed Material instance.
     Returns:
-        List[str]: Property names dynamically assigned during processing.
+        Property names assigned during processing.
     Raises:
         ValueError: Argument is not a Material instance.
     Example:
@@ -154,20 +148,20 @@ def get_material_property_names(material: Material) -> List[str]:
         raise ValueError(f"Expected Material instance, got {type(material).__name__}")
     return material.property_names()
 
-
 # ====================================================================
 # PROPERTY EVALUATION
 # ====================================================================
 
-def evaluate_material_properties(material: Material, symbol: sp.Symbol, value: Union[float, int]) -> Dict[str, float]:
-    """Functional wrapper around Material.evaluate_properties_at_temperature().
+def evaluate_material_properties(material: Material, symbol: sp.Symbol,
+                                  value: Union[float, int]) -> Dict[str, float]:
+    """Evaluates all symbolic properties at a given numeric value.
 
     Args:
         material: A fully processed Material instance.
-        symbol:   SymPy symbol to substitute (e.g. sp.Symbol('T')).
-        value:    Value in Kelvin. Must be positive.
+        symbol:   SymPy symbol to substitute.
+        value:    Numeric value to substitute. Must be positive.
     Returns:
-        Dict[str, float]: All property names mapped to evaluated float values.
+        All property names mapped to evaluated float values.
     Raises:
         ValueError: If material is not a Material instance.
     Example:
@@ -175,8 +169,7 @@ def evaluate_material_properties(material: Material, symbol: sp.Symbol, value: U
     """
     if not isinstance(material, Material):
         raise ValueError(f"Expected Material instance, got {type(material).__name__}")
-    return material.evaluate_properties_at_temperature(symbol, value)
-
+    return material.evaluate(symbol, value)
 
 # ====================================================================
 # INTERNAL/TESTING FUNCTIONS
@@ -193,7 +186,6 @@ def _test_api() -> None:
             logger.warning("Test file not found, skipping API test")
     except (FileNotFoundError, ValueError, AssertionError) as e:
         logger.error("API test failed: %s", e)
-
 
 # ====================================================================
 # MODULE EXPORTS

@@ -157,7 +157,7 @@ def create_heat_equation_workflow_visualization():
                         if len(energy_symbols) == 1:
                             temp_symbol = list(energy_symbols)[0]
                             E_symbol = sp.Symbol('E')
-                            inverse_func = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol, E_symbol) # type: ignore
+                            _ = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol, E_symbol) # type: ignore
                             print("Inverse function created for heat equation")
                     except Exception as e:
                         print(f"Inverse creation failed: {e}")

@@ -2,7 +2,6 @@
 import pytest
 import sympy as sp
 from materforge.algorithms.piecewise_inverter import PiecewiseInverter
-from materforge.core.materials import Material
 
 class TestPiecewiseInverter:
     """Test cases for PiecewiseInverter."""
@@ -62,9 +61,9 @@ class TestPiecewiseInverter:
         E = sp.Symbol('E')
         inverter = PiecewiseInverter()
         expr = sp.Float(1000)
-        inverse_expr = inverter._invert_linear_expression(expr, T, E, boundary_temp=None)
+        inverse_expr = inverter._invert_linear_expression(expr, T, E, boundary_val=None)
         assert float(inverse_expr) == 1000.0
-        inverse_expr_with_boundary = inverter._invert_linear_expression(expr, T, E, boundary_temp=500.0)
+        inverse_expr_with_boundary = inverter._invert_linear_expression(expr, T, E, boundary_val=500.0)
         assert float(inverse_expr_with_boundary) == 500.0
 
     def test_create_inverse_single_segment(self):
