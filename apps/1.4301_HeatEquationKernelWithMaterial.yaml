@@ -21,7 +21,7 @@ properties:
   thermal_diffusivity: # COMPUTED_PROPERTY
     dependency: (3000, 300, -5.0)
     equation: heat_conductivity /(density * heat_capacity)
-    bounds: [ extrapolate, extrapolate ]
+    bounds: [ linear, linear ]
     regression:
       simplify: post
       degree: 1
@@ -32,7 +32,7 @@ properties:
   energy_density:  # COMPUTED_PROPERTY
     dependency: (300, 3000, 5.0)
     equation: density * specific_enthalpy
-    bounds: [ extrapolate, extrapolate ]
+    bounds: [ linear, linear ]
     regression:
         simplify: post
         degree: 1
@@ -55,7 +55,7 @@ properties:
     file_path: ./1.4301_HeatEquationKernelWithMaterial.xlsx
     dependency_column: T (K)
     property_column: Specific heat (J/(Kg K))
-    bounds: [extrapolate, extrapolate]
+    bounds: [linear, linear]
     regression:
       simplify: pre  # TODO: 'post' causes errors: <lambdifygenerated-8>:2: RuntimeWarning: divide by zero encountered in reciprocal
       degree: 1
@@ -67,7 +67,7 @@ properties:
     file_path: ./1.4301_HeatEquationKernelWithMaterial.xlsx
     dependency_column: T (K)
     property_column: Thermal conductivity (W/(m*K))-TOTAL-10000.0(K/s)
-    bounds: [extrapolate, extrapolate]
+    bounds: [linear, linear]
     regression:
       simplify: post
       degree: 1
@@ -79,7 +79,7 @@ properties:
     file_path: ./1.4301_HeatEquationKernelWithMaterial.xlsx
     dependency_column: T (K)
     property_column: Density (kg/(m)^3)
-    bounds: [extrapolate, extrapolate]
+    bounds: [linear, linear]
     regression:
       simplify: post
       degree: 1  # 2
