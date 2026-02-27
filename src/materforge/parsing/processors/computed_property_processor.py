@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import logging
-from typing import Dict, List, Set, Union, Any
+from typing import Dict, List, Set, Any
 import numpy as np
 import sympy as sp
 from materforge.core.materials import Material

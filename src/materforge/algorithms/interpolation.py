@@ -5,7 +5,7 @@ import logging
 import numpy as np
 from typing import Tuple
 
-from materforge.parsing.config.yaml_keys import CONSTANT_KEY, LINEAR_KEY
+from materforge.parsing.config.yaml_keys import LINEAR_KEY
 from materforge.data.constants import ProcessingConstants
 
 logger = logging.getLogger(__name__)

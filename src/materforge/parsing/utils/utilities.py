@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import logging
-from typing import List, Tuple, Union
+from typing import List, Tuple
 import numpy as np
-import sympy as sp
-from materforge.core.materials import Material
+
 from materforge.data.constants import ProcessingConstants
 
 logger = logging.getLogger(__name__)

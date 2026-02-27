@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 import sympy as sp
 
@@ -20,6 +20,7 @@ class Material:
 
     Attributes:
         name: Human-readable material identifier.
+        properties: Dictionary with all properties.
     """
     name: str
     properties: Dict[str, sp.Basic] = field(default_factory=dict)
@@ -83,10 +84,8 @@ class Material:
             properties=evaluated_properties,
         )
 
-    # --- Repr ---
     def __str__(self) -> str:
         return f"Material: {self.name} ({len(self.properties)} properties)"
 
     def __repr__(self) -> str:
-        return (f"Material(name='{self.name}', "
-                f"properties={sorted(self.property_names())})")
+        return f"Material(name='{self.name}', properties={sorted(self.property_names())})"
