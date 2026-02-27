@@ -8,13 +8,14 @@ import sympy as sp
 from materforge.algorithms.interpolation import ensure_ascending_order
 from materforge.algorithms.regression_processor import RegressionProcessor
 from materforge.data.constants import ProcessingConstants
-from materforge.parsing.config.yaml_keys import CONSTANT_KEY, EXTRAPOLATE_KEY, BOUNDS_KEY, PRE_KEY
+from materforge.parsing.config.yaml_keys import CONSTANT_KEY, LINEAR_KEY, BOUNDS_KEY, PRE_KEY
 from materforge.parsing.utils.utilities import ensure_sympy_compatible
 
 logger = logging.getLogger(__name__)
 
 # The placeholder symbol used in YAML equation strings.
 _YAML_PLACEHOLDER = sp.Symbol('T')
+
 
 class PiecewiseBuilder:
     """Centralised piecewise function creation with different build strategies."""
@@ -111,8 +112,8 @@ class PiecewiseBuilder:
                     raise ValueError(f"Failed to parse equation {i + 1}: '{eqn_str}': {e}") from e
             # Special case: single expression with extrapolation at both ends
             if (len(parsed_equations) == 1
-                    and lower_bound_type == EXTRAPOLATE_KEY
-                    and upper_bound_type == EXTRAPOLATE_KEY):
+                    and lower_bound_type == LINEAR_KEY
+                    and upper_bound_type == LINEAR_KEY):
                 logger.warning(
                     "Single expression with extrapolation at both ends for dependency %s. "
                     "Consider simplifying to a direct equation.", dependency
@@ -123,9 +124,9 @@ class PiecewiseBuilder:
                 const_value = parsed_equations[0].subs(dependency, dep_points[0])
                 conditions.append((const_value, dependency < dep_points[0]))
             for i, expr in enumerate(parsed_equations):
-                if i == 0 and lower_bound_type == EXTRAPOLATE_KEY:
+                if i == 0 and lower_bound_type == LINEAR_KEY:
                     conditions.append((expr, dependency < dep_points[i + 1]))
-                elif i == len(parsed_equations) - 1 and upper_bound_type == EXTRAPOLATE_KEY:
+                elif i == len(parsed_equations) - 1 and upper_bound_type == LINEAR_KEY:
                     conditions.append((expr, dependency >= dep_points[i]))
                 else:
                     conditions.append((expr, sp.And(dependency >= dep_points[i], dependency < dep_points[i + 1])))

@@ -27,19 +27,19 @@ class TestComputedPropertyProcessor:
 
     def test_extract_equation_dependencies_simple(self):
         deps = ComputedPropertyProcessor._extract_equation_dependencies(
-            "density * heat_capacity")
+            "density * heat_capacity", sp.Symbol("T"))
         assert set(deps) == {'density', 'heat_capacity'}
 
     def test_extract_equation_dependencies_complex(self):
         deps = ComputedPropertyProcessor._extract_equation_dependencies(
-            "density * heat_capacity + thermal_conductivity / viscosity")
+            "density * heat_capacity + thermal_conductivity / viscosity", sp.Symbol("T"))
         assert set(deps) == {
             'density', 'heat_capacity', 'thermal_conductivity', 'viscosity'}
 
     def test_extract_equation_dependencies_excludes_temperature_symbol(self):
         """Temperature symbol T must not appear in extracted dependencies."""
         deps = ComputedPropertyProcessor._extract_equation_dependencies(
-            "density * T + heat_capacity")
+            "density * T + heat_capacity", sp.Symbol("T"))
         assert set(deps) == {'density', 'heat_capacity'}
         assert 'T' not in deps
 
@@ -50,7 +50,7 @@ class TestComputedPropertyProcessor:
             'mass': 1000.0,
         }
         processor = ComputedPropertyProcessor(properties, set())
-        processor._validate_circular_dependencies('volume', ['mass', 'density'], set())
+        processor._validate_circular_dependencies('volume', sp.Symbol("T"), ['mass', 'density'], set())
 
     def test_validate_circular_dependencies_with_cycle(self):
         """Cycle a -> b -> c -> a raises CircularDependencyError."""
@@ -61,13 +61,13 @@ class TestComputedPropertyProcessor:
         }
         processor = ComputedPropertyProcessor(properties, set())
         with pytest.raises(CircularDependencyError):
-            processor._validate_circular_dependencies('prop_a', ['prop_b'], set())
+            processor._validate_circular_dependencies('prop_a', sp.Symbol("T"), ['prop_b'], set())
 
     def test_validate_circular_dependencies_self_reference(self):
         properties = {'recursive_prop': {'equation': 'recursive_prop + 1'}}
         processor = ComputedPropertyProcessor(properties, set())
         with pytest.raises(CircularDependencyError):
-            processor._validate_circular_dependencies('recursive_prop', ['recursive_prop'], set())
+            processor._validate_circular_dependencies('recursive_prop', sp.Symbol("T"), ['recursive_prop'], set())
 
     def test_process_computed_property_simple(self):
         """Product of two scalar constants is computed and tracked."""

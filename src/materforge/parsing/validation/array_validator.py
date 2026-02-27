@@ -9,6 +9,7 @@ from materforge.data.constants import ProcessingConstants
 
 logger = logging.getLogger(__name__)
 
+
 def is_monotonic(arr: np.ndarray, name: str = "Array",
                  mode: str = "strictly_increasing",
                  threshold: float = ProcessingConstants.MONOTONICITY_THRESHOLD,

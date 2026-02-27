@@ -4,7 +4,9 @@ from pathlib import Path
 import pytest
 import sympy as sp
 from ruamel.yaml import YAML
+
 from materforge.parsing.api import create_material
+from materforge.parsing.config.yaml_keys import CONSTANT_KEY, LINEAR_KEY
 
 class TestMaterialCreation:
     """Integration tests for complete material creation workflows."""
@@ -20,12 +22,12 @@ class TestMaterialCreation:
                 'heat_capacity': {
                     'dependency': [300, 600, 900, 1200],
                     'value': [523, 565, 590, 615],
-                    'bounds': ['constant', 'constant'],
+                    'bounds': [CONSTANT_KEY, CONSTANT_KEY],
                 },
                 'heat_conductivity': {
                     'dependency': [300, 600, 900],
                     'value': [21.9, 24.5, 27.1],
-                    'bounds': ['extrapolate', 'extrapolate'],
+                    'bounds': [LINEAR_KEY, LINEAR_KEY],
                 },
             },
         }
@@ -62,12 +64,12 @@ class TestMaterialCreation:
                 'heat_capacity': {
                     'dependency': [300, 600, 900, 1200, 1500],
                     'value': [435, 485, 520, 555, 590],
-                    'bounds': ['constant', 'constant'],
+                    'bounds': [CONSTANT_KEY, CONSTANT_KEY],
                 },
                 'heat_conductivity': {
                     'dependency': [300, 600, 900],
                     'equation': ['211000 - 45*T', '180000 - 20*T'],
-                    'bounds': ['constant', 'extrapolate'],
+                    'bounds': [CONSTANT_KEY, LINEAR_KEY],
                 },
             },
         }
@@ -101,7 +103,7 @@ class TestMaterialCreation:
                 'latent_heat': {
                     'dependency': 'solidus_temperature',
                     'value': [0.0, 250000.0],
-                    'bounds': ['constant', 'constant'],
+                    'bounds': [CONSTANT_KEY, CONSTANT_KEY],
                 },
             },
         }

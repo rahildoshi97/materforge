@@ -16,9 +16,10 @@ from typing import Dict, Union, Tuple, Optional
 from pathlib import Path
 from materforge.algorithms.piecewise_builder import PiecewiseBuilder
 from materforge.core.materials import Material
-from materforge.parsing.utils.utilities import handle_numeric_dependency
+
 
 logger = logging.getLogger(__name__)
+
 
 class PropertyProcessorBase:
     """Base class for material property processors with common finalization logic.
@@ -47,7 +48,7 @@ class PropertyProcessorBase:
 
     def finalize_with_piecewise_function(self, material: Material, prop_name: str,
                                          piecewise_func: sp.Piecewise,
-                                         dependency: Union[float, sp.Symbol],
+                                         dependency: sp.Symbol,
                                          config: Dict, prop_type: str,
                                          x_data: Optional[np.ndarray] = None,
                                          y_data: Optional[np.ndarray] = None) -> bool:
@@ -59,7 +60,7 @@ class PropertyProcessorBase:
             material:       Material instance to assign the property to.
             prop_name:      Name of the property.
             piecewise_func: Pre-built SymPy Piecewise expression.
-            dependency:     SymPy symbol (symbolic mode) or float (numeric mode).
+            dependency:     SymPy symbol (symbolic mode).
             config:         Property configuration dict.
             prop_type:      Property type string for visualization context.
             x_data:         Optional dependency values for visualization.
@@ -68,8 +69,6 @@ class PropertyProcessorBase:
             True if numeric evaluation was performed, False if symbolic.
         """
         logger.debug("Finalizing property '%s' with existing piecewise function", prop_name)
-        if handle_numeric_dependency(self, material, prop_name, piecewise_func, dependency):
-            return True
         setattr(material, prop_name, piecewise_func)
         bounds = (np.min(x_data), np.max(x_data)) if x_data is not None and len(x_data) > 0 else None
         self._visualize_if_enabled(
@@ -82,7 +81,7 @@ class PropertyProcessorBase:
 
     def finalize_with_data_arrays(self, material: Material, prop_name: str,
                                   dep_array: np.ndarray, prop_array: np.ndarray,
-                                  dependency: Union[float, sp.Symbol],
+                                  dependency: sp.Symbol,
                                   config: Dict, prop_type: str) -> bool:
         """Finalises property processing from raw dependency–value arrays.
 
@@ -94,7 +93,7 @@ class PropertyProcessorBase:
             prop_name:   Name of the property.
             dep_array:   Dependency variable values.
             prop_array:  Corresponding property values.
-            dependency:  SymPy symbol (symbolic mode) or float (numeric mode).
+            dependency:  SymPy symbol (symbolic mode).
             config:      Property configuration dict.
             prop_type:   Property type string for visualization context.
         Returns:
@@ -109,18 +108,7 @@ class PropertyProcessorBase:
         if len(dep_array) != len(prop_array):
             raise ValueError(f"Dependency and property arrays must have equal length for '{prop_name}' "
                 f"(got {len(dep_array)} and {len(prop_array)})")
-        lower_bound_type, upper_bound_type = config.get('bounds', ['constant', 'constant'])
-        # Numeric mode: interpolate directly
-        if not isinstance(dependency, sp.Symbol):
-            from materforge.algorithms.interpolation import interpolate_value
-            try:
-                value = interpolate_value(dependency, dep_array, prop_array, lower_bound_type, upper_bound_type)
-                setattr(material, prop_name, sp.Float(value))
-                self.processed_properties.add(prop_name)
-                logger.debug("Numeric interpolation completed for '%s': %s", prop_name, value)
-                return True
-            except Exception as e:
-                raise ValueError(f"Failed to interpolate '{prop_name}' at dependency={dependency}: {str(e)}") from e
+
         # Symbolic mode: build piecewise function
         try:
             piecewise_func = PiecewiseBuilder.build_from_data(dep_array, prop_array, dependency, config, prop_name)

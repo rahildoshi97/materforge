@@ -7,11 +7,12 @@ import pwlf
 import sympy as sp
 from materforge.data.constants import ProcessingConstants
 from materforge.parsing.config.yaml_keys import (
-    REGRESSION_KEY, SIMPLIFY_KEY, DEGREE_KEY, SEGMENTS_KEY, EXTRAPOLATE_KEY, CONSTANT_KEY,
+    REGRESSION_KEY, SIMPLIFY_KEY, DEGREE_KEY, SEGMENTS_KEY, LINEAR_KEY, CONSTANT_KEY,
 )
 from materforge.parsing.utils.utilities import ensure_sympy_compatible
 
 logger = logging.getLogger(__name__)
+
 
 class RegressionProcessor:
     """Handles all regression-related functionality."""
@@ -111,8 +112,8 @@ class RegressionProcessor:
         Args:
             pwlf_:      Fitted PiecewiseLinFit instance.
             dependency: SymPy symbol used in the expressions.
-            lower_:     Lower boundary type ("constant" or "extrapolate").
-            upper_:     Upper boundary type ("constant" or "extrapolate").
+            lower_:     Lower boundary type (CONSTANT_KEY or LINEAR_KEY).
+            upper_:     Upper boundary type (CONSTANT_KEY or LINEAR_KEY).
         Returns:
             List of (expr, condition) tuples suitable for sp.Piecewise.
         """
@@ -120,7 +121,7 @@ class RegressionProcessor:
         fit_breaks = [ensure_sympy_compatible(b) for b in pwlf_.fit_breaks]
         conditions = []
         # Special case: single segment with full extrapolation
-        if pwlf_.n_segments == 1 and lower_ == EXTRAPOLATE_KEY and upper_ == EXTRAPOLATE_KEY:
+        if pwlf_.n_segments == 1 and lower_ == LINEAR_KEY and upper_ == LINEAR_KEY:
             eqn = RegressionProcessor.get_symbolic_eqn(pwlf_, 1, dependency)
             conditions.append((eqn, dependency >= -sp.oo))
             return conditions
@@ -130,9 +131,9 @@ class RegressionProcessor:
             conditions.append((const_val, dependency < fit_breaks[0]))
         for i in range(pwlf_.n_segments):
             eqn = RegressionProcessor.get_symbolic_eqn(pwlf_, i + 1, dependency)
-            if i == 0 and lower_ == EXTRAPOLATE_KEY:
+            if i == 0 and lower_ == LINEAR_KEY:
                 conditions.append((eqn, dependency < fit_breaks[i + 1]))
-            elif i == pwlf_.n_segments - 1 and upper_ == EXTRAPOLATE_KEY:
+            elif i == pwlf_.n_segments - 1 and upper_ == LINEAR_KEY:
                 conditions.append((eqn, dependency >= fit_breaks[i]))
             else:
                 conditions.append(

@@ -21,6 +21,7 @@ from materforge.parsing.processors.post_processor import PropertyPostProcessor
 
 logger = logging.getLogger(__name__)
 
+
 class PropertyProcessor(PropertyProcessorBase):
     """Orchestrates property processing by delegating to specialised handlers.
 

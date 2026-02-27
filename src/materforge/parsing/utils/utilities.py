@@ -10,36 +10,8 @@ from materforge.data.constants import ProcessingConstants
 
 logger = logging.getLogger(__name__)
 
-# --- Core Utility Functions ---
-def handle_numeric_dependency(processor_instance, material: Material,
-                              prop_name: str, piecewise_expr: sp.Expr,
-                              dependency: Union[float, sp.Symbol]) -> bool:
-    """Evaluates a piecewise expression at a numeric dependency value and assigns
-    the result to the material.
 
-    Args:
-        processor_instance: Processor instance owning processed_properties tracking.
-        material:           Material to assign the evaluated value to.
-        prop_name:          Name of the property being evaluated.
-        piecewise_expr:     SymPy expression to evaluate.
-        dependency:         Dependency value or symbol. If sp.Symbol, returns False
-                            and no evaluation is performed.
-    Returns:
-        True if numeric evaluation was performed, False if dependency is symbolic.
-    Raises:
-        ValueError: If numeric evaluation fails.
-    """
-    if isinstance(dependency, sp.Symbol):
-        return False
-    try:
-        placeholder = sp.Symbol('T')
-        value = float(piecewise_expr.subs(placeholder, dependency).evalf())
-        setattr(material, prop_name, sp.Float(value))
-        processor_instance.processed_properties.add(prop_name)
-        logger.debug("Numeric evaluation completed for '%s': %s", prop_name, value)
-        return True
-    except Exception as e:
-        raise ValueError(f"Failed to evaluate '{prop_name}' at dependency={dependency}: {str(e)}") from e
+# --- Core Utility Functions ---
 
 def create_step_visualization_data(transition_point: float, val_array: List[float],
                                    dep_range: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
@@ -69,6 +41,7 @@ def create_step_visualization_data(transition_point: float, val_array: List[floa
         val_array[1]
     ])
     return x_data, y_data
+
 
 def ensure_sympy_compatible(value):
     """Converts a value to a SymPy-compatible Python scalar or list.

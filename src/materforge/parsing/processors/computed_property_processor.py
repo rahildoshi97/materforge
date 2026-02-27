@@ -10,7 +10,7 @@ from materforge.core.symbol_registry import SymbolRegistry
 from materforge.parsing.processors.dependency_resolver import DependencyResolver
 from materforge.parsing.validation.errors import DependencyError, CircularDependencyError
 from materforge.parsing.config.yaml_keys import EQUATION_KEY, DEPENDENCY_KEY
-from materforge.parsing.utils.utilities import handle_numeric_dependency
+
 
 logger = logging.getLogger(__name__)
 
@@ -32,14 +32,14 @@ class ComputedPropertyProcessor:
         self.property_handler = property_handler
 
     def process_computed_property(self, material: Material, prop_name: str,
-                                  dependency: Union[float, sp.Symbol]) -> None:
+                                  dependency: sp.Symbol) -> None:
         """Processes a computed property by evaluating its equation over the
         resolved dependency range.
 
         Args:
             material:    Material instance to assign the result to.
             prop_name:   Name of the property to compute.
-            dependency:  SymPy symbol (symbolic mode) or float (numeric mode).
+            dependency:  SymPy symbol (symbolic mode).
         """
         if prop_name in self.processed_properties:
             logger.debug("Property '%s' already processed, skipping", prop_name)
@@ -60,9 +60,6 @@ class ComputedPropertyProcessor:
             except Exception as e:
                 logger.error("Failed to parse expression for '%s': %s", prop_name, e, exc_info=True)
                 raise ValueError(f"Failed to process computed property '{prop_name}' \n -> {str(e)}") from e
-            # Numeric dependency: evaluate immediately and return
-            if handle_numeric_dependency(self, material, prop_name, material_property, dependency):
-                return
             # Symbolic dependency: lambdify over the dependency array
             # material_property is already expressed in terms of `dependency` (the caller's symbol).
             f_pw = sp.lambdify(dependency, material_property, 'numpy')
@@ -91,7 +88,7 @@ class ComputedPropertyProcessor:
             raise ValueError(f"Failed to process computed property '{prop_name}' \n -> {str(e)}") from e
 
     def _parse_and_process_expression(self, expression: str, material: Material,
-                                      dependency: Union[float, sp.Symbol],
+                                      dependency: sp.Symbol,
                                       prop_name: str) -> sp.Expr:
         """Parses a mathematical expression string into a SymPy expression,
         substitutes all property dependencies and the placeholder symbol,
@@ -105,7 +102,7 @@ class ComputedPropertyProcessor:
             sympy_expr = sp.sympify(expression, evaluate=False)
             # Identify non-placeholder free symbols - these are property dependencies
             dependencies = [str(s) for s in sympy_expr.free_symbols
-                if s != _YAML_PLACEHOLDER]
+                if s != dependency]
             if dependencies:
                 logger.debug("Property '%s' depends on: %s", prop_name, dependencies)
                 missing_deps = [dep for dep in dependencies
@@ -114,7 +111,7 @@ class ComputedPropertyProcessor:
                     available_props = sorted(self.properties.keys())
                     raise DependencyError(expression=expression, missing_deps=missing_deps,
                                           available_props=available_props)
-                self._validate_circular_dependencies(prop_name, dependencies, set())
+                self._validate_circular_dependencies(prop_name, dependency, dependencies, set())
                 # Ensure all dependencies are processed before this property
                 for dep in dependencies:
                     if not hasattr(material, dep) or getattr(material, dep) is None:
@@ -140,7 +137,6 @@ class ComputedPropertyProcessor:
                     raise ValueError(f"Symbol '{dep}' not found in symbol registry")
                 substitutions[dep_symbol] = dep_value
             # Substitute the YAML placeholder with the caller's dependency symbol (or value)
-            substitutions[_YAML_PLACEHOLDER] = dependency
             result_expr = sympy_expr.subs(substitutions)
             # Evaluate any integrals (e.g. Integral(heat_capacity, T))
             if isinstance(result_expr, sp.Integral):
@@ -157,7 +153,7 @@ class ComputedPropertyProcessor:
                 expression, prop_name, e, exc_info=True)
             raise ValueError(f"Failed to parse and process expression: {expression}") from e
 
-    def _validate_circular_dependencies(self, prop_name: str, current_deps: List[str],
+    def _validate_circular_dependencies(self, prop_name: str, dependency: sp.Symbol, current_deps: List[str],
                                         visited: Set[str], path: List[str] = None) -> None:
         """Checks for circular dependencies in property definitions.
 
@@ -172,7 +168,7 @@ class ComputedPropertyProcessor:
         if path is None:
             path = []
         # Exclude the YAML placeholder from dependency graph traversal
-        current_deps = [dep for dep in current_deps if dep != str(_YAML_PLACEHOLDER)]
+        current_deps = [dep for dep in current_deps if dep != str(dependency)]
         if prop_name is not None:
             if prop_name in visited:
                 cycle_path = path + [prop_name]
@@ -184,12 +180,12 @@ class ComputedPropertyProcessor:
             if dep in self.properties:
                 dep_config = self.properties[dep]
                 if isinstance(dep_config, dict) and EQUATION_KEY in dep_config:
-                    dep_deps = self._extract_equation_dependencies(dep_config[EQUATION_KEY])
+                    dep_deps = self._extract_equation_dependencies(dep_config[EQUATION_KEY], dependency)
                     if dep_deps:
-                        self._validate_circular_dependencies(dep, dep_deps, visited.copy(), path)
+                        self._validate_circular_dependencies(dep, dependency, dep_deps, visited.copy(), path)
 
     @staticmethod
-    def _extract_equation_dependencies(equation_data) -> List[str]:
+    def _extract_equation_dependencies(equation_data, dependency: sp.Symbol) -> List[str]:
         """Extracts non-placeholder free symbols from equation data."""
         symbols = set()
         if isinstance(equation_data, list):
@@ -197,4 +193,4 @@ class ComputedPropertyProcessor:
                 symbols.update(sp.sympify(eq).free_symbols)
         else:
             symbols.update(sp.sympify(equation_data).free_symbols)
-        return [str(s) for s in symbols if s != _YAML_PLACEHOLDER]
+        return [str(s) for s in symbols if s != dependency]

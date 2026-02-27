@@ -11,7 +11,7 @@ from matplotlib.gridspec import GridSpec
 from materforge.core.materials import Material
 from materforge.algorithms.regression_processor import RegressionProcessor
 from materforge.parsing.config.yaml_keys import CONSTANT_KEY, NAME_KEY, POST_KEY, PRE_KEY
-from materforge.data.constants import PhysicalConstants, ProcessingConstants
+from materforge.data.constants import ProcessingConstants
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +136,7 @@ class PropertyVisualizer:
             if upper_bound is None:
                 upper_bound = data_upper
             padding = (upper_bound - lower_bound) * ProcessingConstants.DEPENDENCY_PADDING_FACTOR
-            padded_lower = max(lower_bound - padding, PhysicalConstants.ABSOLUTE_ZERO)
+            padded_lower = lower_bound - padding
             padded_upper = upper_bound + padding
             num_points = int(np.ceil((padded_upper - padded_lower) / step)) + 1
             extended_dep = np.linspace(padded_lower, padded_upper, num_points)

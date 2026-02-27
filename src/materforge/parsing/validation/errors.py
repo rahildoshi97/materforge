@@ -3,9 +3,11 @@
 
 from typing import List
 
+
 class PropertyError(Exception):
     """Base exception for property-related errors."""
     pass
+
 
 class DependencyError(PropertyError):
     """Exception for dependency-related errors."""
@@ -19,6 +21,7 @@ class DependencyError(PropertyError):
             message += f"\nAvailable properties: {', '.join(available_props)}"
             message += "\nPlease check for typos or add the missing properties to your configuration."
         super().__init__(message)
+
 
 class CircularDependencyError(PropertyError):
     """Exception for circular dependency errors."""

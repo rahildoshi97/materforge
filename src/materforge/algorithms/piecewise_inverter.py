@@ -7,6 +7,7 @@ import sympy as sp
 
 logger = logging.getLogger(__name__)
 
+
 class PiecewiseInverter:
     """Creates inverse functions for linear piecewise functions (degree <= 1 only)."""
 

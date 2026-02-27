@@ -3,7 +3,10 @@ import sympy as sp
 from typing import List, Tuple
 import logging
 from pathlib import Path
+
 from materforge.parsing.api import create_material
+from materforge.parsing.config.yaml_keys import CONSTANT_KEY, LINEAR_KEY
+
 
 logger = logging.getLogger(__name__)
 

@@ -24,7 +24,7 @@ EQUATION_KEY = "equation"
 # Boundary condition keys
 BOUNDS_KEY = "bounds"
 CONSTANT_KEY = "constant"
-EXTRAPOLATE_KEY = "extrapolate"
+LINEAR_KEY = "linear"
 
 # Regression keys
 REGRESSION_KEY = "regression"

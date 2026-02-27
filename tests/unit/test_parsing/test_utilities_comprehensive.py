@@ -5,7 +5,7 @@ import numpy as np
 import sympy as sp
 from unittest.mock import Mock
 from materforge.core.materials import Material
-from materforge.parsing.utils.utilities import create_step_visualization_data, handle_numeric_dependency
+from materforge.parsing.utils.utilities import create_step_visualization_data
 
 
 class TestUtilitiesComprehensive:
@@ -17,49 +17,6 @@ class TestUtilitiesComprehensive:
         mat.melting_temperature = 1811.0
         mat.boiling_temperature = 3134.0
         return mat
-
-    def test_handle_numeric_dependency_symbolic(self, sample_material):
-        """Symbolic dependency -> returns False, property not added."""
-        processor = Mock()
-        processor.processed_properties = set()
-        T = sp.Symbol('T')
-        piecewise_expr = sp.Piecewise((100, T < 500), (200, True))
-        result = handle_numeric_dependency(processor, sample_material, 'test_prop', piecewise_expr, T)
-        assert result is False
-        assert 'test_prop' not in processor.processed_properties
-
-    def test_handle_numeric_dependency_numeric_success(self, sample_material):
-        """Numeric dependency -> returns True, property assigned to material."""
-        processor = Mock()
-        processor.processed_properties = set()
-        T = sp.Symbol('T')
-        piecewise_expr = sp.Piecewise((100, T < 500), (200, True))
-        result = handle_numeric_dependency(processor, sample_material, 'test_prop', piecewise_expr, 400.0)
-        assert result is True
-        assert hasattr(sample_material, 'test_prop')
-        assert 'test_prop' in processor.processed_properties
-
-    def test_handle_numeric_dependency_evaluation_error(self, sample_material):
-        """Expression with an unresolvable symbol raises ValueError."""
-        processor = Mock()
-        processor.processed_properties = set()
-        T = sp.Symbol('T')
-        # After substituting T=400, 'undef' remains symbolic -> float() raises TypeError
-        bad_expr = T + sp.Symbol('undef')
-        with pytest.raises(ValueError, match="Failed to evaluate.*at dependency="):
-            handle_numeric_dependency(
-                processor, sample_material, 'test_prop', bad_expr, 400.0)
-
-    def test_handle_numeric_dependency_complex_expression(self, sample_material):
-        """Complex symbolic expression evaluates to a finite float."""
-        processor = Mock()
-        processor.processed_properties = set()
-        T = sp.Symbol('T')
-        expr = sp.sin(T) * sp.exp(T / 1000) + sp.log(T)
-        result = handle_numeric_dependency(processor, sample_material, 'complex_prop', expr, 400.0)
-        assert result is True
-        assert hasattr(sample_material, 'complex_prop')
-        assert np.isfinite(float(getattr(sample_material, 'complex_prop')))
 
     def test_create_step_visualization_data_normal_range(self):
         """Normal range: 5-point output, extends beyond range bounds."""

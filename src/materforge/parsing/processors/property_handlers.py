@@ -17,10 +17,8 @@ from materforge.parsing.config.yaml_keys import (
 )
 from materforge.data.constants import ProcessingConstants
 
-# The placeholder symbol used in YAML equation strings.
-_YAML_PLACEHOLDER = sp.Symbol('T')
-
 logger = logging.getLogger(__name__)
+
 
 class BasePropertyHandler(PropertyProcessorBase):
     """Base class for property handlers with common functionality.
@@ -33,39 +31,39 @@ class BasePropertyHandler(PropertyProcessorBase):
         super().__init__()
         logger.debug("BasePropertyHandler initialized")
 
+
 class ConstantValuePropertyHandler(BasePropertyHandler):
     """Handler for constant (dependency-independent) properties."""
 
     def process_property(self, material: Material, prop_name: str,
                          prop_config: Union[float, str],
-                         dependency: Union[float, sp.Symbol]) -> None:
+                         dependency: sp.Symbol) -> None:
         """Processes a constant numeric property.
 
         Args:
             material:    Material instance to assign the value to.
             prop_name:   Name of the property.
             prop_config: Raw config value - expected to be a numeric scalar.
-            dependency:  SymPy symbol or float. Visualization is skipped for numeric.
+            dependency:  SymPy symbol
         """
         try:
             value = float(prop_config)
             setattr(material, prop_name, sp.Float(value))
             logger.debug("Set constant property '%s' = %s", prop_name, value)
-            if isinstance(dependency, sp.Symbol):
-                self._visualize_if_enabled(material=material, prop_name=prop_name, dependency=dependency,
-                    prop_type='CONSTANT_VALUE', x_data=None, y_data=None)
-            else:
-                logger.debug("Skipping visualization for constant property '%s' - numeric dependency", prop_name)
+            self._visualize_if_enabled(material=material, prop_name=prop_name, dependency=dependency,
+                prop_type='CONSTANT_VALUE', x_data=None, y_data=None)
+
             self.processed_properties.add(prop_name)
         except (ValueError, TypeError) as e:
             raise ValueError(f"Failed to process constant property '{prop_name}'\n -> {str(e)}") from e
+
 
 class StepFunctionPropertyHandler(BasePropertyHandler):
     """Handler for step function properties."""
 
     def process_property(self, material: Material, prop_name: str,
                          prop_config: Dict[str, Any],
-                         dependency: Union[float, sp.Symbol]) -> None:
+                         dependency: sp.Symbol) -> None:
         """Processes a step function property.
 
         Builds a SymPy Piecewise with two constant segments around a transition
@@ -75,7 +73,7 @@ class StepFunctionPropertyHandler(BasePropertyHandler):
             material:    Material instance.
             prop_name:   Name of the property.
             prop_config: Property configuration dict.
-            dependency:  SymPy symbol or float.
+            dependency:  SymPy symbol.
         """
         try:
             dep_key = prop_config[DEPENDENCY_KEY]
@@ -83,11 +81,9 @@ class StepFunctionPropertyHandler(BasePropertyHandler):
             transition_point = DependencyResolver.resolve_dependency_reference(dep_key, material)
             # Build piecewise using the YAML placeholder, then substitute caller's symbol
             step_function = sp.Piecewise(
-                (val_array[0], _YAML_PLACEHOLDER < transition_point),
+                (val_array[0], dependency < transition_point),
                 (val_array[1], True)
             )
-            if dependency != _YAML_PLACEHOLDER:
-                step_function = step_function.subs(_YAML_PLACEHOLDER, dependency)
             # Build visualization data around the transition point
             offset = ProcessingConstants.STEP_FUNCTION_OFFSET
             dep_range = np.array([transition_point - offset, transition_point, transition_point + offset])
@@ -98,19 +94,20 @@ class StepFunctionPropertyHandler(BasePropertyHandler):
         except Exception as e:
             raise ValueError(f"Failed to process step function property '{prop_name}'\n -> {str(e)}") from e
 
+
 class FileImportPropertyHandler(BasePropertyHandler):
     """Handler for file-based properties."""
 
     def process_property(self, material: Material, prop_name: str,
                          file_config: Dict[str, Any],
-                         dependency: Union[float, sp.Symbol]) -> None:
+                         dependency: sp.Symbol) -> None:
         """Processes a property loaded from an external file.
 
         Args:
             material:    Material instance.
             prop_name:   Name of the property.
             file_config: Property configuration dict containing file_path and column keys.
-            dependency:  SymPy symbol or float.
+            dependency:  SymPy symbol.
         """
         try:
             file_path = self.base_dir / file_config[FILE_PATH_KEY]
@@ -127,19 +124,20 @@ class FileImportPropertyHandler(BasePropertyHandler):
         except Exception as e:
             raise ValueError(f"Failed to process file property '{prop_name}'\n -> {str(e)}") from e
 
+
 class TabularDataPropertyHandler(BasePropertyHandler):
     """Handler for tabular (explicit dependency–value pair) properties."""
 
     def process_property(self, material: Material, prop_name: str,
                          prop_config: Dict[str, Any],
-                         dependency: Union[float, sp.Symbol]) -> None:
+                         dependency: sp.Symbol) -> None:
         """Processes a property defined by explicit dependency–value pairs.
 
         Args:
             material:    Material instance.
             prop_name:   Name of the property.
             prop_config: Property configuration dict.
-            dependency:  SymPy symbol or float.
+            dependency:  SymPy symbol.
         """
         try:
             dep_def = prop_config[DEPENDENCY_KEY]
@@ -155,12 +153,13 @@ class TabularDataPropertyHandler(BasePropertyHandler):
         except Exception as e:
             raise ValueError(f"Failed to process tabular data property '{prop_name}'\n -> {str(e)}") from e
 
+
 class PiecewiseEquationPropertyHandler(BasePropertyHandler):
     """Handler for piecewise equation properties."""
 
     def process_property(self, material: Material, prop_name: str,
                          prop_config: Dict[str, Any],
-                         dependency: Union[float, sp.Symbol]) -> None:
+                         dependency: sp.Symbol) -> None:
         """Processes a property defined by piecewise symbolic equations.
 
         n breakpoints in dependency define n-1 equations. The YAML placeholder
@@ -170,7 +169,7 @@ class PiecewiseEquationPropertyHandler(BasePropertyHandler):
             material:    Material instance.
             prop_name:   Name of the property.
             prop_config: Property configuration dict.
-            dependency:  SymPy symbol or float.
+            dependency:  SymPy symbol.
         """
         try:
             eqn_strings = prop_config[EQUATION_KEY]
@@ -179,28 +178,27 @@ class PiecewiseEquationPropertyHandler(BasePropertyHandler):
             # Validate that equations only reference the YAML placeholder
             for eqn in eqn_strings:
                 expr = sp.sympify(eqn)
-                unexpected = [s for s in expr.free_symbols if s != _YAML_PLACEHOLDER]
+                unexpected = [s for s in expr.free_symbols if s != dependency]
                 if unexpected:
                     raise ValueError(f"Unexpected symbol(s) {unexpected} in equation '{eqn}' for property '{prop_name}'. "
-                        f"Equations may only reference the dependency placeholder '{_YAML_PLACEHOLDER}'.")
+                        f"Equations may only reference the dependency placeholder '{dependency}'.")
             lower_bound_type, upper_bound_type = prop_config[BOUNDS_KEY]
             dep_points, eqn_strings = ensure_ascending_order(dep_points, eqn_strings)
             # Build piecewise using placeholder, then substitute caller's symbol
-            piecewise_placeholder = PiecewiseBuilder.build_from_formulas(dep_points, list(eqn_strings), _YAML_PLACEHOLDER,
+            piecewise_func = PiecewiseBuilder.build_from_formulas(dep_points, list(eqn_strings), dependency,
                 lower_bound_type, upper_bound_type)
-            piecewise_func = (piecewise_placeholder.subs(_YAML_PLACEHOLDER, dependency)
-                if dependency != _YAML_PLACEHOLDER
-                else piecewise_placeholder)
+
             # Build dense array for visualization using the placeholder expression
             diff = max(np.min(np.diff(np.sort(dep_points))) / 10.0, 1.0)
             dep_dense = np.arange(dep_points[0], dep_points[-1] + diff / 2, diff)
-            f_pw = sp.lambdify(_YAML_PLACEHOLDER, piecewise_placeholder, 'numpy')
+            f_pw = sp.lambdify(dependency, piecewise_func, 'numpy')
             y_dense = f_pw(dep_dense)
             self.finalize_with_piecewise_function(material=material, prop_name=prop_name, piecewise_func=piecewise_func,
                 dependency=dependency, config=prop_config, prop_type='PIECEWISE_EQUATION',
                 x_data=dep_dense, y_data=y_dense)
         except Exception as e:
             raise ValueError(f"Failed to process piecewise equation property '{prop_name}'\n -> {str(e)}") from e
+
 
 class ComputedPropertyHandler(BasePropertyHandler):
     """Handler for computed (derived) properties."""
@@ -217,14 +215,14 @@ class ComputedPropertyHandler(BasePropertyHandler):
 
     def process_property(self, material: Material, prop_name: str,
                          config: Dict[str, Any],
-                         dependency: Union[float, sp.Symbol]) -> None:
+                         dependency: sp.Symbol) -> None:
         """Processes a computed property via ComputedPropertyProcessor.
 
         Args:
             material:    Material instance.
             prop_name:   Name of the property.
             config:      Property configuration dict (passed through to processor).
-            dependency:  SymPy symbol or float.
+            dependency:  SymPy symbol.
         """
         if self.computed_property_processor is None:
             raise ValueError("ComputedPropertyProcessor not initialised - call set_computed_property_processor first")
@@ -232,7 +230,7 @@ class ComputedPropertyHandler(BasePropertyHandler):
 
     def finalize_computed_property(self, material: Material, prop_name: str,
                                    dep_array: np.ndarray, prop_array: np.ndarray,
-                                   dependency: Union[float, sp.Symbol],
+                                   dependency: sp.Symbol,
                                    config: Dict[str, Any]) -> None:
         """Finalises a computed property using the standard data-array path.
 
@@ -245,7 +243,7 @@ class ComputedPropertyHandler(BasePropertyHandler):
             prop_name:   Name of the property.
             dep_array:   Dependency values the expression was evaluated at.
             prop_array:  Corresponding evaluated property values.
-            dependency:  SymPy symbol or float.
+            dependency:  SymPy symbol.
             config:      Property configuration dict.
         """
         self.finalize_with_data_arrays(material=material, prop_name=prop_name, dep_array=dep_array,

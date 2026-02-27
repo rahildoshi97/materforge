@@ -11,6 +11,7 @@ from materforge.data.constants import ProcessingConstants, FileConstants
 
 logger = logging.getLogger(__name__)
 
+
 def load_property_data(file_config: Dict[str, Union[str, int]], header: bool = True) -> Tuple[np.ndarray, np.ndarray]:
     """Reads dependency and property data from a file.
 
@@ -58,6 +59,7 @@ def load_property_data(file_config: Dict[str, Union[str, int]], header: bool = T
     dep_array, prop_array = _clean_and_validate_data(dep_array, prop_array, str(file_path))
     return dep_array, prop_array
 
+
 def _validate_file_config(file_config: Dict) -> None:
     """Validates the file configuration dictionary."""
     required_keys = {FILE_PATH_KEY, DEPENDENCY_COLUMN_KEY, PROPERTY_COLUMN_KEY}
@@ -66,6 +68,7 @@ def _validate_file_config(file_config: Dict) -> None:
         raise ValueError(f"Missing required configuration keys: {missing_keys}")
     if not file_config[FILE_PATH_KEY]:
         raise ValueError("File path cannot be empty")
+
 
 def _read_excel_file(file_path: Path, header: bool, dep_col: Union[str, int],
                      prop_col: Union[str, int]) -> pd.DataFrame:
@@ -83,6 +86,7 @@ def _read_excel_file(file_path: Path, header: bool, dep_col: Union[str, int],
     except ImportError as e:
         raise ValueError("Excel file support requires openpyxl. Install with: pip install openpyxl") from e
 
+
 def _read_csv_file(file_path: Path, header: bool, dep_col: Union[str, int],
                    prop_col: Union[str, int]) -> pd.DataFrame:
     """Reads a CSV file with proper error handling."""
@@ -96,6 +100,7 @@ def _read_csv_file(file_path: Path, header: bool, dep_col: Union[str, int],
             prop_col: lambda x: pd.to_numeric(x, errors='coerce')
         } if header else None
     )
+
 
 def _read_text_file(file_path: Path, header: bool, dep_col: Union[str, int],
                     prop_col: Union[str, int]) -> Tuple[np.ndarray, np.ndarray]:
@@ -140,6 +145,7 @@ def _read_text_file(file_path: Path, header: bool, dep_col: Union[str, int],
     except Exception as e:
         raise ValueError(f"Error processing text file: {str(e)}") from e
 
+
 def _extract_data_columns(df: pd.DataFrame, dep_col: Union[str, int], prop_col: Union[str, int],
                           file_path: str) -> Tuple[np.ndarray, np.ndarray]:
     """Extracts dependency and property columns from a DataFrame."""
@@ -149,6 +155,7 @@ def _extract_data_columns(df: pd.DataFrame, dep_col: Union[str, int], prop_col: 
     prop_series = _extract_column(df, prop_col, "property", file_path)
     dep_array, prop_array = _convert_to_numeric_arrays(dep_series, prop_series, file_path)
     return dep_array, prop_array
+
 
 def _extract_column(df: pd.DataFrame, col_identifier: Union[str, int],
                     col_type: str, file_path: str) -> pd.Series:
@@ -164,6 +171,7 @@ def _extract_column(df: pd.DataFrame, col_identifier: Union[str, int],
             raise ValueError(f"{col_type.capitalize()} column index {col_identifier} out of bounds "
                              f"(file has {len(df.columns)} columns)")
         return df.iloc[:, col_identifier]
+
 
 def _convert_to_numeric_arrays(dep_series: pd.Series, prop_series: pd.Series,
                                file_path: str) -> Tuple[np.ndarray, np.ndarray]:
@@ -205,6 +213,7 @@ def _get_column_index(col_identifier: Union[str, int], column_names: list,
                              f"out of bounds (file has {num_cols} columns)")
         return col_identifier
 
+
 def _clean_and_validate_data(dep_array: np.ndarray, prop_array: np.ndarray,
                              file_path: str) -> Tuple[np.ndarray, np.ndarray]:
     """Validates data quality and removes missing values."""
@@ -234,6 +243,7 @@ def _clean_and_validate_data(dep_array: np.ndarray, prop_array: np.ndarray,
     dep_array, prop_array = _ensure_ascending_order(dep_array, prop_array)
     return dep_array, prop_array
 
+
 def _remove_duplicate_entries(dep_array: np.ndarray, prop_array: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """Removes duplicate dependency entries, keeping the first occurrence."""
     unique_dep, unique_indices = np.unique(dep_array, return_index=True)
@@ -244,6 +254,7 @@ def _remove_duplicate_entries(dep_array: np.ndarray, prop_array: np.ndarray) -> 
         dep_array = dep_array[unique_indices]
         prop_array = prop_array[unique_indices]
     return dep_array, prop_array
+
 
 def _ensure_ascending_order(dep_array: np.ndarray, prop_array: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """Ensures the dependency array is in ascending order."""

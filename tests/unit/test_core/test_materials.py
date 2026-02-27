@@ -13,7 +13,7 @@ class TestMaterial:
 
     def test_construction_empty_properties(self):
         mat = Material(name="Empty")
-        assert len(mat.property_names()) == 0  # type-agnostic
+        assert not mat.property_names()  # type-agnostic
 
     def test_name_stored_correctly(self):
         mat = Material(name="Steel 1.4301")
@@ -21,8 +21,8 @@ class TestMaterial:
 
     def test_assign_scalar_float(self):
         mat = Material(name="Test")
-        mat.density = 7850.0
-        assert mat.density == 7850.0
+        mat.density = sp.Float(7850.0)
+        assert mat.density == sp.Float(7850.0)
 
     def test_assign_sympy_float(self):
         mat = Material(name="Test")
@@ -38,40 +38,36 @@ class TestMaterial:
     def test_assign_sympy_expression(self):
         T = sp.Symbol('T')
         mat = Material(name="Test")
-        mat.viscosity = 2.5*T + 100
+        mat.viscosity = sp.sympify(2.5*T + 100)
         assert mat.viscosity.free_symbols == {T}
 
     def test_overwrite_property(self):
         mat = Material(name="Test")
-        mat.density = 7000.0
-        mat.density = 7850.0
-        assert mat.density == 7850.0
+        mat.density = sp.Float(7000.0)
+        mat.density = sp.Float(7850.0)
+        assert mat.density == sp.Float(7850.0)
 
     def test_multiple_properties_independent(self):
         T = sp.Symbol('T')
         mat = Material(name="Test")
-        mat.density = 7850.0
-        mat.heat_capacity = 450 + 0.1*T
-        mat.melting_temperature = 1811.0
-        assert mat.density == 7850.0
-        assert mat.melting_temperature == 1811.0
+        mat.density = sp.Float(7850.0)
+        mat.heat_capacity = sp.sympify(450 + 0.1*T)
+        mat.melting_temperature = sp.Float(1811.0)
+        assert mat.density == sp.Float(7850.0)
+        assert mat.melting_temperature == sp.Float(1811.0)
         assert mat.heat_capacity.free_symbols == {T}
-
-    def test_property_names_empty(self):
-        mat = Material(name="Test")
-        assert len(mat.property_names()) == 0  # type-agnostic
 
     def test_property_names_single(self):
         mat = Material(name="Test")
-        mat.density = 7850.0
+        mat.density = sp.Float(7850.0)
         assert 'density' in mat.property_names()
 
     def test_property_names_multiple(self):
         T = sp.Symbol('T')
         mat = Material(name="Test")
-        mat.density = 7850.0
-        mat.heat_capacity = 450 + 0.1*T
-        mat.melting_temperature = 933.47
+        mat.density = sp.Float(7850.0)
+        mat.heat_capacity = sp.sympify(450 + 0.1*T)
+        mat.melting_temperature = sp.Float(933.47)
         names = mat.property_names()
         for expected in ('density', 'heat_capacity', 'melting_temperature'):
             assert expected in names
@@ -84,54 +80,51 @@ class TestMaterial:
     def test_property_names_returns_copy(self):
         """Mutating the returned collection must not affect the material."""
         mat = Material(name="Test")
-        mat.density = 7850.0
+        mat.density = sp.Float(7850.0)
         names = mat.property_names()
-        if isinstance(names, set):
-            names.add('fake_property')
-        else:
-            names.append('fake_property')
+        names.add('fake_property')
         assert 'fake_property' not in mat.property_names()
 
     def test_evaluate_symbolic_property(self):
         T = sp.Symbol('T')
         mat = Material(name="Test")
-        mat.heat_capacity = 450 + 0.1*T
-        result = mat.evaluate(T, 500.0)
-        assert result['heat_capacity'] == pytest.approx(500.0)
+        mat.heat_capacity = sp.sympify(450 + 0.1*T)
+        result = mat.evaluate(T, 600.0)
+        assert float(result.heat_capacity) == pytest.approx(510.0)
 
     def test_evaluate_constant_property(self):
         T = sp.Symbol('T')
         mat = Material(name="Test")
-        mat.density = 7850.0
+        mat.density = sp.Float(7850.0)
         result = mat.evaluate(T, 500.0)
-        assert result['density'] == pytest.approx(7850.0)
+        assert float(result.density) == pytest.approx(7850.0)
 
     def test_evaluate_piecewise_below_boundary(self):
         T = sp.Symbol('T')
         mat = Material(name="Test")
         mat.heat_capacity = sp.Piecewise((400.0, T < 1000), (600.0, True))
         result = mat.evaluate(T, 500.0)
-        assert result['heat_capacity'] == pytest.approx(400.0)
+        assert float(result.heat_capacity) == pytest.approx(400.0)
 
     def test_evaluate_piecewise_above_boundary(self):
         T = sp.Symbol('T')
         mat = Material(name="Test")
         mat.heat_capacity = sp.Piecewise((400.0, T < 1000), (600.0, True))
         result = mat.evaluate(T, 1500.0)
-        assert result['heat_capacity'] == pytest.approx(600.0)
+        assert float(result.heat_capacity) == pytest.approx(600.0)
 
     def test_evaluate_no_properties_returns_empty(self):
         T = sp.Symbol('T')
         mat = Material(name="Test")
         result = mat.evaluate(T, 500.0)
-        assert result == {}
+        assert not result.property_names()
 
     def test_evaluate_returns_float_values(self):
         T = sp.Symbol('T')
         mat = Material(name="Test")
-        mat.heat_capacity = 450 + 0.1*T
+        mat.heat_capacity = sp.sympify(450 + 0.1*T)
         result = mat.evaluate(T, 500.0)
-        assert isinstance(result['heat_capacity'], float)
+        assert result.heat_capacity.is_number
 
     def test_sample_valid_material_fixture(self, sample_valid_material):
         assert sample_valid_material.name == "Test Aluminum"

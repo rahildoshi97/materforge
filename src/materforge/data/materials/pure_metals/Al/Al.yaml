@@ -86,7 +86,7 @@ properties:
   thermal_diffusivity:
     dependency: (3000, 300, -5.)          # (start, stop, negative_step) - decreasing by 5K
     equation: heat_conductivity / (density * heat_capacity)  # Standard thermal diffusivity formula
-    bounds: [extrapolate, extrapolate]     # Allow extrapolation outside range
+    bounds: [linear, linear]     # Allow extrapolation outside range
     regression:
       simplify: post
       degree: 2
@@ -95,7 +95,7 @@ properties:
   energy_density:
     dependency: (300, 3000, 5.0)          # (start, stop, step) - 5K increments
     equation: density * specific_enthalpy  # Property dependencies automatically resolved
-    bounds: [extrapolate, extrapolate]
+    bounds: [linear, linear]
     regression:
       simplify: pre
       degree: 1

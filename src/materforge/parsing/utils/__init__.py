@@ -5,12 +5,10 @@
 
 from .utilities import (
     create_step_visualization_data,
-    handle_numeric_dependency,
     ensure_sympy_compatible
 )
 
 __all__ = [
     "create_step_visualization_data",
-    "handle_numeric_dependency",
     "ensure_sympy_compatible"
 ]

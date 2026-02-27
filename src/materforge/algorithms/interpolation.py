@@ -4,23 +4,25 @@
 import logging
 import numpy as np
 from typing import Tuple
-from materforge.parsing.config.yaml_keys import CONSTANT_KEY
+
+from materforge.parsing.config.yaml_keys import CONSTANT_KEY, LINEAR_KEY
 from materforge.data.constants import ProcessingConstants
 
 logger = logging.getLogger(__name__)
 
-def interpolate_value(dep_value: float, dep_array: np.ndarray, prop_array: np.ndarray,
-                      lower_bound_type: str, upper_bound_type: str) -> float:
+
+def interpolate_value(dep_value, dep_array: np.ndarray, prop_array: np.ndarray,
+                      lower_bound_type: str, upper_bound_type: str):
     """Interpolates a property value at dep_value using the provided data arrays.
 
     Args:
         dep_value:        Dependency value at which to interpolate.
         dep_array:        Dependency axis data (must be sorted ascending).
         prop_array:       Corresponding property values.
-        lower_bound_type: Behaviour below dep_array[0]: "constant" or "extrapolate".
-        upper_bound_type: Behaviour above dep_array[-1]: "constant" or "extrapolate".
+        lower_bound_type: Behaviour below dep_array[0]: CONSTANT_KEY or LINEAR_KEY.
+        upper_bound_type: Behaviour above dep_array[-1]: CONSTANT_KEY or LINEAR_KEY.
     Returns:
-        Interpolated float value.
+        Interpolated value.
     Raises:
         ValueError: If dep_value is non-finite, arrays are empty or mismatched,
                     or extrapolation is requested on a degenerate interval.
@@ -31,27 +33,26 @@ def interpolate_value(dep_value: float, dep_array: np.ndarray, prop_array: np.nd
         raise ValueError("Input arrays cannot be empty")
     if len(dep_array) != len(prop_array):
         raise ValueError(f"Array length mismatch: dep_array({len(dep_array)}) != prop_array({len(prop_array)})")
+
     logger.debug("Interpolating at dep_value=%.4g (lower=%s, upper=%s)",
                  dep_value, lower_bound_type, upper_bound_type)
     logger.debug("Data range: dep=[%.4g, %.4g], prop=[%.3e, %.3e]",
                  dep_array[0], dep_array[-1], np.min(prop_array), np.max(prop_array))
+
     try:
-        if len(dep_array) == 1:
-            logger.debug("Single-point array: returning constant %.6g", prop_array[0])
-            return float(prop_array[0])
-        if dep_value < dep_array[0]:
+        if dep_value < dep_array[0] and lower_bound_type == LINEAR_KEY:
             logger.debug("dep_value below data range - applying lower bound: %s", lower_bound_type)
-            if lower_bound_type == CONSTANT_KEY:
-                return float(prop_array[0])
+            if len(dep_array) < 2:
+                return prop_array[0]
             denom = dep_array[1] - dep_array[0]
             if denom == 0:
                 raise ValueError("Cannot extrapolate: first two dependency values are equal")
             slope = (prop_array[1] - prop_array[0]) / denom
-            return float(prop_array[0] + slope * (dep_value - dep_array[0]))
-        if dep_value >= dep_array[-1]:
+            return prop_array[0] + slope * (dep_value - dep_array[0])
+        if dep_value >= dep_array[-1] and upper_bound_type == LINEAR_KEY:
             logger.debug("dep_value above data range - applying upper bound: %s", upper_bound_type)
-            if upper_bound_type == CONSTANT_KEY:
-                return float(prop_array[-1])
+            if len(dep_array) < 2:
+                return prop_array[-1]
             denom = dep_array[-1] - dep_array[-2]
             if denom == 0:
                 raise ValueError("Cannot extrapolate: last two dependency values are equal")
@@ -60,6 +61,7 @@ def interpolate_value(dep_value: float, dep_array: np.ndarray, prop_array: np.nd
         return float(np.interp(dep_value, dep_array, prop_array))
     except Exception as e:
         raise ValueError(f"Interpolation failed at dep_value={dep_value}: {str(e)}") from e
+
 
 def ensure_ascending_order(dep_array: np.ndarray, *value_arrays: np.ndarray) -> Tuple[np.ndarray, ...]:
     """Ensures dep_array is in ascending order, flipping all arrays together if needed.

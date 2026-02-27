@@ -14,6 +14,7 @@ from materforge.parsing.config.yaml_keys import NAME_KEY, PROPERTIES_KEY
 
 logger = logging.getLogger(__name__)
 
+
 class BaseFileParser:
     """Base class for parsing configuration files."""
 
@@ -25,6 +26,7 @@ class BaseFileParser:
 
     def _load_config(self) -> Dict[str, Any]:
         raise NotImplementedError("Subclasses must implement _load_config")
+
 
 class YAMLFileParser(BaseFileParser):
     """Parser for YAML configuration files."""
@@ -50,6 +52,7 @@ class YAMLFileParser(BaseFileParser):
         except Exception as e:
             logger.error("Unexpected error parsing %s: %s", self.config_path, e, exc_info=True)
             raise ValueError(f"Error parsing {self.config_path}: {str(e)}") from e
+
 
 class MaterialYAMLParser(YAMLFileParser):
     """Parser for material YAML configuration files.

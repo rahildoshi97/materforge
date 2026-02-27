@@ -9,6 +9,7 @@ from materforge.data.constants import ProcessingConstants
 
 logger = logging.getLogger(__name__)
 
+
 def validate_monotonic_property(prop_name: str, dep_array: np.ndarray,
                                 prop_array: np.ndarray, mode: str = "strictly_increasing",
                                 tolerance: float = ProcessingConstants.DEFAULT_TOLERANCE) -> None:

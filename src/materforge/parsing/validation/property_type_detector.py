@@ -10,7 +10,7 @@ import sympy as sp
 from materforge.parsing.config.yaml_keys import (
     FILE_PATH_KEY, DEPENDENCY_COLUMN_KEY, PROPERTY_COLUMN_KEY, BOUNDS_KEY,
     REGRESSION_KEY, DEPENDENCY_KEY, EQUATION_KEY, CONSTANT_KEY,
-    EXTRAPOLATE_KEY, SIMPLIFY_KEY, DEGREE_KEY, SEGMENTS_KEY, PRE_KEY, POST_KEY, VALUE_KEY,
+    LINEAR_KEY, SIMPLIFY_KEY, DEGREE_KEY, SEGMENTS_KEY, PRE_KEY, POST_KEY, VALUE_KEY,
 )
 from materforge.data.constants import ProcessingConstants
 
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 # Valid Python identifier - accepts any user-defined scalar reference.
 _IDENTIFIER_RE = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+
 
 class PropertyType(Enum):
     CONSTANT_VALUE = auto()
@@ -27,6 +28,7 @@ class PropertyType(Enum):
     PIECEWISE_EQUATION = auto()
     COMPUTED_PROPERTY = auto()
     INVALID = auto()
+
 
 class PropertyTypeDetector:
     """Detects and validates property types from YAML config values."""
@@ -239,7 +241,7 @@ class PropertyTypeDetector:
     def _check_bounds(bounds: Any) -> None:
         if not isinstance(bounds, list) or len(bounds) != 2:
             raise ValueError("'bounds' must be a list of exactly two elements")
-        valid = {CONSTANT_KEY, EXTRAPOLATE_KEY}
+        valid = {CONSTANT_KEY, LINEAR_KEY}
         if bounds[0] not in valid or bounds[1] not in valid:
             raise ValueError(f"bound types must be one of {valid}, got {bounds}")
 

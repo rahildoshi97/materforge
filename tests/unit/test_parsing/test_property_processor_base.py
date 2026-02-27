@@ -62,24 +62,6 @@ class TestPropertyProcessorBaseComprehensive:
         assert hasattr(sample_material, 'test_prop')
         assert 'test_prop' in processor.processed_properties
 
-    def test_finalize_with_data_arrays_numeric_temperature(self, processor, sample_material):
-        """Numeric dependency -> returns True, assigns interpolated sp.Float."""
-        config = {'bounds': ['constant', 'constant']}
-
-        result = processor.finalize_with_data_arrays(
-            material=sample_material,
-            prop_name='test_prop',
-            dep_array=np.array([300, 400, 500]),
-            prop_array=np.array([100, 150, 200]),
-            dependency=400.0,
-            config=config,
-            prop_type='KEY_VAL',
-        )
-
-        assert result is True
-        assert hasattr(sample_material, 'test_prop')
-        assert isinstance(getattr(sample_material, 'test_prop'), sp.Float)
-
     def test_finalize_with_data_arrays_none_input(self, processor, sample_material):
         """None array raises ValueError."""
         T = sp.Symbol('T')

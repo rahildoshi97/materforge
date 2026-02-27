@@ -12,6 +12,7 @@ from materforge.data.constants import ProcessingConstants
 
 logger = logging.getLogger(__name__)
 
+
 class DependencyResolver:
     """Handles processing of different dependency definition formats in YAML configurations."""
     EPSILON = ProcessingConstants.DEPENDENCY_EPSILON
