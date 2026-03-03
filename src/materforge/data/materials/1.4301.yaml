@@ -6,8 +6,8 @@
 #
 # IMPORTANT: All property configurations must include 'bounds' parameter (except CONSTANT properties)
 #
-# Note: T is just a placeholder in equations.
-# The final equation will depend on the symbol passed via the API.
+# Use a single, consistent dependency symbol (e.g., T) in all equations.
+# This symbol will be provided later when creating the material via the API.
 # ====================================================================================================
 
 name: "1.4301"

@@ -75,9 +75,15 @@ class Material:
                 continue
 
             try:
-                evaluated_properties[prop_name] = expr.subs(symbol, value).evalf(chop=True)
-            except Exception as e:
-                logger.error("Failed to evaluate '%s': %s", prop_name, e)
+                substituted = expr.subs(symbol, value).evalf(chop=True)
+            except (TypeError, ValueError, AttributeError) as e:
+                logger.error("Failed to evaluate '%s': %s", prop_name, e, exc_info=True)
+                continue
+            if substituted.free_symbols:
+                logger.error("Property '%s' still has free symbols %s after substituting %s; expression requires %s",
+                    prop_name, substituted.free_symbols, symbol, expr.free_symbols, exc_info=True)
+                continue
+            evaluated_properties[prop_name] = substituted
 
         return Material(
             name=f"{self.name}@{symbol}={value}",

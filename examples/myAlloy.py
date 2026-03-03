@@ -14,6 +14,11 @@ from materforge.parsing.api import (
     get_material_info,
 )
 
+MATERIAL_CONFIGS = [
+    #("src/materforge/data/materials/Al.yaml", "T"),
+    #("src/materforge/data/materials/1.4301.yaml", "T"),
+    ("examples/myAlloy.yaml", "u_C"),
+]
 
 def setup_logging() -> None:
     logging.basicConfig(
@@ -30,20 +35,22 @@ def _scalar_properties(mat) -> dict:
     return {
         n: getattr(mat, n)
         for n in mat.property_names()
-        if not (hasattr(getattr(mat, n), 'free_symbols')
-                and getattr(mat, n).free_symbols)
+        if not (hasattr(getattr(mat, n), 'free_symbols') and getattr(mat, n).free_symbols)
         and isinstance(getattr(mat, n), (int, float, sp.Float, sp.Integer))
     }
 
 def demonstrate_material_properties() -> None:
     setup_logging()
 
-    T = sp.Symbol('T')
-
+    repo_root = Path(__file__).parent.parent
     current_file = Path(__file__)
-    yaml_path = current_file.parent / "myAlloy.yaml"
-    # yaml_path = (current_file.parent.parent / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml")
-    # yaml_path = (current_file.parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml")
+
+    targets = []
+    for rel_path, sym_name in MATERIAL_CONFIGS:
+        yaml_path = repo_root / rel_path
+        if not yaml_path.exists():
+            raise FileNotFoundError(f"YAML file not found: {yaml_path} (configured in {current_file})")
+        targets.append((yaml_path, sp.Symbol(sym_name)))
 
     materials = []
     material_symbols = {}
@@ -58,14 +65,15 @@ def demonstrate_material_properties() -> None:
     print(f"\n{'1. YAML FILE VALIDATION':<50}")
     print(f"{'-' * 50}")
 
-    if yaml_path.exists():
-        try:
-            is_valid = validate_yaml_file(yaml_path)
-            print(f"myAlloy YAML validation: {'PASSED' if is_valid else 'FAILED'}")
-        except Exception as e:
-            raise ValueError(f"myAlloy YAML validation: FAILED - {e}")
-    else:
-        raise ValueError(f"myAlloy YAML file not found: {yaml_path}")
+    for yaml_path, _ in targets:
+        if yaml_path.exists():
+            try:
+                is_valid = validate_yaml_file(yaml_path)
+                print(f"{yaml_path.stem} YAML validation: {'PASSED' if is_valid else 'FAILED'}")
+            except Exception as e:
+                raise ValueError(f"{yaml_path.stem} YAML validation FAILED: {e}") from e
+        else:
+            raise ValueError(f"YAML file not found: {yaml_path}")
 
     # ===================================================================
     # 2. MATERIAL INFO EXTRACTION
@@ -73,10 +81,12 @@ def demonstrate_material_properties() -> None:
     print(f"\n{'2. MATERIAL INFO EXTRACTION':<50}")
     print(f"{'-' * 50}")
 
-    if yaml_path.exists():
+    for yaml_path, _ in targets:
+        if not yaml_path.exists():
+            continue
         try:
             info = get_material_info(yaml_path)
-            print("\nmyAlloy Information:")
+            print(f"\n{info['name']} Information:")
             print(f"  Name:             {info['name']}")
             print(f"  Total Properties: {info['total_properties']}")
             print(f"  Properties:       {info['properties']}")
@@ -85,7 +95,7 @@ def demonstrate_material_properties() -> None:
                 for ptype, count in info['property_types'].items():
                     print(f"    {ptype:<30}: {count}")
         except Exception as e:
-            raise ValueError(f"Failed to get myAlloy info: {e}")
+            raise ValueError(f"Failed to get info for {yaml_path.stem}: {e}") from e
 
     # ===================================================================
     # 3. MATERIAL CREATION
@@ -93,24 +103,30 @@ def demonstrate_material_properties() -> None:
     print(f"\n{'3. MATERIAL CREATION':<50}")
     print(f"{'-' * 50}")
 
-    if yaml_path.exists():
+    for yaml_path, T in targets:
+        if not yaml_path.exists():
+            continue
         try:
-            myAlloy = create_material(yaml_path=yaml_path, dependency=T, enable_plotting=True)
-            materials.append(myAlloy)
-            material_symbols[myAlloy.name] = T
-            print(f"Successfully created: {myAlloy.name} (symbol: {T})")
-            print(f"Representation: {repr(myAlloy)}")
-            print(f"density1: {myAlloy.density1}  (type: {type(myAlloy.density1).__name__})")
+            mat = create_material(yaml_path=yaml_path, dependency=T, enable_plotting=True)
+            materials.append(mat)
+            material_symbols[mat.name] = T
+            print(f"Successfully created: {mat.name} (symbol: {T})")
+            print(f"Representation: {repr(mat)}")
+
+            # Dynamically show first available scalar property instead of hardcoding
+            scalars = _scalar_properties(mat)
+            if scalars:
+                first_name, first_val = next(iter(sorted(scalars.items())))
+                print(f"{first_name}: {first_val}  (type: {type(first_val).__name__})")
         except Exception as e:
-            raise ValueError(f"Failed to create myAlloy: {e}")
+            raise ValueError(f"Failed to create material from {yaml_path.stem}: {e}") from e
 
     # ===================================================================
     # 4. PROPERTY TYPES OVERVIEW
     # ===================================================================
     print(f"\n{'4. PROPERTY TYPES OVERVIEW':<50}")
     print(f"{'-' * 50}")
-    print("MaterForge supports 6 property definition types "
-          "(any property name is valid):")
+    print("MaterForge supports 6 property definition types (any property name is valid):")
     for i, (ptype, desc) in enumerate([
         ("CONSTANT_VALUE",     "Single numeric value, e.g. density: 7000."),
         ("STEP_FUNCTION",      "Two values split at a scalar-property reference"),
@@ -134,7 +150,7 @@ def demonstrate_material_properties() -> None:
         print(f"MATERIAL: {mat.name}  (temperature symbol: {T_mat})")
         print(f"{'=' * 80}")
         print(f"Name: {mat.name}")
-        # Scalar constants (temperature references, fixed values) - dynamic lookup
+
         scalars = _scalar_properties(mat)
         if scalars:
             print("Scalar constants:")
@@ -143,7 +159,7 @@ def demonstrate_material_properties() -> None:
         available_props = get_material_property_names(mat)
 
         # -------------------------------------------------------------------
-        # 5.1 Available Properties (names only)
+        # 5.1 Available Properties
         # -------------------------------------------------------------------
         print(f"\n{'AVAILABLE PROPERTIES:':<50}")
         print(f"{'-' * 50}")
@@ -153,8 +169,6 @@ def demonstrate_material_properties() -> None:
 
         # -------------------------------------------------------------------
         # 5.2 Full Symbolic Expressions
-        # Shows the complete SymPy expression for every property - constants
-        # print their value, symbolic properties print the full Piecewise/Expr.
         # -------------------------------------------------------------------
         print(f"\n{'PROPERTY EXPRESSIONS:':<50}")
         print(f"{'-' * 50}")
@@ -169,7 +183,7 @@ def demonstrate_material_properties() -> None:
         # 5.3 Numerical Evaluation at a Single Temperature
         # -------------------------------------------------------------------
         test_temp = 500.15
-        print(f"\n{'PROPERTY VALUES AT ' + str(test_temp) + 'K:':<50}")
+        print(f"\n{'PROPERTY VALUES AT ' + str(test_temp) + ' K:':<50}")
         print(f"{'-' * 50}")
 
         print("Method 1: Manual substitution")
@@ -182,7 +196,7 @@ def demonstrate_material_properties() -> None:
                 else:
                     print(f"  {prop_name:<30}: {prop_value}  (constant)")
             except Exception as e:
-                raise ValueError(f"  {prop_name:<30}: Error - {e}")
+                raise ValueError(f"  {prop_name}: Error - {e}") from e
 
         # -------------------------------------------------------------------
         # 5.4 API Evaluation Methods
@@ -192,19 +206,23 @@ def demonstrate_material_properties() -> None:
 
         print("Method 2: material.evaluate()")
         try:
-            all_values = mat.evaluate(sp.Symbol('T'), test_temp)
+            evaluated_mat = mat.evaluate(T_mat, test_temp)
             print(f"All properties at {test_temp} K:")
-            for prop, value in sorted(all_values.items()):
-                print(f"  {prop:<30}: {value:.6e}")
+            for prop in sorted(evaluated_mat.property_names()):
+                value = getattr(evaluated_mat, prop)
+                print(f"  {prop:<30}: {type(value).__name__:<15}  {float(value):.6e}")
         except Exception as e:
-            raise ValueError(f"Error in Method 2: {e}")
+            raise ValueError(f"Error in Method 2: {e}") from e
 
         print("\nMethod 3: evaluate_material_properties()")
         try:
-            all_values_func = evaluate_material_properties(mat, sp.Symbol('T'), test_temp)
-            print(f"  Results match Method 2: {all_values == all_values_func}")
+            all_values_func = evaluate_material_properties(mat, T_mat, test_temp)
+            print(f"  Results type: {type(all_values_func).__name__}")
+            for prop in sorted(all_values_func.property_names()):
+                value = getattr(all_values_func, prop)
+                print(f"  {prop:<30}: {float(value):.6e}")
         except Exception as e:
-            raise ValueError(f"Error in Method 3: {e}")
+            raise ValueError(f"Error in Method 3: {e}") from e
 
 
 if __name__ == "__main__":

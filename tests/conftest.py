@@ -18,12 +18,12 @@ def test_data_dir():
 def aluminum_yaml_path():
     """Path to aluminum YAML file."""
     current_file = Path(__file__)
-    return current_file.parent.parent / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
+    return current_file.parent.parent / "src" / "materforge" / "data" / "materials" / "Al.yaml"
 
 @pytest.fixture
 def steel_yaml_path():
     """Path to steel YAML file."""
-    return (Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml")
+    return (Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "1.4301.yaml")
 
 @pytest.fixture
 def temp_symbol():

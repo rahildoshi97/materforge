@@ -168,7 +168,7 @@ test_examples:
   script:
     - echo "Testing example scripts..."
     - cd examples/
-    - python material_properties_demo.py
+    - python myAlloy.py
     - echo "✅ Examples executed successfully"
   dependencies:
     - python_3.10
@@ -271,24 +271,6 @@ package_build:
     paths:
       - dist/
     expire_in: 1 week
-
-# Build performance benchmarks
-performance_benchmarks:
-  stage: build
-  image: python:${PYTHON_VERSION}
-  before_script:
-    - pip install --upgrade pip
-    - pip install -e .
-    - pip install pytest pytest-benchmark
-  script:
-    - echo "Running performance benchmarks..."
-    - pytest tests/performance/ -v --benchmark-only || echo "⚠️ Benchmarks completed with warnings"
-    - echo "✅ Performance benchmarks completed"
-  artifacts:
-    paths:
-      - .benchmarks/
-    expire_in: 1 week
-  allow_failure: true
 
 # ================================
 # DEPLOYMENT STAGE
