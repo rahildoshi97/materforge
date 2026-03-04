@@ -14,6 +14,7 @@ from materforge.parsing.config.yaml_keys import NAME_KEY, PROPERTIES_KEY
 
 logger = logging.getLogger(__name__)
 
+_REQUIRED_TOP_LEVEL_KEYS = frozenset({NAME_KEY, PROPERTIES_KEY})
 
 class BaseFileParser:
     """Base class for parsing configuration files."""
@@ -121,40 +122,35 @@ class MaterialYAMLParser(YAMLFileParser):
     def _validate_config(self) -> None:
         """Validates the top-level YAML structure.
         Raises:
-            ValueError: If the config is not a dict, or if name/properties
-                fields are missing or have invalid types.
+            ValueError: If the config is not a dict, contains unknown top-level keys,
+                or if name/properties fields are missing or invalid.
         """
         logger.debug("Validating configuration structure")
         if not isinstance(self.config, dict):
-            raise ValueError("YAML file must contain a top-level mapping, not a list or scalar")
-        # name
+            raise ValueError(f"YAML file must contain a top-level mapping, got {type(self.config).__name__}")
+        # Reject unknown top-level keys - only 'name' and 'properties' are allowed
+        unknown_keys = set(self.config.keys()) - _REQUIRED_TOP_LEVEL_KEYS
+        if unknown_keys:
+            raise ValueError(f"Unknown top-level keys: {sorted(unknown_keys)}. "
+                f"Only {sorted(_REQUIRED_TOP_LEVEL_KEYS)} are allowed.")
+        # Validate name
         if NAME_KEY not in self.config:
             raise ValueError(f"Missing required field: '{NAME_KEY}'")
-        self._validate_name()
-        # properties
-        if PROPERTIES_KEY not in self.config:
-            raise ValueError(f"Missing required field: '{PROPERTIES_KEY}'")
-        if not isinstance(self.config[PROPERTIES_KEY], dict):
-            raise ValueError(f"'{PROPERTIES_KEY}' must be a mapping, "
-                f"got {type(self.config[PROPERTIES_KEY]).__name__}")
-        if not self.config[PROPERTIES_KEY]:
-            raise ValueError(f"'{PROPERTIES_KEY}' block cannot be empty")
-        logger.info("Configuration validation passed")
-
-    def _validate_name(self) -> None:
-        """Validates the material name field.
-        Raises:
-            ValueError: If name is None, not a string, or empty.
-        """
         name = self.config[NAME_KEY]
-        if name is None:
-            raise ValueError("Material name cannot be None")
-        if not isinstance(name, str):
-            raise ValueError(f"Material name must be a string, got {type(name).__name__} (value: {name})")
-        if not name.strip():
-            raise ValueError("Material name cannot be blank")
+        if name is None or not isinstance(name, str) or not name.strip():
+            raise ValueError(f"'{NAME_KEY}' must be a non-empty string, "
+                f"got {type(name).__name__!r}: {name!r}")
         if len(name) > 100:
             logger.warning("Material name '%s' exceeds 100 characters", name)
+        # Validate properties block
+        if PROPERTIES_KEY not in self.config:
+            raise ValueError(f"Missing required field: '{PROPERTIES_KEY}'")
+        props = self.config[PROPERTIES_KEY]
+        if not isinstance(props, dict):
+            raise ValueError(f"'{PROPERTIES_KEY}' must be a mapping, got {type(props).__name__}")
+        if not props:
+            raise ValueError(f"'{PROPERTIES_KEY}' block cannot be empty")
+        logger.info("Configuration validation passed")
 
     # --- Property categorisation ---
     @staticmethod
