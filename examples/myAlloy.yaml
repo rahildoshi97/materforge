@@ -6,8 +6,8 @@
 #
 # IMPORTANT: All property configurations must include 'bounds' parameter (except CONSTANT properties)
 #
-# Use a single, consistent dependency symbol (e.g., T) in all equations.
-# This symbol will be provided later when creating the material via the API.
+# Note: T is just a placeholder in equations.
+# The final equation will depend on the symbol passed via the API.
 # ====================================================================================================
 
 name: myAlloy
@@ -68,7 +68,7 @@ properties:
 
   viscosity1:
     dependency: [300, 1660, 1736, 3000]
-    equation: [7877.39-0.37*u_C, 11816.63-2.74*u_C, 8596.40-0.88*u_C]
+    equation: [7877.39-0.37*T, 11816.63-2.74*T, 8596.40-0.88*T]
     bounds: [constant, constant]
 
   # ====================================================================================================
@@ -85,6 +85,15 @@ properties:
       simplify: post
       degree: 3
       segments: 7
+
+  specific_enthalpy1:
+    dependency: (3000, 300, 541)
+    equation: Integral(heat_capacity1, T)
+    bounds: [ constant, constant ]
+    regression:
+      simplify: post
+      degree: 2
+      segments: 4
 
   solidus_temp1: 1605.          # Temperature where melting begins (K)
   liquidus_temp1: 1735.         # Temperature where material is completely melted (K)

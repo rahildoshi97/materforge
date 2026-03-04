@@ -1,9 +1,8 @@
 # SPDX-FileCopyrightText: 2025 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Constants used for YAML parsing and property processing."""
+import sympy as sp
 
-# ── TOP-LEVEL KEYS ───────────────────────────────────────────────
 # Property structure keys
 DEPENDENCIES_KEY = "dependencies"
 RANGES_KEY = "ranges"
@@ -37,6 +36,11 @@ POST_KEY = "post"
 # Properties and material name
 PROPERTIES_KEY = "properties"
 NAME_KEY = "name"
+
+# The placeholder symbol used in YAML equation strings.
+# All expressions parsed from YAML are built in terms of this symbol;
+# it is substituted with the caller-supplied dependency symbol at runtime.
+YAML_PLACEHOLDER = sp.Symbol('T')
 
 # Automatically export all constants
 __all__ = [name for name in globals() if not name.startswith('_') and name.isupper()]

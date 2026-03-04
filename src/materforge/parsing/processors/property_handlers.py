@@ -13,12 +13,11 @@ from materforge.parsing.utils.utilities import create_step_visualization_data
 from materforge.algorithms.interpolation import ensure_ascending_order
 from materforge.algorithms.piecewise_builder import PiecewiseBuilder
 from materforge.parsing.config.yaml_keys import (
-    DEPENDENCY_KEY, VALUE_KEY, BOUNDS_KEY, FILE_PATH_KEY, EQUATION_KEY
+    DEPENDENCY_KEY, VALUE_KEY, BOUNDS_KEY, FILE_PATH_KEY, EQUATION_KEY, YAML_PLACEHOLDER
 )
 from materforge.data.constants import ProcessingConstants
 
 logger = logging.getLogger(__name__)
-
 
 class BasePropertyHandler(PropertyProcessorBase):
     """Base class for property handlers with common functionality.
@@ -81,9 +80,11 @@ class StepFunctionPropertyHandler(BasePropertyHandler):
             transition_point = DependencyResolver.resolve_dependency_reference(dep_key, material)
             # Build piecewise using the YAML placeholder, then substitute caller's symbol
             step_function = sp.Piecewise(
-                (val_array[0], dependency < transition_point),
+                (val_array[0], YAML_PLACEHOLDER < transition_point),
                 (val_array[1], True)
             )
+            if dependency != YAML_PLACEHOLDER:
+                step_function = step_function.subs(YAML_PLACEHOLDER, dependency)
             # Build visualization data around the transition point
             offset = ProcessingConstants.STEP_FUNCTION_OFFSET
             dep_range = np.array([transition_point - offset, transition_point, transition_point + offset])
@@ -178,20 +179,22 @@ class PiecewiseEquationPropertyHandler(BasePropertyHandler):
             # Validate that equations only reference the YAML placeholder
             for eqn in eqn_strings:
                 expr = sp.sympify(eqn)
-                unexpected = [s for s in expr.free_symbols if s != dependency]
+                unexpected = [s for s in expr.free_symbols if s != YAML_PLACEHOLDER]
                 if unexpected:
                     raise ValueError(f"Unexpected symbol(s) {unexpected} in equation '{eqn}' for property '{prop_name}'. "
-                        f"Equations may only reference the dependency symbol '{dependency}'.")
+                        f"Equations may only reference the dependency placeholder '{YAML_PLACEHOLDER}'.")
             lower_bound_type, upper_bound_type = prop_config[BOUNDS_KEY]
             dep_points, eqn_strings = ensure_ascending_order(dep_points, eqn_strings)
             # Build piecewise using placeholder, then substitute caller's symbol
-            piecewise_func = PiecewiseBuilder.build_from_formulas(dep_points, list(eqn_strings), dependency,
+            piecewise_placeholder = PiecewiseBuilder.build_from_formulas(dep_points, list(eqn_strings), YAML_PLACEHOLDER,
                 lower_bound_type, upper_bound_type)
-
+            piecewise_func = (piecewise_placeholder.subs(YAML_PLACEHOLDER, dependency)
+                if dependency != YAML_PLACEHOLDER
+                else piecewise_placeholder)
             # Build dense array for visualization using the placeholder expression
             diff = max(np.min(np.diff(np.sort(dep_points))) / 10.0, 1.0)
             dep_dense = np.arange(dep_points[0], dep_points[-1] + diff / 2, diff)
-            f_pw = sp.lambdify(dependency, piecewise_func, 'numpy')
+            f_pw = sp.lambdify(YAML_PLACEHOLDER, piecewise_placeholder, 'numpy')
             y_dense = f_pw(dep_dense)
             self.finalize_with_piecewise_function(material=material, prop_name=prop_name, piecewise_func=piecewise_func,
                 dependency=dependency, config=prop_config, prop_type='PIECEWISE_EQUATION',

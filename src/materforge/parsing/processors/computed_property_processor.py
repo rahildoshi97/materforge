@@ -9,15 +9,10 @@ from materforge.core.materials import Material
 from materforge.core.symbol_registry import SymbolRegistry
 from materforge.parsing.processors.dependency_resolver import DependencyResolver
 from materforge.parsing.validation.errors import DependencyError, CircularDependencyError
-from materforge.parsing.config.yaml_keys import EQUATION_KEY, DEPENDENCY_KEY
+from materforge.parsing.config.yaml_keys import EQUATION_KEY, DEPENDENCY_KEY, YAML_PLACEHOLDER
 
 
 logger = logging.getLogger(__name__)
-
-# The placeholder symbol used in YAML equation strings.
-# All expressions parsed from YAML are built in terms of this symbol;
-# it is substituted with the caller-supplied dependency symbol at runtime.
-_YAML_PLACEHOLDER = sp.Symbol('T')
 
 class ComputedPropertyProcessor:
     """Handles dependency resolution and computed property processing."""
@@ -41,6 +36,8 @@ class ComputedPropertyProcessor:
             prop_name:   Name of the property to compute.
             dependency:  SymPy symbol (symbolic mode).
         """
+        if not isinstance(dependency, sp.Basic):
+            raise TypeError(f"dependency must be a SymPy expression, got {type(dependency).__name__}")
         if prop_name in self.processed_properties:
             logger.debug("Property '%s' already processed, skipping", prop_name)
             return
@@ -102,7 +99,7 @@ class ComputedPropertyProcessor:
             sympy_expr = sp.sympify(expression, evaluate=False)
             # Identify non-placeholder free symbols - these are property dependencies
             dependencies = [str(s) for s in sympy_expr.free_symbols
-                if s != dependency]
+                if s != YAML_PLACEHOLDER]
             if dependencies:
                 logger.debug("Property '%s' depends on: %s", prop_name, dependencies)
                 missing_deps = [dep for dep in dependencies
@@ -111,7 +108,7 @@ class ComputedPropertyProcessor:
                     available_props = sorted(self.properties.keys())
                     raise DependencyError(expression=expression, missing_deps=missing_deps,
                                           available_props=available_props)
-                self._validate_circular_dependencies(prop_name, dependency, dependencies, set())
+                self._validate_circular_dependencies(prop_name, dependencies, set())
                 # Ensure all dependencies are processed before this property
                 for dep in dependencies:
                     if not hasattr(material, dep) or getattr(material, dep) is None:
@@ -137,6 +134,7 @@ class ComputedPropertyProcessor:
                     raise ValueError(f"Symbol '{dep}' not found in symbol registry")
                 substitutions[dep_symbol] = dep_value
             # Substitute the YAML placeholder with the caller's dependency symbol (or value)
+            substitutions[YAML_PLACEHOLDER] = dependency
             result_expr = sympy_expr.subs(substitutions)
             # Evaluate any integrals (e.g. Integral(heat_capacity, T))
             if isinstance(result_expr, sp.Integral):
@@ -153,7 +151,7 @@ class ComputedPropertyProcessor:
                 expression, prop_name, e, exc_info=True)
             raise ValueError(f"Failed to parse and process expression: {expression}") from e
 
-    def _validate_circular_dependencies(self, prop_name: str, dependency: sp.Symbol, current_deps: List[str],
+    def _validate_circular_dependencies(self, prop_name: str, current_deps: List[str],
                                         visited: Set[str], path: List[str] = None) -> None:
         """Checks for circular dependencies in property definitions.
 
@@ -168,7 +166,8 @@ class ComputedPropertyProcessor:
         if path is None:
             path = []
         # Exclude the YAML placeholder from dependency graph traversal
-        current_deps = [dep for dep in current_deps if dep != str(dependency)]
+        # YAML_PLACEHOLDER already excluded by _extract_equation_dependencies
+        # current_deps = [dep for dep in current_deps if dep != str(YAML_PLACEHOLDER)]
         if prop_name is not None:
             if prop_name in visited:
                 cycle_path = path + [prop_name]
@@ -180,12 +179,12 @@ class ComputedPropertyProcessor:
             if dep in self.properties:
                 dep_config = self.properties[dep]
                 if isinstance(dep_config, dict) and EQUATION_KEY in dep_config:
-                    dep_deps = self._extract_equation_dependencies(dep_config[EQUATION_KEY], dependency)
+                    dep_deps = self._extract_equation_dependencies(dep_config[EQUATION_KEY])
                     if dep_deps:
-                        self._validate_circular_dependencies(dep, dependency, dep_deps, visited.copy(), path)
+                        self._validate_circular_dependencies(dep, dep_deps, visited.copy(), path)
 
     @staticmethod
-    def _extract_equation_dependencies(equation_data, dependency: sp.Symbol) -> List[str]:
+    def _extract_equation_dependencies(equation_data) -> List[str]:
         """Extracts non-placeholder free symbols from equation data."""
         symbols = set()
         if isinstance(equation_data, list):
@@ -193,4 +192,4 @@ class ComputedPropertyProcessor:
                 symbols.update(sp.sympify(eq).free_symbols)
         else:
             symbols.update(sp.sympify(equation_data).free_symbols)
-        return [str(s) for s in symbols if s != dependency]
+        return [str(s) for s in symbols if s != YAML_PLACEHOLDER]
