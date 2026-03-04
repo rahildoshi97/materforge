@@ -87,7 +87,7 @@ Supported formats: `.xlsx`, `.csv`, `.txt` (space/tab separated).
 
 ### 4. Tabular Data
 
-Explicit paired dependency–value lists. Both lists must have the same length.
+Explicit paired dependency-value lists. Both lists must have the same length.
 
 ```yaml
 properties:

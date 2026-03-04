@@ -83,7 +83,7 @@ class PropertyProcessorBase:
                                   dep_array: np.ndarray, prop_array: np.ndarray,
                                   dependency: sp.Symbol,
                                   config: Dict, prop_type: str) -> bool:
-        """Finalises property processing from raw dependency–value arrays.
+        """Finalises property processing from raw dependency-value arrays.
 
         In numeric mode, interpolates at the given value and assigns a float.
         In symbolic mode, builds a SymPy Piecewise and assigns it to the material.

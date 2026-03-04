@@ -130,7 +130,7 @@ MaterForge uses a property type detection system with six distinct types:
 1. **CONSTANT_VALUE**: Simple numeric values for dependency-independent properties
 2. **STEP_FUNCTION**: Discontinuous changes at a scalar transition point
 3. **FILE_IMPORT**: Data loaded from external files (Excel, CSV, text)
-4. **TABULAR_DATA**: Explicit dependency–property value pairs
+4. **TABULAR_DATA**: Explicit dependency-property value pairs
 5. **PIECEWISE_EQUATION**: Multiple equations for different dependency variable ranges
 6. **COMPUTED_PROPERTY**: Properties calculated from other already-defined properties
 

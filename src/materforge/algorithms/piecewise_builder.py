@@ -8,14 +8,12 @@ import sympy as sp
 from materforge.algorithms.interpolation import ensure_ascending_order
 from materforge.algorithms.regression_processor import RegressionProcessor
 from materforge.data.constants import ProcessingConstants
-from materforge.parsing.config.yaml_keys import CONSTANT_KEY, LINEAR_KEY, BOUNDS_KEY, PRE_KEY
+from materforge.parsing.config.yaml_keys import (
+    CONSTANT_KEY, LINEAR_KEY, BOUNDS_KEY, PRE_KEY, YAML_PLACEHOLDER
+)
 from materforge.parsing.utils.utilities import ensure_sympy_compatible
 
 logger = logging.getLogger(__name__)
-
-# The placeholder symbol used in YAML equation strings.
-_YAML_PLACEHOLDER = sp.Symbol('T')
-
 
 class PiecewiseBuilder:
     """Centralised piecewise function creation with different build strategies."""
@@ -23,7 +21,7 @@ class PiecewiseBuilder:
     @staticmethod
     def build_from_data(dep_array: np.ndarray, prop_array: np.ndarray,
                         dependency: sp.Symbol, config: Dict, prop_name: str) -> sp.Piecewise:
-        """Builds a piecewise function from raw dependency–value arrays.
+        """Builds a piecewise function from raw dependency-value arrays.
 
         Handles ascending/descending input, optional pre-regression, and
         symbol substitution when the caller uses a non-placeholder symbol.
@@ -57,16 +55,16 @@ class PiecewiseBuilder:
                             prop_name, simplify_type, degree, segments)
             if has_regression and simplify_type == PRE_KEY:
                 pw_result = PiecewiseBuilder._build_with_regression(
-                    dep_array, prop_array, _YAML_PLACEHOLDER,
+                    dep_array, prop_array, YAML_PLACEHOLDER,
                     lower_bound_type, upper_bound_type, degree, segments)
             else:
                 pw_result = PiecewiseBuilder._build_without_regression(
-                    dep_array, prop_array, _YAML_PLACEHOLDER,
+                    dep_array, prop_array, YAML_PLACEHOLDER,
                     lower_bound_type, upper_bound_type)
-            if dependency != _YAML_PLACEHOLDER:
+            if dependency != YAML_PLACEHOLDER:
                 logger.debug("Substituting %s -> %s for property %r",
-                             _YAML_PLACEHOLDER, dependency, prop_name)
-                pw_result = pw_result.subs(_YAML_PLACEHOLDER, dependency)
+                             YAML_PLACEHOLDER, dependency, prop_name)
+                pw_result = pw_result.subs(YAML_PLACEHOLDER, dependency)
             logger.info("Successfully built piecewise function for property: %s", prop_name)
             return pw_result
         except Exception as e:

@@ -115,7 +115,7 @@ class FileImportPropertyHandler(BasePropertyHandler):
             file_config[FILE_PATH_KEY] = str(file_path)
             logger.debug("Loading property '%s' from file: %s", prop_name, file_path)
             dep_array, prop_array = load_property_data(file_config)
-            logger.debug("Loaded %d data points for property '%s' (range: %s – %s)",
+            logger.debug("Loaded %d data points for property '%s' (range: %s - %s)",
                 len(dep_array), prop_name, dep_array.min(), dep_array.max())
             self.finalize_with_data_arrays(material=material, prop_name=prop_name, dep_array=dep_array,
                 prop_array=prop_array, dependency=dependency,
@@ -127,12 +127,12 @@ class FileImportPropertyHandler(BasePropertyHandler):
 
 
 class TabularDataPropertyHandler(BasePropertyHandler):
-    """Handler for tabular (explicit dependency–value pair) properties."""
+    """Handler for tabular (explicit dependency-value pair) properties."""
 
     def process_property(self, material: Material, prop_name: str,
                          prop_config: Dict[str, Any],
                          dependency: sp.Symbol) -> None:
-        """Processes a property defined by explicit dependency–value pairs.
+        """Processes a property defined by explicit dependency-value pairs.
 
         Args:
             material:    Material instance.

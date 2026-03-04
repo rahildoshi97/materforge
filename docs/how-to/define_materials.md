@@ -81,7 +81,7 @@ Supported formats: `.txt` (space/tab separated), `.csv`, `.xlsx`.
 
 ### 4. Tabular Data
 
-For properties defined by paired dependency–value lists:
+For properties defined by paired dependency-value lists:
 
 ```yaml
 properties:

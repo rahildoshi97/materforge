@@ -124,7 +124,7 @@ if hasattr(mat, 'energy_density'):
 - **CONSTANT_VALUE**: Single numeric value - not dependency-driven
 - **STEP_FUNCTION**: Discontinuous transition at a scalar reference point
 - **FILE_IMPORT**: Data loaded from CSV, Excel, or text files
-- **TABULAR_DATA**: Explicit dependency–value pairs
+- **TABULAR_DATA**: Explicit dependency-value pairs
 - **PIECEWISE_EQUATION**: Symbolic equations over dependency variable ranges
 - **COMPUTED_PROPERTY**: Properties derived from other defined properties
 

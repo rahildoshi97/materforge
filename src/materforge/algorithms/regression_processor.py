@@ -162,7 +162,7 @@ class RegressionProcessor:
         if pwlf_.degree < 1:
             raise ValueError("Degree must be at least 1")
         if segment_number < 1 or segment_number > pwlf_.n_segments:
-            raise ValueError(f"segment_number {segment_number} out of range (1–{pwlf_.n_segments})")
+            raise ValueError(f"segment_number {segment_number} out of range (1-{pwlf_.n_segments})")
         try:
             beta       = [ensure_sympy_compatible(b) for b in pwlf_.beta]
             fit_breaks = [ensure_sympy_compatible(b) for b in pwlf_.fit_breaks]
