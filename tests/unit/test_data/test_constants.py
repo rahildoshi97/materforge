@@ -1,6 +1,5 @@
 """Unit tests for constants modules."""
 
-import scipy.constants as sc
 from materforge.data.constants.processing_constants import ProcessingConstants
 
 

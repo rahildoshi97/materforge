@@ -2,8 +2,6 @@
 
 import pytest
 import numpy as np
-import sympy as sp
-from unittest.mock import Mock
 from materforge.core.materials import Material
 from materforge.parsing.utils.utilities import create_step_visualization_data
 
