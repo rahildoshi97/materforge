@@ -146,7 +146,7 @@ properties:
     thermal_diffusivity:
         dependency: (3000, 300, -5.0)
         equation: heat_conductivity / (density * heat_capacity)
-        bounds: [extrapolate, extrapolate]
+        bounds: [linear, linear]
         regression:
             simplify: post
             degree: 2
@@ -155,7 +155,7 @@ properties:
     energy_density:
         dependency: (300, 3000, 5.0)
         equation: density * specific_enthalpy
-        bounds: [extrapolate, extrapolate]
+        bounds: [linear, linear]
 ```
 
 ---
@@ -199,7 +199,7 @@ bounds: [lower_bound, upper_bound]
 | Option      | Behaviour                                      |
 |-------------|------------------------------------------------|
 | constant    | Clamp to the boundary value outside the range  |
-| extrapolate | Linear extrapolation beyond the range          |
+| linear | Linear extrapolation beyond the range          |
 
 ---
 

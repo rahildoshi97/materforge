@@ -69,7 +69,7 @@ properties:
     thermal_diffusivity:
         dependency: (300, 3000, 5.0)
         equation: heat_conductivity / (density * heat_capacity)
-        bounds: [extrapolate, extrapolate]
+        bounds: [linear, linear]
 ```
 
 ### 2. Load and Evaluate in Python

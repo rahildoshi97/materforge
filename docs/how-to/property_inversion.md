@@ -115,7 +115,7 @@ block for any property you intend to invert:
 energy_density:
     dependency: (300, 3000, 5.0)
     equation: density * specific_enthalpy
-    bounds: [extrapolate, extrapolate]
+    bounds: [linear, linear]
     regression:
         simplify: pre
         degree: 1      # required for inversion
@@ -130,5 +130,5 @@ energy_density:
 - Use `degree: 1` regression for properties you intend to invert
 - The input property must be monotonic over its domain for the inverse to be
   well-defined - verify this by inspecting the forward plot
-- Prefer `bounds: [extrapolate, extrapolate]` for properties used in inversion
+- Prefer `bounds: [linear, linear]` for properties used in inversion
   so out-of-range queries degrade gracefully rather than clamping silently

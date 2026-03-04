@@ -174,7 +174,7 @@ class TestPropertyProcessorBaseComprehensive:
         processor.visualizer = visualizer
 
         config = {
-            'bounds': ['constant', 'extrapolate'],
+            'bounds': ['constant', 'linear'],
             'regression': {'simplify': 'pre', 'degree': 2, 'segments': 3},
         }
 
@@ -194,4 +194,4 @@ class TestPropertyProcessorBaseComprehensive:
         assert call_kwargs['degree'] == 2
         assert call_kwargs['segments'] == 3
         assert call_kwargs['lower_bound_type'] == 'constant'
-        assert call_kwargs['upper_bound_type'] == 'extrapolate'
+        assert call_kwargs['upper_bound_type'] == 'linear'

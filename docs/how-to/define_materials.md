@@ -135,7 +135,7 @@ properties:
     thermal_diffusivity:
         dependency: (3000, 300, -5.0)
         equation: heat_conductivity / (density * heat_capacity)
-        bounds: [extrapolate, extrapolate]
+        bounds: [linear, linear]
         regression:
             simplify: post
             degree: 2
@@ -144,7 +144,7 @@ properties:
     energy_density:
         dependency: (300, 3000, 541)
         equation: density * specific_enthalpy
-        bounds: [extrapolate, extrapolate]
+        bounds: [linear, linear]
 ```
 
 MaterForge resolves property dependencies automatically - `thermal_diffusivity` is always
@@ -188,13 +188,13 @@ dependency: solidus_temp + 5     # single reference for step functions
 Controls behaviour outside the defined data range:
 
 ```yaml
-bounds: [constant, extrapolate]
+bounds: [constant, linear]
 ```
 
 | Option      | Behaviour                                      |
 |-------------|------------------------------------------------|
 | constant    | Clamp to the boundary value outside the range  |
-| extrapolate | Linear extrapolation beyond the range          |
+| linear | Linear extrapolation beyond the range          |
 
 ---
 
@@ -238,7 +238,7 @@ properties:
     heat_conductivity:
         dependency: [500, 1000, 1600, 1700, 1750, 2000, 2500]
         value: [19.25, 25.47, 32.94, 33.52, 31.53, 35.33, 42.95]
-        bounds: [extrapolate, extrapolate]
+        bounds: [linear, linear]
 
     # File import with regression
     heat_capacity:
@@ -261,7 +261,7 @@ properties:
     thermal_diffusivity:
         dependency: (3000, 300, -5.0)
         equation: heat_conductivity / (density * heat_capacity)
-        bounds: [extrapolate, extrapolate]
+        bounds: [linear, linear]
         regression:
             simplify: post
             degree: 3

@@ -160,7 +160,7 @@ class TestPiecewiseInverter:
             assert abs(recovered_temp - temp) < 1e-10
 
     def test_material_specific_enthalpy_bounds_constant_extrapolate(self):
-        """Inverse of specific_enthalpy with bounds=[constant, extrapolate]."""
+        """Inverse of specific_enthalpy with bounds=[constant, linear]."""
         T_C = sp.Symbol('T_C')
         h = sp.Symbol('h')
         specific_enthalpy = sp.Piecewise(
@@ -178,7 +178,7 @@ class TestPiecewiseInverter:
             assert abs(recovered_temp - temp) < 1e-10
 
     def test_material_specific_enthalpy_bounds_extrapolate_constant(self):
-        """Inverse of specific_enthalpy with bounds=[extrapolate, constant]."""
+        """Inverse of specific_enthalpy with bounds=[linear, constant]."""
         T_C = sp.Symbol('T_C')
         h = sp.Symbol('h')
         specific_enthalpy = sp.Piecewise(
@@ -198,7 +198,7 @@ class TestPiecewiseInverter:
             assert abs(recovered_temp - temp) < 1e-10
 
     def test_material_specific_enthalpy_bounds_extrapolate_extrapolate(self):
-        """Inverse of specific_enthalpy with bounds=[extrapolate, extrapolate]."""
+        """Inverse of specific_enthalpy with bounds=[linear, linear]."""
         T_C = sp.Symbol('T_C')
         h = sp.Symbol('h')
         specific_enthalpy = sp.Piecewise(
@@ -231,7 +231,7 @@ class TestPiecewiseInverter:
                 'test_temps': [300, 1000, 2000, 4500],
             },
             {
-                'name': 'constant-extrapolate',
+                'name': 'constant-linear',
                 'piecewise': sp.Piecewise(
                     (119597.624967454, T_C < 300.0),
                     (661.839836478122 * T_C - 78954.325975983, T_C < 1672.40999625891),
@@ -241,7 +241,7 @@ class TestPiecewiseInverter:
                 'test_temps': [300, 1000, 2000],
             },
             {
-                'name': 'extrapolate-constant',
+                'name': 'linear-constant',
                 'piecewise': sp.Piecewise(
                     (661.839974761036 * T_C - 78954.4303636301, T_C < 1672.410186589),
                     (3503.34591068727 * T_C - 4831117.90285977, T_C < 1741.14311373293),
@@ -251,7 +251,7 @@ class TestPiecewiseInverter:
                 'test_temps': [1000, 2000, 4500],
             },
             {
-                'name': 'extrapolate-extrapolate',
+                'name': 'linear-linear',
                 'piecewise': sp.Piecewise(
                     (661.839836478122 * T_C - 78954.325975983, T_C < 1672.40999625891),
                     (3503.38337434609 * T_C - 4831180.14351127, T_C < 1741.14194564656),
