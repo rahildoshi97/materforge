@@ -38,12 +38,13 @@ with SourceFileGenerator() as sfg:
     heat_pde_discretized = heat_pde_discretized.args[1] + heat_pde_discretized.args[0].simplify() # type: ignore
 
     yaml_path = Path(__file__).parent / '1.4301_HeatEquationKernelWithMaterial.yaml'
-    yaml_path_Al = Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
-    yaml_path_SS304L = Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+    #yaml_path_Al = Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "Al.yaml"
+    #yaml_path_SS304L = Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "1.4301.yaml"
 
-    mat = create_material(yaml_path=yaml_path, dependency=u.center(), enable_plotting=True) # type: ignore
-    mat_Al = create_material(yaml_path=yaml_path_Al, dependency=u.center(), enable_plotting=True) # type: ignore
-    mat_SS304L = create_material(yaml_path=yaml_path_SS304L, dependency=u.center(), enable_plotting=True) # type: ignore
+    S = sp.Symbol('S')
+    mat = create_material(yaml_path=yaml_path, dependency=S, enable_plotting=True)
+    #mat_Al = create_material(yaml_path=yaml_path_Al, dependency=u.center(), enable_plotting=True) # type: ignore
+    #mat_SS304L = create_material(yaml_path=yaml_path_SS304L, dependency=u.center(), enable_plotting=True) # type: ignore
 
     print(f"Energy density function: {mat.energy_density}")
     print(f"Type: {type(mat.energy_density)}")
@@ -64,15 +65,7 @@ with SourceFileGenerator() as sfg:
         3000, 3500, 4000
     ]
 
-    # Create inverse energy density function
-        # Method 2: Using PiecewiseInverter directly (alternative approach)
-        # inverter = PiecewiseInverter()
-        # T_symbol = sp.Symbol('T')  # or extract from energy_density function
-        # E_symbol = sp.Symbol('E')
-        # inverse_energy_density = inverter.create_inverse(mat.energy_density, T_symbol, E_symbol)
-
-    # METHOD 2: Using PiecewiseInverter directly
-    print("METHOD 2: Using PiecewiseInverter directly")
+    print("Create inverse energy density function Using PiecewiseInverter")
     print("-" * 60)
 
     if hasattr(mat, 'energy_density'):
@@ -88,12 +81,12 @@ with SourceFileGenerator() as sfg:
             # Create inverter with custom tolerance
             inverse_func = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol, E_symbol) # type: ignore
 
-            print("Method 2 inverse created successfully!")
+            print("Inverse created successfully!")
             print(f"Temperature symbol used: {temp_symbol}")
             print(f"Inverse function: {inverse_func}")
 
             # Test round-trip accuracy for Method 2
-            print("\nMethod 2 - Round-trip accuracy test:")
+            print("\nRound-trip accuracy test:")
             method2_errors = []
             method2_passed = 0
             method2_failed = 0
@@ -120,7 +113,7 @@ with SourceFileGenerator() as sfg:
                     print(f"Error at T={temp}K: {e}")
 
             max_error_method2 = max(method2_errors) if method2_errors else float('inf')
-            print("\nMethod 2 Summary:")
+            print("\nSummary:")
             print(f"  Passed: {method2_passed}/{len(test_temperatures)}")
             print(f"  Failed: {method2_failed}/{len(test_temperatures)}")
             print(f"  Maximum error: {max_error_method2:.2e}")
@@ -133,11 +126,11 @@ with SourceFileGenerator() as sfg:
                 method2_passed = 0
                 method2_failed = len(test_temperatures)
             else:
-                print(f"Method 2 failed: {e}")
+                print(f"Failed: {e}")
                 method2_passed = 0
                 method2_failed = len(test_temperatures)
         except Exception as e:
-            print(f"Method 2 failed with unexpected error: {e}")
+            print(f"Failed with unexpected error: {e}")
             method2_passed = 0
             method2_failed = len(test_temperatures)
     else:
@@ -147,19 +140,8 @@ with SourceFileGenerator() as sfg:
 
     print("\n" + "=" * 80)
 
-    # COMPARISON SUMMARY
-    print("COMPARISON SUMMARY")
-    print("-" * 60)
-
-    print("\nMethod 2 (Direct PiecewiseInverter):")
-    print(f"  Success rate: {method2_passed}/{len(test_temperatures)} ({100*method2_passed/len(test_temperatures):.1f}%)")
-    if 'max_error_method2' in locals():
-        print(f"  Max error: {max_error_method2:.2e}") # type: ignore
-
-    print("\n" + "=" * 80)
-
     subexp = [
-        ps.Assignment(thermal_diffusivity_symbol, mat.thermal_diffusivity),
+        ps.Assignment(thermal_diffusivity_symbol, mat.thermal_diffusivity.subs(S, u.center())),
     ]
 
     ac = ps.AssignmentCollection(

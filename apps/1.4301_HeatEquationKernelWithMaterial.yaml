@@ -1,26 +1,17 @@
 name: SS304L_HeatEquationKernelWithMaterial
 
-material_type: alloy  # or pure_metal
-
-composition:
-  Fe: 0.675
-  Cr: 0.170
-  Ni: 0.120
-  Mo: 0.025
-  Mn: 0.010
-
-# interval for melting
-solidus_temperature: 1605.
-liquidus_temperature: 1735.
-# interval for evaporation
-initial_boiling_temperature: 3090.
-final_boiling_temperature: 3200.
-
 properties:
+
+  # interval for melting
+  solidus_temperature: 1605.
+  liquidus_temperature: 1735.
+  # interval for evaporation
+  initial_boiling_temperature: 3090.
+  final_boiling_temperature: 3200.
 
   thermal_diffusivity: # COMPUTED_PROPERTY
     dependency: (3000, 300, -5.0)
-    equation: heat_conductivity /(density * heat_capacity)
+    equation: heat_conductivity /(density1 * heat_capacity1)
     bounds: [ linear, linear ]
     regression:
       simplify: post
@@ -31,7 +22,7 @@ properties:
 
   energy_density:  # COMPUTED_PROPERTY
     dependency: (300, 3000, 5.0)
-    equation: density * specific_enthalpy
+    equation: density1 * specific_enthalpy
     bounds: [ linear, linear ]
     regression:
         simplify: post
@@ -42,7 +33,7 @@ properties:
 
   specific_enthalpy:  # COMPUTED_PROPERTY
     dependency: (3000, 300, 541)
-    equation: Integral(heat_capacity, T)
+    equation: Integral(heat_capacity1, T)
     bounds: [ constant, constant ]
     regression:
       simplify: post
@@ -51,7 +42,7 @@ properties:
 
   ##################################################
 
-  heat_capacity:  # FILE_IMPORT
+  heat_capacity1:  # FILE_IMPORT
     file_path: ./1.4301_HeatEquationKernelWithMaterial.xlsx
     dependency_column: T (K)
     property_column: Specific heat (J/(Kg K))
@@ -75,7 +66,7 @@ properties:
 
   ##################################################
 
-  density:  # FILE_IMPORT
+  density1:  # FILE_IMPORT
     file_path: ./1.4301_HeatEquationKernelWithMaterial.xlsx
     dependency_column: T (K)
     property_column: Density (kg/(m)^3)
