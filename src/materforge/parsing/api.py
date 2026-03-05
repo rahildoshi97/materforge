@@ -24,15 +24,15 @@ def create_material(yaml_path: Union[str, Path], dependency: sp.Symbol,
 
     Args:
         yaml_path:       Path to the YAML configuration file.
-        dependency:      SymPy symbol (symbolic mode).
+        dependency:      SymPy symbol used as the independent variable.
                          YAML equations always use the placeholder 'T';
-                         it is substituted with this symbol automatically.
+                         it is substituted with this symbol at runtime.
         enable_plotting: Generate visualisation plots (default: True).
     Returns:
         Fully initialised Material instance.
     Raises:
         FileNotFoundError: YAML file does not exist.
-        TypeError:         dependency is not a sp.Symbol
+        TypeError:         dependency is not a sp.Symbol.
         ValueError:        YAML content is invalid or material creation fails.
     Example:
         >>> material = create_material('steel.yaml', sp.Symbol('T'))
@@ -50,7 +50,8 @@ def create_material(yaml_path: Union[str, Path], dependency: sp.Symbol,
                     material.name, len(material.property_names()))
         return material
     except Exception as e:
-        logger.error("Failed to create material from %s: %s", yaml_path, e, exc_info=True)
+        # Top of the materforge stack - log once here, then re-raise as-is
+        logger.error("Failed to create material from %s: %s", yaml_path, e)
         raise
 
 
@@ -94,7 +95,7 @@ def get_material_info(yaml_path: Union[str, Path]) -> Dict:
         yaml_path: Path to the YAML configuration file.
     Returns:
         Dict with keys: name, properties, total_properties, property_types,
-        and any additional top-level YAML fields (e.g. solidus_temperature).
+        and any additional top-level YAML fields.
     Raises:
         FileNotFoundError: File does not exist.
         ValueError:        Content is invalid or a required field is missing.
@@ -136,8 +137,6 @@ def get_material_info(yaml_path: Union[str, Path]) -> Dict:
 def get_material_property_names(material: Material) -> Set[str]:
     """Returns all property names dynamically assigned to a material instance.
 
-    Uses the dynamic property tracker - works for any user-defined name.
-
     Args:
         material: A fully processed Material instance.
     Returns:
@@ -163,9 +162,9 @@ def evaluate_material_properties(material: Material, symbol: sp.Symbol, value) -
     Args:
         material: A fully processed Material instance.
         symbol:   SymPy symbol to substitute.
-        value:    Numeric value to substitute. Must be positive.
+        value:    Numeric value to substitute.
     Returns:
-        All property names mapped to evaluated float values.
+        New Material with all properties evaluated to numeric values.
     Raises:
         ValueError: If material is not a Material instance.
     Example:

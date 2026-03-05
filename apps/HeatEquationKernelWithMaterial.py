@@ -70,12 +70,11 @@ with SourceFileGenerator() as sfg:
 
     if hasattr(mat, 'energy_density'):
         try:
-            # Extract the temperature symbol from the energy density function
             energy_symbols = mat.energy_density.free_symbols # type: ignore
             if len(energy_symbols) != 1:
                 raise ValueError(f"Energy density function must have exactly one symbol, found: {energy_symbols}")
 
-            temp_symbol = list(energy_symbols)[0]  # This should be u.center()
+            temp_symbol = list(energy_symbols)[0]
             E_symbol = sp.Symbol('E')
 
             # Create inverter with custom tolerance
@@ -85,11 +84,10 @@ with SourceFileGenerator() as sfg:
             print(f"Temperature symbol used: {temp_symbol}")
             print(f"Inverse function: {inverse_func}")
 
-            # Test round-trip accuracy for Method 2
             print("\nRound-trip accuracy test:")
-            method2_errors = []
-            method2_passed = 0
-            method2_failed = 0
+            errors = []
+            passed = 0
+            failed = 0
 
             for temp in test_temperatures:
                 try:
@@ -98,45 +96,45 @@ with SourceFileGenerator() as sfg:
                     # Backward: E -> T
                     recovered_temp = float(inverse_func.subs(E_symbol, energy_val)) # type: ignore
                     error = abs(temp - recovered_temp)
-                    method2_errors.append(error)
+                    errors.append(error)
 
-                    status = "✓" if error < 1e-6 else "!" if error < 1e-3 else "✗"
+                    status = "✅" if error < 1e-6 else "⚠️" if error < 1e-3 else "❌"
                     if error < 1e-3:
-                        method2_passed += 1
+                        passed += 1
                     else:
-                        method2_failed += 1
+                        failed += 1
 
                     print(f"{status} T={temp:6.1f}K -> E={energy_val:12.2e} -> T={recovered_temp:6.1f}K, Error={error:.2e}")
 
                 except Exception as e:
-                    method2_failed += 1
+                    failed += 1
                     print(f"Error at T={temp}K: {e}")
 
-            max_error_method2 = max(method2_errors) if method2_errors else float('inf')
+            max_error = max(errors) if errors else float('inf')
             print("\nSummary:")
-            print(f"  Passed: {method2_passed}/{len(test_temperatures)}")
-            print(f"  Failed: {method2_failed}/{len(test_temperatures)}")
-            print(f"  Maximum error: {max_error_method2:.2e}")
+            print(f"  Passed: {passed}/{len(test_temperatures)}")
+            print(f"  Failed: {failed}/{len(test_temperatures)}")
+            print(f"  Maximum error: {max_error:.2e}")
 
         except ValueError as e:
             if "degree" in str(e).lower():
                 print(f"Expected error: {e}")
                 print("  This is expected if the material has non-linear energy density.")
                 print("  The simplified inverter only supports linear piecewise functions.")
-                method2_passed = 0
-                method2_failed = len(test_temperatures)
+                passed = 0
+                failed = len(test_temperatures)
             else:
                 print(f"Failed: {e}")
-                method2_passed = 0
-                method2_failed = len(test_temperatures)
+                passed = 0
+                failed = len(test_temperatures)
         except Exception as e:
             print(f"Failed with unexpected error: {e}")
-            method2_passed = 0
-            method2_failed = len(test_temperatures)
+            passed = 0
+            failed = len(test_temperatures)
     else:
         print("Material does not have energy_density property")
-        method2_passed = 0
-        method2_failed = len(test_temperatures)
+        passed = 0
+        failed = len(test_temperatures)
 
     print("\n" + "=" * 80)
 

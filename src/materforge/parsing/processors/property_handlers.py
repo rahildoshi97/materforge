@@ -182,7 +182,7 @@ class PiecewiseEquationPropertyHandler(BasePropertyHandler):
                 unexpected = [s for s in expr.free_symbols if s != YAML_PLACEHOLDER]
                 if unexpected:
                     raise ValueError(f"Unexpected symbol(s) {unexpected} in equation '{eqn}' for property '{prop_name}'. "
-                        f"Equations may only reference the dependency placeholder '{YAML_PLACEHOLDER}'.")
+                        f"PIECEWISE_EQUATION equations must use '{YAML_PLACEHOLDER}' as the only variable.")
             lower_bound_type, upper_bound_type = prop_config[BOUNDS_KEY]
             dep_points, eqn_strings = ensure_ascending_order(dep_points, eqn_strings)
             # Build piecewise using placeholder, then substitute caller's symbol

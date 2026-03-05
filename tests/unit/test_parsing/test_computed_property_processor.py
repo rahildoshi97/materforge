@@ -3,7 +3,7 @@ import pytest
 import sympy as sp
 from materforge.core.materials import Material
 from materforge.parsing.processors.computed_property_processor import ComputedPropertyProcessor
-from materforge.parsing.validation.errors import CircularDependencyError
+from materforge.parsing.validation.errors import DependencyError, CircularDependencyError
 
 def _make_material(**scalar_props) -> Material:
     mat = Material(name="TestMaterial")
@@ -84,7 +84,7 @@ class TestComputedPropertyProcessor:
         assert 'mass' in processed
 
     def test_process_computed_property_missing_dependency(self):
-        """Referencing undefined symbols raises ValueError."""
+        """Referencing undefined symbols raises DependencyError."""
         mat = Material(name="TestMaterial")
         properties = {
             'mass': {
@@ -93,7 +93,7 @@ class TestComputedPropertyProcessor:
             },
         }
         processor = ComputedPropertyProcessor(properties, set())
-        with pytest.raises(ValueError, match="Missing dependencies in expression"):
+        with pytest.raises(DependencyError, match="Missing dependencies in expression"):
             processor.process_computed_property(mat, 'mass', sp.Symbol('T'))
 
     def test_process_computed_property_transitive_dependencies(self):

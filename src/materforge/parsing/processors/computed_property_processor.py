@@ -11,7 +11,6 @@ from materforge.parsing.processors.dependency_resolver import DependencyResolver
 from materforge.parsing.validation.errors import DependencyError, CircularDependencyError
 from materforge.parsing.config.yaml_keys import EQUATION_KEY, DEPENDENCY_KEY, YAML_PLACEHOLDER
 
-
 logger = logging.getLogger(__name__)
 
 class ComputedPropertyProcessor:
@@ -52,10 +51,9 @@ class ComputedPropertyProcessor:
             logger.debug("Computing property '%s' with expression: %s", prop_name, expression)
             try:
                 material_property = self._parse_and_process_expression(expression, material, dependency, prop_name)
-            except CircularDependencyError:
+            except (DependencyError, CircularDependencyError):
                 raise
             except Exception as e:
-                logger.error("Failed to parse expression for '%s': %s", prop_name, e, exc_info=True)
                 raise ValueError(f"Failed to process computed property '{prop_name}' \n -> {str(e)}") from e
             # Symbolic dependency: lambdify over the dependency array
             # material_property is already expressed in terms of `dependency` (the caller's symbol).
@@ -65,7 +63,7 @@ class ComputedPropertyProcessor:
                 if not np.all(np.isfinite(y_dense)):
                     invalid_count = np.sum(~np.isfinite(y_dense))
                     logger.warning("Property '%s' has %d non-finite values. "
-                        "Check expression: %s", prop_name, invalid_count, expression)
+                                   "Check expression: %s", prop_name, invalid_count, expression)
                 if self.property_handler is not None:
                     self.property_handler.finalize_computed_property(
                         material, prop_name, dep_array, y_dense, dependency, prop_config
@@ -75,13 +73,13 @@ class ComputedPropertyProcessor:
                     self.processed_properties.add(prop_name)
                     logger.warning("Property handler not available for '%s' - skipping visualization", prop_name)
                 logger.debug("Successfully computed property '%s' over %d dependency points", prop_name, len(dep_array))
+            except (DependencyError, CircularDependencyError):
+                raise
             except Exception as e:
-                logger.error("Error evaluating expression for '%s': %s", prop_name, e, exc_info=True)
                 raise ValueError(f"Error evaluating expression for '{prop_name}' \n -> {str(e)}") from e
         except (DependencyError, CircularDependencyError):
             raise
         except Exception as e:
-            logger.error("Failed to process computed property '%s': %s", prop_name, e, exc_info=True)
             raise ValueError(f"Failed to process computed property '{prop_name}' \n -> {str(e)}") from e
 
     def _parse_and_process_expression(self, expression: str, material: Material,
@@ -98,12 +96,11 @@ class ComputedPropertyProcessor:
             logger.debug("Parsing expression for '%s': %s", prop_name, expression)
             sympy_expr = sp.sympify(expression, evaluate=False)
             # Identify non-placeholder free symbols - these are property dependencies
-            dependencies = [str(s) for s in sympy_expr.free_symbols
-                if s != YAML_PLACEHOLDER]
+            dependencies = [str(s) for s in sympy_expr.free_symbols if s != YAML_PLACEHOLDER]
             if dependencies:
                 logger.debug("Property '%s' depends on: %s", prop_name, dependencies)
                 missing_deps = [dep for dep in dependencies
-                    if not hasattr(material, dep) and dep not in self.properties]
+                                if not hasattr(material, dep) and dep not in self.properties]
                 if missing_deps:
                     available_props = sorted(self.properties.keys())
                     raise DependencyError(expression=expression, missing_deps=missing_deps,
@@ -120,7 +117,7 @@ class ComputedPropertyProcessor:
                                                   available_props=sorted(self.properties.keys()))
             # Verify all dependencies are now available
             still_missing = [dep for dep in dependencies
-                if not hasattr(material, dep) or getattr(material, dep) is None]
+                             if not hasattr(material, dep) or getattr(material, dep) is None]
             if still_missing:
                 raise ValueError(f"Cannot compute expression. Missing dependencies: {still_missing}")
             # Build substitution dict: property symbols -> their material values
@@ -142,13 +139,9 @@ class ComputedPropertyProcessor:
                 result_expr = result_expr.doit()
             logger.debug("Successfully processed expression for '%s'", prop_name)
             return result_expr
-        except CircularDependencyError:
-            raise
-        except DependencyError:
+        except (CircularDependencyError, DependencyError):
             raise
         except Exception as e:
-            logger.error("Failed to parse expression '%s' for '%s': %s",
-                expression, prop_name, e, exc_info=True)
             raise ValueError(f"Failed to parse and process expression: {expression}") from e
 
     def _validate_circular_dependencies(self, prop_name: str, current_deps: List[str],
@@ -165,12 +158,10 @@ class ComputedPropertyProcessor:
         """
         if path is None:
             path = []
-        # Exclude the YAML placeholder from dependency graph traversal
-        # YAML_PLACEHOLDER already excluded by _extract_equation_dependencies
-        # current_deps = [dep for dep in current_deps if dep != str(YAML_PLACEHOLDER)]
         if prop_name is not None:
             if prop_name in visited:
                 cycle_path = path + [prop_name]
+                # Origin point - log here before raising
                 logger.error("Circular dependency detected: %s", ' -> '.join(cycle_path))
                 raise CircularDependencyError(dependency_path=cycle_path)
             visited.add(prop_name)

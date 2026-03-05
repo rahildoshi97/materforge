@@ -23,6 +23,7 @@ Material Class
    :members:
    :undoc-members:
    :show-inheritance:
+   :no-index:
 
 Algorithms Module
 -----------------

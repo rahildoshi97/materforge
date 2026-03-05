@@ -71,7 +71,7 @@ class PropertyProcessor(PropertyProcessorBase):
                 material, dependency, self.properties, self.categorized_properties, self.processed_properties)
             logger.info("Finished processing all properties for '%s'", material.name)
         except Exception as e:
-            logger.error("Property processing failed for '%s': %s", material.name, e, exc_info=True)
+            # Intermediate layer - do not log here, bubble up to api.py
             raise ValueError(f"Failed to process properties\n -> {str(e)}") from e
 
     # --- Private helpers ---
@@ -114,9 +114,6 @@ class PropertyProcessor(PropertyProcessorBase):
             logger.info("Processing %d %s properties", len(prop_list), prop_type.name)
             for prop_name, config in prop_list:
                 logger.debug("Processing '%s'", prop_name)
-                try:
-                    handler.process_property(material, prop_name, config, dependency)
-                except Exception as e:
-                    logger.error("Failed to process '%s': %s", prop_name, e, exc_info=True)
-                    raise
+                handler.process_property(material, prop_name, config, dependency)
+                # No try/except here - errors propagate cleanly to process_properties
             logger.info("Completed %s", prop_type.name)

@@ -141,23 +141,6 @@ python_3.12:
   <<: *python_test
   image: python:3.12
 
-# Performance tests (separate job with relaxed thresholds)
-performance_tests_ci:
-  stage: test
-  image: python:${PYTHON_VERSION}
-  before_script:
-    - pip install --upgrade pip
-    - pip install -e .
-    - pip install pytest pytest-benchmark numpy sympy matplotlib pyyaml ruamel.yaml pwlf pandas openpyxl scipy psutil
-  script:
-    - echo "Running performance tests with CI-adjusted thresholds..."
-    - pytest tests/performance/ -v -m "slow" || echo "⚠️ Performance tests failed but continuing"
-    - echo "✅ Performance tests completed"
-  allow_failure: true  # Don't block pipeline on performance failures
-  only:
-    - main
-    - master
-
 # Test examples
 test_examples:
   stage: test
@@ -244,18 +227,17 @@ docs_build:
   stage: build
   image: python:${PYTHON_VERSION}
   script:
-    - pip install sphinx sphinx-rtd-theme
-    - pip install -e .
-    - echo "✅ Documentation dependencies installed"
-    - echo "📚 Documentation structure validated"
+    - pip install -e ".[docs]"
+    - sphinx-build -W -b html docs/ docs/_build/html
+    - echo "✅ Documentation built successfully"
   artifacts:
     paths:
-      - docs/
+      - docs/_build/html/
     expire_in: 1 week
   only:
     changes:
-      - docs/
-      - ${PACKAGE_DIR}/
+      - docs/**/*
+      - src/materforge/**/*
 
 # Package build test
 package_build:

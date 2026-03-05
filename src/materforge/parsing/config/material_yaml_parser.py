@@ -61,7 +61,7 @@ class MaterialYAMLParser(YAMLFileParser):
     and a properties block. All thermophysical properties live in the properties
     block and are assigned dynamically to the Material instance.
     """
-    # --- Constructor ---
+
     def __init__(self, yaml_path: Union[str, Path]) -> None:
         super().__init__(yaml_path)
         logger.info("Initializing MaterialYAMLParser for: %s", yaml_path)
@@ -77,8 +77,8 @@ class MaterialYAMLParser(YAMLFileParser):
         """Creates a Material instance from the parsed configuration.
     
         Args:
-            dependency: SymPy symbol used as the independent variable in
-                property expressions (e.g. sp.Symbol('T')).
+            dependency:      SymPy symbol used as the independent variable in
+                             property expressions (e.g. sp.Symbol('T')).
             enable_plotting: Whether to generate and save property plots.
         Returns:
             Fully initialised Material with all properties assigned.
@@ -115,7 +115,7 @@ class MaterialYAMLParser(YAMLFileParser):
             logger.info("Successfully created material: '%s'", name)
             return material
         except Exception as e:
-            logger.error("Failed to create material from %s: %s", self.config_path, e, exc_info=True)
+            # Intermediate layer — do not log here, bubble up to api.py
             raise ValueError(f"Failed to create material \n -> {str(e)}") from e
 
     # --- Validation ---
@@ -128,12 +128,10 @@ class MaterialYAMLParser(YAMLFileParser):
         logger.debug("Validating configuration structure")
         if not isinstance(self.config, dict):
             raise ValueError(f"YAML file must contain a top-level mapping, got {type(self.config).__name__}")
-        # Reject unknown top-level keys - only 'name' and 'properties' are allowed
         unknown_keys = set(self.config.keys()) - _REQUIRED_TOP_LEVEL_KEYS
         if unknown_keys:
             raise ValueError(f"Unknown top-level keys: {sorted(unknown_keys)}. "
                 f"Only {sorted(_REQUIRED_TOP_LEVEL_KEYS)} are allowed.")
-        # Validate name
         if NAME_KEY not in self.config:
             raise ValueError(f"Missing required field: '{NAME_KEY}'")
         name = self.config[NAME_KEY]
@@ -142,7 +140,6 @@ class MaterialYAMLParser(YAMLFileParser):
                 f"got {type(name).__name__!r}: {name!r}")
         if len(name) > 100:
             logger.warning("Material name '%s' exceeds 100 characters", name)
-        # Validate properties block
         if PROPERTIES_KEY not in self.config:
             raise ValueError(f"Missing required field: '{PROPERTIES_KEY}'")
         props = self.config[PROPERTIES_KEY]

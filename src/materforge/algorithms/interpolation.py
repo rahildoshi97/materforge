@@ -68,9 +68,9 @@ def ensure_ascending_order(dep_array: np.ndarray, *value_arrays: np.ndarray) -> 
 
     Args:
         dep_array:     Dependency axis data.
-        *value_arrays: Any number of paired value arrays to flip alongside dep_array.
+        ``*value_arrays``: Any number of paired value arrays to flip alongside dep_array.
     Returns:
-        Tuple of (dep_array, *value_arrays), all in ascending dep order.
+        Tuple of (dep_array, ``*value_arrays``), all in ascending dep order.
     Raises:
         ValueError: If the array is neither strictly ascending nor strictly descending.
     """

@@ -6,17 +6,12 @@
 
 A dataclass representing a material with fully dynamic property tracking.
 All properties - constants and dependency-driven expressions - are assigned
-dynamically and tracked automatically. No material type, composition, or
-fixed schema required.
+dynamically and tracked automatically via a `properties` dict. No material
+type, composition, or fixed schema required.
 
 ```python
 from materforge.core.materials import Material
 ```
-
-#### Attributes
-
-- `name` (`str`): Human-readable material identifier
-- `_dynamic_properties` (`set`): Automatically tracked set of all assigned property names
 
 #### Methods
 
@@ -26,27 +21,32 @@ Returns all dynamically assigned property names.
 
 ```python
 props = material.property_names()
-# {'density', 'heat_capacity', 'solidus_temp', ...}
+# {'density', 'heat_capacity', 'solidus_temperature', ...}
 ```
 
-##### `evaluate(symbol, value) -> Dict[str, float]`
+##### `evaluate(symbol, value) -> Material`
 
-Evaluates all properties by substituting `symbol = value`.
+Evaluates all properties by substituting `symbol = value`. Returns a **new
+`Material`** instance with all expressions reduced to numeric SymPy values.
+Properties that still have free symbols after substitution, or that fail
+evaluation, are excluded and logged as errors.
 
 ```python
-def evaluate(self, symbol: sp.Symbol, value: Union[float, int]) -> Dict[str, float]:
+def evaluate(self, symbol: sp.Symbol, value: Union[float, int]) -> Material:
 ```
 
 **Parameters:**
-- `symbol`: SymPy symbol to substitute (must match the symbol used in `create_material`)
-- `value`: Numeric value to substitute - must be a number
+- `symbol`: SymPy symbol to substitute - must match the symbol passed to
+  `create_material()`. Must be `sp.Symbol`.
+- `value`: Numeric value to substitute - must be convertible to `float`
 
 **Returns:**
-- `Dict[str, float]`: All property names mapped to evaluated float values.
-  Properties that fail evaluation are excluded and logged as errors.
+- A new `Material` named `"{name}@{symbol}={value}"` with all properties
+  evaluated to numeric SymPy scalars
 
 **Raises:**
-- `ValueError`: If `symbol` is not `sp.Symbol`, or `value` is non-numeric
+- `ValueError`: If `symbol` is not `sp.Symbol`
+- `ValueError`: If `value` is `None` or not convertible to `float`
 
 **Example:**
 ```python
@@ -56,26 +56,23 @@ from materforge.parsing.api import create_material
 T = sp.Symbol('T')
 mat = create_material('myAlloy.yaml', dependency=T)
 
-# Evaluate all properties at a specific value
-results = mat.evaluate(T, 500.0)
-print(results['heat_capacity'])    # float
+# Evaluate all properties at T = 500 K - returns a new Material
+mat_at_500 = mat.evaluate(T, 500.0)
+print(mat_at_500.properties['heat_capacity'])   # sp.Float numeric value
 
-# Access symbolic expressions directly via dot notation
-print(mat.density)                 # 7000.0 (constant)
-print(mat.heat_conductivity)       # SymPy Piecewise expression in T
+# Access symbolic expressions directly via dot notation on the original
+print(mat.density)            # sp.Float(7000.0) for a constant
+print(mat.heat_conductivity)  # SymPy Piecewise expression in T
 ```
 
-##### `evaluate` - removed
-
-This method was renamed to `evaluate()`. Update any existing callsites:
-
-```python
-# Before
-mat.evaluate(T, 500.0)
-
-# After
-mat.evaluate(T, 500.0)
-```
+> **pystencils users:** Do not pass `u.center()` to `create_material()`.
+> Always create the material with a plain `sp.Symbol`, then substitute
+> to the field accessor at the pystencils boundary:
+> ```python
+> T = sp.Symbol('T')
+> mat = create_material('myAlloy.yaml', dependency=T)
+> expr = mat.thermal_diffusivity.subs(T, u.center())   # one explicit coupling point
+> ```
 
 #### Repr
 
@@ -97,15 +94,16 @@ from materforge.parsing.api import create_material
 
 def create_material(
     yaml_path: Union[str, Path],
-    dependency: Union[float, sp.Symbol],
+    dependency: sp.Symbol,
     enable_plotting: bool = True,
 ) -> Material:
 ```
 
 **Parameters:**
 - `yaml_path`: Path to the YAML configuration file
-- `dependency`: SymPy symbol used as the independent variable in property expressions.
-  Pass a `float` to evaluate all properties immediately at that value instead.
+- `dependency`: SymPy symbol used as the independent variable in all property
+  expressions. Must be a plain `sp.Symbol`. pystencils field accessors such
+  as `u.center()` are not valid here - apply `.subs()` after creation instead.
 - `enable_plotting`: Whether to generate and save property plots (default: `True`)
 
 **Returns:**
@@ -113,22 +111,16 @@ def create_material(
 
 **Raises:**
 - `ValueError`: If configuration is invalid or property processing fails
+- `TypeError`: If `dependency` is not a `sp.Symbol` instance
 
 **Example:**
 ```python
 import sympy as sp
 from materforge.parsing.api import create_material
 
-# Symbolic - properties stored as SymPy expressions
 T = sp.Symbol('T')
 mat = create_material('myAlloy.yaml', dependency=T)
-
-# Any symbol works
-P = sp.Symbol('P')
-mat2 = create_material('pressureMaterial.yaml', dependency=P)
-
-# Numeric - properties evaluated immediately at that value
-mat3 = create_material('myAlloy.yaml', dependency=500.0)
+mat_no_plots = create_material('myAlloy.yaml', dependency=T, enable_plotting=False)
 ```
 
 ---
@@ -184,7 +176,8 @@ print(info['property_types'])    # {'CONSTANT_VALUE': 5, 'TABULAR_DATA': 1, ...}
 
 ### `get_material_property_names`
 
-Returns all property names on an already-created material.
+Returns all property names on an already-created material. Equivalent to
+`sorted(mat.property_names())` - prefer calling `mat.property_names()` directly.
 
 ```python
 from materforge.parsing.api import get_material_property_names
@@ -197,15 +190,72 @@ names = get_material_property_names(mat)
 
 ### `evaluate_material_properties`
 
-Functional wrapper around `Material.evaluate()`.
+Functional wrapper around `Material.evaluate()`. Equivalent to
+`mat.evaluate(symbol, value)` - prefer calling `mat.evaluate()` directly.
 
 ```python
 from materforge.parsing.api import evaluate_material_properties
 
-results = evaluate_material_properties(mat, T, 500.0)
+mat_at_500 = evaluate_material_properties(mat, T, 500.0)
 ```
 
-Equivalent to `mat.evaluate(T, 500.0)`. Prefer calling `mat.evaluate()` directly.
+---
+
+## YAML Placeholder Contract
+
+All YAML equation strings **must** use `T` as the integration and dependency
+variable. `T` is the fixed placeholder (`YAML_PLACEHOLDER = sp.Symbol('T')`),
+hardcoded in materforge. At runtime, `T` is substituted with whatever
+`sp.Symbol` the caller passes to `create_material()`.
+
+```yaml
+# Correct - always use T in YAML equations
+specific_enthalpy:
+  dependency: (1773, 293, 541)
+  equation: Integral(heat_capacity, T)
+  bounds: [constant, constant]
+
+thermal_diffusivity:
+  dependency: (1773, 293, 100)
+  equation: thermal_conductivity / (density * specific_heat)
+  bounds: [constant, constant]
+```
+
+```yaml
+# Wrong - any symbol other than T in the equation will cause an error
+specific_enthalpy:
+  equation: Integral(heat_capacity, u_C)   # crashes unconditionally
+```
+
+When YAML uses any symbol other than `T`, the exact exception depends on
+property type:
+
+- **`COMPUTED_PROPERTY`**: raises `DependencyError` - `sp.sympify()` parses
+  the non-`T` symbol as a plain `sp.Symbol`. The dependency filter
+  (`if s != YAML_PLACEHOLDER`) does not exclude it, so it lands in the
+  dependency list. Since `u_C` (or any other name) is not a material property,
+  materforge raises:
+  ```
+  DependencyError: Missing dependencies ['u_C'] in expression
+      'Integral(heat_capacity, u_C)': u_C
+  Available properties: density, heat_capacity, ...
+  Please check for typos or add the missing properties to your configuration.
+  ```
+
+- **`PIECEWISE_EQUATION`**: raises `ValueError` - equations in this type are
+  validated upfront and may only reference `T`. Any other symbol is rejected
+  immediately:
+  ```
+  ValueError: Unexpected symbol(s) [u_C] in equation '7877.39-0.37*u_C'
+      for property 'viscosity'. PIECEWISE_EQUATION equations must use 'T'
+      as the only variable.
+  ```
+  To reference other material properties in an expression, use
+  `COMPUTED_PROPERTY` instead.
+
+Both errors occur regardless of what symbol the caller passes to
+`create_material()`. The YAML and the Python caller are fully decoupled -
+the YAML always uses `T`, and the caller can use any `sp.Symbol`.
 
 ---
 
@@ -219,24 +269,37 @@ PropertyType.STEP_FUNCTION       # discontinuous transition at a scalar referenc
 PropertyType.FILE_IMPORT         # data loaded from .csv / .xlsx / .txt
 PropertyType.TABULAR_DATA        # explicit dependency-value pairs
 PropertyType.PIECEWISE_EQUATION  # symbolic equations over dependency ranges
-PropertyType.COMPUTED_PROPERTY   # derived from other properties
+PropertyType.COMPUTED_PROPERTY   # derived from other properties via equation
 ```
+
+Note: `PIECEWISE_EQUATION` equations may only reference `T` (the YAML
+placeholder). To combine multiple material properties in an expression, use
+`COMPUTED_PROPERTY` instead.
 
 ---
 
 ## Error Handling
 
-MaterForge raises standard Python exceptions with descriptive messages:
+MaterForge raises standard Python exceptions with descriptive messages that
+include the property name and config path where the failure occurred.
 
 | Situation | Exception |
 |---|---|
 | YAML file not found | `FileNotFoundError` |
 | Invalid YAML syntax | `ruamel.yaml.scanner.ScannerError` |
 | Duplicate key in YAML | `ruamel.yaml.constructor.DuplicateKeyError` |
+| Unknown top-level YAML key | `ValueError` |
 | Missing `name` or `properties` block | `ValueError` |
-| Wrong symbol passed to `evaluate()` | `ValueError` (lists required symbols) |
+| `properties` block is empty | `ValueError` |
+| `dependency` not `sp.Symbol` in `create_material()` | `TypeError` |
+| `symbol` not `sp.Symbol` in `evaluate()` | `ValueError` |
+| `value` non-numeric in `evaluate()` | `ValueError` |
 | Invalid property configuration | `ValueError` |
-| Circular property dependency | `ValueError` |
+| Non-`T` symbol in `PIECEWISE_EQUATION` | `ValueError` |
+| Non-`T` symbol in `COMPUTED_PROPERTY` | `DependencyError` |
+| Missing property dependency | `DependencyError` |
+| Circular property dependency | `CircularDependencyError` |
 | File import column not found | `ValueError` |
 
-All errors include the property name and config path where the failure occurred.
+`DependencyError` and `CircularDependencyError` are importable from
+`materforge.parsing.validation.errors`.
