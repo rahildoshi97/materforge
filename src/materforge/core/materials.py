@@ -50,7 +50,8 @@ class Material:
             symbol: SymPy symbol to substitute (e.g. sp.Symbol('T')).
             value:  Value to substitute.
         Returns:
-            All property names mapped to evaluated float values.
+            New Material instance with name '{name}@{symbol}={value}' and
+            all properties substituted at the given value.
             Properties that fail evaluation are silently excluded.
         Raises:
             ValueError: If symbol is not sp.Symbol, or value is non-numeric.
