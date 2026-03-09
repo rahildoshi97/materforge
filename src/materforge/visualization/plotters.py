@@ -15,11 +15,11 @@ from materforge.data.constants import ProcessingConstants
 
 logger = logging.getLogger(__name__)
 
+
 class PropertyVisualizer:
     """Handles visualization of material properties."""
 
     # --- Constructor ---
-
     def __init__(self, parser) -> None:
         self.parser = parser
         self.fig = None
@@ -57,7 +57,6 @@ class PropertyVisualizer:
         })
 
     # --- Public API ---
-
     def is_visualization_enabled(self) -> bool:
         """Returns True if visualization is active and a figure exists."""
         return self.is_enabled and self.fig is not None

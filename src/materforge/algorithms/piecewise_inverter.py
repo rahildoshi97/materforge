@@ -43,7 +43,6 @@ class PiecewiseInverter:
         return inverter._create_inverse_impl(piecewise_func, input_symbol, output_symbol)
 
     # --- Internal implementation ---
-
     def _create_inverse_impl(self, piecewise_func: sp.Piecewise,
         input_symbol: Union[sp.Symbol, sp.Basic],
         output_symbol: Union[sp.Symbol, sp.Basic]) -> sp.Piecewise:

@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 # --- Core Utility Functions ---
-
 def create_step_visualization_data(transition_point: float, val_array: List[float],
                                    dep_range: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """Creates step function visualization data around a transition point.

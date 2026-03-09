@@ -14,7 +14,6 @@ from materforge.parsing.validation.errors import MaterialConfigError, PropertyCo
 
 logger = logging.getLogger(__name__)
 
-
 # ====================================================================
 # CORE MATERIAL CREATION AND VALIDATION
 # ====================================================================
@@ -59,7 +58,6 @@ def create_material(yaml_path: Union[str, Path], dependency: sp.Symbol,
         logger.error("Failed to create material from %s: %s", yaml_path, e)
         raise
 
-
 def validate_yaml_file(yaml_path: Union[str, Path]) -> bool:
     """Validates a YAML file without creating the material.
 
@@ -91,7 +89,6 @@ def validate_yaml_file(yaml_path: Union[str, Path]) -> bool:
     except Exception as e:
         logger.error("Unexpected error validating YAML %s: %s", yaml_path, e, exc_info=True)
         raise MaterialConfigError(f"Unexpected error validating YAML: {str(e)}") from e
-
 
 # ====================================================================
 # MATERIAL INFORMATION AND PROPERTIES
@@ -149,7 +146,6 @@ def get_material_info(yaml_path: Union[str, Path]) -> Dict:
         logger.error("Failed to extract material info from %s: %s", yaml_path, e, exc_info=True)
         raise MaterialConfigError(f"Failed to extract material info: {str(e)}") from e
 
-
 def get_material_property_names(material: Material) -> Set[str]:
     """Returns all property names dynamically assigned to a material instance.
 
@@ -166,7 +162,6 @@ def get_material_property_names(material: Material) -> Set[str]:
     if not isinstance(material, Material):
         raise TypeError(f"Expected Material instance, got {type(material).__name__}")
     return material.property_names()
-
 
 # ====================================================================
 # PROPERTY EVALUATION
@@ -190,7 +185,6 @@ def evaluate_material_properties(material: Material, symbol: sp.Symbol, value) -
         raise TypeError(f"Expected Material instance, got {type(material).__name__}")
     return material.evaluate(symbol, value)
 
-
 # ====================================================================
 # INTERNAL/TESTING FUNCTIONS
 # ====================================================================
@@ -206,7 +200,6 @@ def _test_api() -> None:
             logger.warning("Test file not found, skipping API test")
     except (FileNotFoundError, MaterialConfigError, AssertionError) as e:
         logger.error("API test failed: %s", e)
-
 
 # ====================================================================
 # MODULE EXPORTS

@@ -19,6 +19,7 @@ from materforge.data.constants import ProcessingConstants
 
 logger = logging.getLogger(__name__)
 
+
 class BasePropertyHandler(PropertyProcessorBase):
     """Base class for property handlers with common functionality.
 

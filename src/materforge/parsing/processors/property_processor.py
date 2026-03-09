@@ -63,7 +63,7 @@ class PropertyProcessor(PropertyProcessorBase):
             visualizer:             PropertyVisualizer instance, or None.
         """
         logger.info("Starting property processing for '%s'", material.name)
-        self._initialize_processing_context(material, dependency, properties, categorized_properties, base_dir, visualizer)
+        self._initialize_processing_context(material, properties, categorized_properties, base_dir, visualizer)
         try:
             self._process_by_category(material, dependency)
             logger.info("Starting post-processing for '%s'", material.name)
@@ -76,7 +76,6 @@ class PropertyProcessor(PropertyProcessorBase):
 
     # --- Private helpers ---
     def _initialize_processing_context(self, material: Material,
-                                       dependency: Union[float, sp.Symbol],
                                        properties: Dict[str, Any],
                                        categorized_properties: Dict[PropertyType, List[Tuple[str, Any]]],
                                        base_dir: Path, visualizer) -> None:

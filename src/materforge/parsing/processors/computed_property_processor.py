@@ -13,6 +13,7 @@ from materforge.parsing.config.yaml_keys import EQUATION_KEY, DEPENDENCY_KEY, YA
 
 logger = logging.getLogger(__name__)
 
+
 class ComputedPropertyProcessor:
     """Handles dependency resolution and computed property processing."""
 

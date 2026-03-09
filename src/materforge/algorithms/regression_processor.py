@@ -18,11 +18,8 @@ class RegressionProcessor:
     """Handles all regression-related functionality."""
 
     @staticmethod
-    def process_regression_params(
-        prop_config: dict,
-        prop_name: str,
-        data_length: int,
-    ) -> Tuple[bool, Union[str, None], Union[int, None], Union[int, None]]:
+    def process_regression_params(prop_config: dict, prop_name: str,
+        data_length: int) -> Tuple[bool, Union[str, None], Union[int, None], Union[int, None]]:
         """Extracts and validates regression parameters from a property config dict.
 
         Args:
@@ -65,11 +62,9 @@ class RegressionProcessor:
             raise
 
     @staticmethod
-    def process_regression(dep_array,
-        prop_array, dependency: sp.Symbol,
-        lower_bound_type: str,
-        upper_bound_type: str, degree: int,
-        segments: int, seed: int = ProcessingConstants.DEFAULT_REGRESSION_SEED,) -> sp.Piecewise:
+    def process_regression(dep_array, prop_array, dependency: sp.Symbol,
+        lower_bound_type: str, upper_bound_type: str, degree: int, segments: int,
+        seed: int = ProcessingConstants.DEFAULT_REGRESSION_SEED,) -> sp.Piecewise:
         """Fits a piecewise polynomial regression and returns a SymPy Piecewise.
 
         Args:

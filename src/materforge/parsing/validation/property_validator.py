@@ -29,8 +29,7 @@ def validate_monotonic_property(prop_name: str, dep_array: np.ndarray,
     try:
         is_monotonic(prop_array, f"Property '{prop_name}'", mode, tolerance, raise_error=True)
     except ValueError as e:
-        raise ValueError(
-            f"Property '{prop_name}' violates {mode.replace('_', ' ')} constraint.\n"
+        raise ValueError(f"Property '{prop_name}' violates {mode.replace('_', ' ')} constraint.\n"
             f"Dependency range: {np.min(dep_array):.6e} - {np.max(dep_array):.6e}\n"
             f"Property range:   {np.min(prop_array):.6e} - {np.max(prop_array):.6e}\n"
             f"Validation details: {str(e)}"

@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 _REQUIRED_TOP_LEVEL_KEYS = frozenset({NAME_KEY, PROPERTIES_KEY})
 
+
 class BaseFileParser:
     """Base class for parsing configuration files."""
 

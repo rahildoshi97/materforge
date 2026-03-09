@@ -48,7 +48,6 @@ class PropertyTypeDetector:
     _VALIDATOR_MAP = None  # populated lazily via _get_validator_map()
 
     # --- Public API ---
-
     @staticmethod
     def determine_property_type(prop_name: str, config: Any) -> PropertyType:
         """Determines the PropertyType for a config entry using rule-based detection.
@@ -98,7 +97,6 @@ class PropertyTypeDetector:
                 f"Invalid configuration for '{prop_name}' (type {prop_type.name}): {str(e)}") from e
 
     # --- High-level detectors (used in DETECTION_RULES) ---
-
     @staticmethod
     def _is_constant_format(val: Any) -> bool:
         """Returns True if val is a plain numeric constant (float or float-like string).
@@ -126,7 +124,6 @@ class PropertyTypeDetector:
                 and not isinstance(dep_def, list))
 
     # --- Strict validators ---
-
     @staticmethod
     def _validate_constant_value(prop_name: str, val: Any) -> None:
         try:
@@ -212,7 +209,6 @@ class PropertyTypeDetector:
             raise ValueError(f"invalid mathematical expression in 'equation': {str(e)}")
 
     # --- Validator dispatch ---
-
     @staticmethod
     def _get_validator(prop_type: PropertyType):
         """Returns the validator function for the given PropertyType, or None."""
@@ -226,7 +222,6 @@ class PropertyTypeDetector:
         }.get(prop_type)
 
     # --- Low-level validation helpers ---
-
     @staticmethod
     def _check_keys(value: Dict[str, Any], required: Set[str], optional: Set[str], context: str) -> None:
         keys = set(value.keys())

@@ -130,12 +130,10 @@ class DependencyResolver:
                 try:
                     return float(val)
                 except (TypeError, ValueError):
-                    raise ValueError(
-                        f"Dependency reference '{dep_ref}' exists on the material "
+                    raise ValueError(f"Dependency reference '{dep_ref}' exists on the material "
                         f"but is not a scalar constant (got {type(val).__name__}). "
                         f"Only CONSTANT_VALUE properties can be used as references.")
-            raise ValueError(
-                f"Unknown dependency reference: '{dep_ref}'. "
+            raise ValueError(f"Unknown dependency reference: '{dep_ref}'. "
                 f"Available scalar properties: {sorted(material.property_names())}")
         raise ValueError(f"Unsupported dependency value type: {type(dep_ref)}")
 
