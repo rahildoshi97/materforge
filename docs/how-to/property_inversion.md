@@ -30,11 +30,12 @@ T = sp.Symbol('T')   # any symbol works
 mat = create_material('myAlloy.yaml', dependency=T)
 
 # Evaluate all properties at T=1500
-results = mat.evaluate(T, 1500.0)
-print(results['energy_density'])   # float, J/m^3
+evaluated = mat.evaluate(T, 1500.0)
+print(evaluated.energy_density)        # sp.Float
+print(float(evaluated.energy_density)) # Python float if needed
 
 # Or access the symbolic expression and substitute manually
-expr = mat.energy_density          # SymPy Piecewise in T
+expr = mat.energy_density              # SymPy Piecewise in T
 value = float(expr.subs(T, 1500.0).evalf())
 ```
 
@@ -46,16 +47,16 @@ If your property is piecewise linear, `PiecewiseInverter` creates the inverse fu
 as a new SymPy Piecewise expression:
 
 ```python
+import sympy as sp
+from materforge.parsing.api import create_material
 from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 T = sp.Symbol('T')
+E = sp.Symbol('E')
 mat = create_material('myAlloy.yaml', dependency=T)
 
-# Define the output symbol for the inverse
-E = sp.Symbol('E')
-
-# Create inverse: energy_density(T) -> T(energy_density)
-inverse = PiecewiseInverter.create_inverse(mat.energy_density, 'T', 'E')
+# Create inverse: energy_density(T) -> T(E)
+inverse = PiecewiseInverter.create_inverse(mat.energy_density, T, E)
 
 # Evaluate: given energy density, recover temperature
 energy_value = 1.5e9   # J/m^3
@@ -63,9 +64,8 @@ recovered_T = float(inverse.subs(E, energy_value))
 print(f"Temperature at E={energy_value:.2e}: {recovered_T:.2f}")
 ```
 
-The symbol names passed to `create_inverse` (`'T'` and `'E'`) are strings that match
-the names of the SymPy symbols used - they are not hardcoded to temperature or energy.
-
+`input_symbol` and `output_symbol` are the actual SymPy symbols used in the
+original expression and its inverse respectively
 ---
 
 ## Round-Trip Validation
@@ -91,11 +91,15 @@ for t_orig in test_values:
 The workflow is identical regardless of what symbol drives the property:
 
 ```python
-P = sp.Symbol('P')   # pressure-driven material
+import sympy as sp
+from materforge.parsing.api import create_material
+from materforge.algorithms.piecewise_inverter import PiecewiseInverter
+
+P   = sp.Symbol('P')    # pressure-driven material
+rho = sp.Symbol('rho')
 mat = create_material('myMaterial.yaml', dependency=P)
 
-rho = sp.Symbol('rho')
-inverse = PiecewiseInverter.create_inverse(mat.density, 'P', 'rho')
+inverse = PiecewiseInverter.create_inverse(mat.density, P, rho)
 
 # Given a density value, recover pressure
 target_density = 7200.0

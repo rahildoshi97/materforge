@@ -283,8 +283,9 @@ print(mat.heat_conductivity)        # SymPy Piecewise expression in T
 print(mat.density)                  # 7000.0 (constant float)
 
 # Evaluate all properties at a specific value
-results = mat.evaluate(T, 500.0)
-print(results['heat_conductivity']) # float
+evaluated = mat.evaluate(T, 500.0)
+print(evaluated.heat_conductivity)           # sp.Float
+print(float(evaluated.heat_conductivity))    # Python float if needed
 ```
 
 ---
