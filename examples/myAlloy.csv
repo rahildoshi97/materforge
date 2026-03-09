@@ -1,4 +1,4 @@
-T (K),Phases vol%-LIQUID-10000.0(K/s),Density (kg/(m)^3),Thermal conductivity (W/(m*K))-TOTAL-10000.0(K/s),Enthalpy (J/kg),Specificf enthalpy,Specific heat (J/(Kg K)),Latent heat (J/Kg)
+T (K),Liquid fraction (%),Density (kg/m^3),Thermal conductivity (W/(m*K)),Enthalpy (J/kg),Specific enthalpy (J/kg),Specific heat (J/(Kg K)), Latent heat (J/Kg)
 3000,100,5924.36,50.564,2246438,2488326.15,845,171401
 2995,100,5929.05,50.488,2242213,2484101.15,845,171401
 2990,100,5933.75,50.412,2237988,2479876.15,845,171401

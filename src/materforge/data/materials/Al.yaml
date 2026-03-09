@@ -12,15 +12,6 @@
 # ====================================================================================================
 
 name: Aluminum
-material_type: pure_metal  # Must be 'pure_metal' for single-element materials
-
-# Composition must sum to 1.0 (for pure metals, single element = 1.0)
-composition:
-  Al: 1.0  # Aluminum purity (99.95%)
-
-# Required temperature properties for pure metals
-melting_temperature: 933.47   # Temperature where solid becomes liquid (K)
-boiling_temperature: 2743.0   # Temperature where liquid becomes gas (K)
 
 properties:
   
@@ -95,7 +86,7 @@ properties:
   thermal_diffusivity:
     dependency: (3000, 300, -5.)          # (start, stop, negative_step) - decreasing by 5K
     equation: heat_conductivity / (density * heat_capacity)  # Standard thermal diffusivity formula
-    bounds: [extrapolate, extrapolate]     # Allow extrapolation outside range
+    bounds: [linear, linear]     # Allow extrapolation outside range
     regression:
       simplify: post
       degree: 2
@@ -104,7 +95,7 @@ properties:
   energy_density:
     dependency: (300, 3000, 5.0)          # (start, stop, step) - 5K increments
     equation: density * specific_enthalpy  # Property dependencies automatically resolved
-    bounds: [extrapolate, extrapolate]
+    bounds: [linear, linear]
     regression:
       simplify: pre
       degree: 1
@@ -119,29 +110,27 @@ properties:
       degree: 1
       segments: 2
 
+  melting_temperature: 933.47   # Temperature where solid becomes liquid (K)
+  boiling_temperature: 2743.0   # Temperature where liquid becomes gas (K)
+
 # ====================================================================================================
-# PURE METAL SPECIFIC NOTES:
-# 
-# 1. REQUIRED FIELDS:
-#    - name, material_type: pure_metal, composition, melting_temperature, boiling_temperature
-# 
-# 2. TEMPERATURE REFERENCES:
-#    - melting_temperature, boiling_temperature (instead of solidus/liquidus for alloys)
-#    - Arithmetic expressions: melting_temperature + 50, boiling_temperature - 100
-# 
-# 3. PROPERTY DEPENDENCIES:
-#    - Properties are processed in dependency order automatically
-#    - thermal_diffusivity depends on heat_conductivity, density, heat_capacity
-#    - density depends on thermal_expansion_coefficient
-# 
-# 4. DEPENDENCY TUPLE FORMATS:
-#    - (start, increment): Requires n_values from 'value' list length
-#    - (start, stop, step): Step size (float) or number of points (integer)
-#    - Negative steps create decreasing data arrays
-# 
-# 5. REGRESSION BENEFITS:
-#    - Reduces memory usage and computational complexity
-#    - Smooths noisy data while preserving essential behavior
-#    - 'pre': Applied to raw data before symbolic processing
-#    - 'post': Applied after symbolic expressions are evaluated
+# TEMPERATURE DEFINITION FORMATS:
+#
+# 1. Single value: 1000.0
+# 2. List: [300, 400, 500, 600]
+# 3. Temperature references: solidus_temperature, liquidus_temperature, etc.
+# 4. Arithmetic expressions: melting_temperature + 50, solidus_temperature - 10
+# 5. Tuple formats:
+#    - (start, increment): (300, 50) with n_values parameter
+#    - (start, stop, step): (300, 1000, 10.0) for 10K increments
+#    - (start, stop, points): (300, 1000, 71) for 71 evenly spaced points
+#
+# BOUNDS OPTIONS:
+# - 'constant': Use boundary values as constants outside range
+# - 'linear': Linear extrapolation outside range
+#
+# REGRESSION OPTIONS:
+# - simplify: 'pre' (before symbolic processing) or 'post' (after symbolic processing)
+# - degree: Polynomial degree (1=linear, 2=quadratic, etc.)
+# - segments: Number of piecewise segments for regression
 # ====================================================================================================

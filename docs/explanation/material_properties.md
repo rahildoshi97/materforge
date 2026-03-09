@@ -1,240 +1,279 @@
-# Material Properties in MaterForge
+# Defining Custom Material Properties
 
-This document explains the conceptual framework behind temperature-dependent material properties in MaterForge, how they are represented internally, and the mathematical models used for computed properties.
+This guide explains how to define custom material properties in MaterForge using
+different property types.
 
-## Conceptual Framework
+## Overview
 
-Material properties in MaterForge are designed around these key principles:
+MaterForge uses a schema-agnostic YAML format - any material kind (metals, alloys,
+polymers, ceramics, composites, or hypothetical materials) and any property name are
+valid. Properties can be constants or expressions driven by any independent variable
+(temperature, pressure, composition, strain, or any SymPy symbol). SI units are
+recommended throughout.
 
-1. **Temperature Dependence**: Most material properties vary with temperature, especially during phase transitions
-2. **Symbolic Representation**: Properties are represented as symbolic expressions for mathematical manipulation
-3. **Flexible Definition**: Properties can be defined through various methods (constants, data points, files, or computation)
-4. **Physical Consistency**: Computed properties follow established physical relationships
+## YAML Configuration Options
 
-## Internal Representation
+### 1. Constant Value
 
-### Material Class
-
-At the core of MaterForge's property system is the `Material` class, which contains:
-
-- Basic material information (name, type, composition)
-- Temperature properties (melting/boiling points, solidus/liquidus temperatures)
-- Optional material properties as SymPy expressions
-- Validation and calculation methods
-
-```python
-@dataclass
-class Material:
-    name: str
-    material_type: str # 'alloy' or 'pure_metal'
-    elements: List[ChemicalElement]
-    composition: Union[np.ndarray, List, Tuple]
-    # Temperature properties vary by material type
-    # Optional properties as SymPy expressions
-    density: sp.Expr = None
-    heat_capacity: sp.Expr = None
-    # ... other properties
-```
-
-### Property Processing Pipeline
-
-Properties are processed through a sophisticated pipeline:
-
-1. **Type Detection**: `PropertyTypeDetector` automatically determines property definition type
-2. **Validation**: Ensures configuration is valid for the detected type
-3. **Processing**: `PropertyProcessor` converts configuration to SymPy expressions
-4. **Dependency Resolution**: Handles property interdependencies automatically
-
-## Property Definition Methods
-
-materforge supports multiple ways to define material properties:
-
-1. Constant Values
-
-Properties that don't vary with temperature are defined as simple numeric values:
+For properties that do not vary with the dependency variable:
 
 ```yaml
-thermal_expansion_coefficient: 16.3e-6
+properties:
+    thermal_expansion_coefficient: 16.3e-6
+    density: 7000.0
 ```
-
-Internally converted to `sp.Float(16.3e-6)`.
 
 ### 2. Step Functions
 
-Properties with discontinuous changes at phase transitions:
-```python
-latent_heat_of_fusion:
-    temperature: solidus_temperature
-    value: [0.0, 171401.0]
-    bounds: [constant, constant]
+For properties that change abruptly at a transition point:
+
+```yaml
+properties:
+    latent_heat_of_fusion:
+        dependency: solidus_temp + 5   # reference to another scalar property
+        value: [0.0, 171401.0]         # [before_transition, after_transition]
+        bounds: [constant, constant]
 ```
 
-Represented as `sp.Piecewise` expressions with temperature-dependent conditions.
+`dependency` here is a single scalar reference or arithmetic expression that defines
+the transition point.
 
-### 3. File Import Properties
+### 3. Importing from External Files
 
-Properties loaded from external data files:
-```python
-density:
-    file_path: ./material_data.xlsx
-    temperature_column: T (K)
-    property_column: Density (kg/(m)^3)
-    bounds: [constant, constant]
+For properties defined in spreadsheets or data files:
+
+```yaml
+properties:
+    # Excel file import
+    density:
+        file_path: ./material_data.xlsx
+        dependency_column: T (K)
+        property_column: Density (kg/m^3)
+        bounds: [constant, constant]
+
+    # CSV file import
+    heat_capacity:
+        file_path: ./heat_capacity_data.csv
+        dependency_column: Temperature
+        property_column: Cp
+        bounds: [constant, constant]
+
+    # Text file import (space/tab separated, headerless - use column index)
+    thermal_conductivity:
+        file_path: ./conductivity_data.txt
+        dependency_column: 0
+        property_column: 1
+        bounds: [constant, constant]
 ```
 
-Data is loaded via `load_property_data` and converted to piecewise interpolation functions.
+Supported formats: `.txt` (space/tab separated), `.csv`, `.xlsx`.
 
 ### 4. Tabular Data
 
-Explicit temperature-property relationships:
-```yaml
-heat_conductivity:
-    temperature: [1200, 1800, 2200, 2400]  # Temperatures in Kelvin
-    value: [25, 30, 33, 35]          # Property values
-    bounds: [constant, constant]
-```
+For properties defined by paired dependency-value lists:
 
-Converted to piecewise linear interpolation functions through `PiecewiseBuilder`.
+```yaml
+properties:
+    heat_conductivity:
+        dependency: [500, 1000, 1600, 1700, 1750, 2000, 2500]
+        value: [19.25, 25.47, 32.94, 33.52, 31.53, 35.33, 42.95]
+        bounds: [constant, constant]
+
+    # Using scalar property references in the dependency list
+    latent_heat_of_fusion:
+        dependency: [solidus_temp - 1, liquidus_temp + 1]
+        value: [0, 171401.0]
+        bounds: [constant, constant]
+
+    # Using tuple notation
+    density:
+        dependency: (1735.0, -5)   # start=1735, decrement by 5 per value
+        value: [7037.47, 7060.15, 7088.80, 7110.46, 7127.68]
+        bounds: [constant, constant]
+```
 
 ### 5. Piecewise Equations
 
-Multiple equations for different temperature ranges:
-```python
-heat_conductivity:
-    temperature: [1700][3000]
-    equation: ["0.012T + 13", "0.015T + 5"]
-    bounds: [constant, constant]
+For properties with different expressions over different ranges:
+
+```yaml
+properties:
+    viscosity:
+        dependency: [300, 1660, 1736, 3000]        # n breakpoints -> n-1 equations
+        equation: [7877.39-0.37*T, 11816.63-2.74*T, 8596.40-0.88*T]
+        bounds: [constant, constant]
 ```
 
-Each equation is parsed as a SymPy expression and combined into a piecewise function.
+The symbol in the equation (`T` here) is just a placeholder.
+It is replaced by the symbol passed to `create_material(..., dependency=X)` at runtime.
+The symbol used in equations (`T` in the example above) is a placeholder only.
+
+So this is valid:
+
+```python
+P = sp.Symbol('P')
+mat = create_material('myAlloy.yaml', dependency=P)
+print(mat.viscosity)  # Piecewise in P, not T
+```
+
+The YAML file never needs to change regardless of what symbol the caller uses.
 
 ### 6. Computed Properties
 
-Properties calculated from other properties:
-```python
-thermal_diffusivity:
-    temperature: (300, 3000, 5.0)
-    equation: heat_conductivity / (density * heat_capacity)
-    bounds: [extrapolate, extrapolate]
+For properties derived from other already-defined properties:
+
+```yaml
+properties:
+    thermal_diffusivity:
+        dependency: (3000, 300, -5.0)
+        equation: heat_conductivity / (density * heat_capacity)
+        bounds: [linear, linear]
+        regression:
+            simplify: post
+            degree: 2
+            segments: 3
 ```
 
-Symbolic expressions that reference other material properties with automatic dependency resolution.
+MaterForge resolves property dependencies automatically - `thermal_diffusivity` will
+always be processed after `heat_conductivity`, `density`, and `heat_capacity`
+regardless of their order in the YAML file.
 
-## Temperature Processing
+---
 
-MaterForge provides sophisticated dependency definition processing through `DependencyResolver`:
+## Dependency Definition Formats
 
-### Temperature Definition Formats
+The `dependency` key accepts five formats:
 
-1. **Explicit Lists**: `[300, 400, 500, 600]`
-2. **Tuple Formats**:
-    - `(300, 50)` - start and increment
-    - `(300, 1000, 10.0)` - start, stop, step
-    - `(300, 1000, 71)` - start, stop, points
-3. **Temperature References**: `solidus_temperature`, `melting_temperature + 50`
+```yaml
+# 1. Explicit list of values
+dependency: [300, 500, 800, 1000]
 
-### Temperature Resolution
+# 2. Tuple (start, increment) - length inferred from value list
+dependency: (300, 50)            # 300, 350, 400, ...
 
-The `DependencyResolver` class handles:
-- Reference resolution to material properties
-- Arithmetic expression evaluation
-- Validation of temperature ranges
-- Conversion to numpy arrays
+# 3. Tuple (start, stop, step) - step is float
+dependency: (300, 1000, 10.0)    # 300, 310, 320, ..., 1000
 
-## Interpolation and Evaluation
+# 4. Tuple (start, stop, points) - points is integer
+dependency: (300, 1000, 71)      # 71 evenly spaced values
 
-### Piecewise Functions
+# 5. Decreasing range
+dependency: (1000, 300, -5.0)    # 1000, 995, 990, ..., 300
+```
 
-Properties are represented as piecewise functions that:
-- Perform linear interpolation between data points
-- Handle boundary conditions (constant or extrapolation)
-- Support symbolic evaluation with SymPy
-- Can be evaluated at specific temperatures using `.evalf()`
+Scalar property references and arithmetic expressions are also valid inside lists:
 
-### Boundary Handling
+```yaml
+dependency: [solidus_temp - 1, liquidus_temp + 1]
+dependency: solidus_temp + 5     # single reference for step functions
+```
 
-Two boundary types are supported:
-- **Constant**: Use boundary values outside the defined range
-- **Extrapolate**: Linear extrapolation beyond the data range
+---
 
-## Dependency Management
+## Bounds Options
 
-### Dependency Detection
+Controls behaviour outside the defined range:
 
-The system automatically:
-- Extracts symbols from mathematical expressions using SymPy
-- Identifies required properties for computed properties
-- Validates that all dependencies are available
+```yaml
+bounds: [constant, linear]
+```
 
-### Circular Dependency Prevention
+| Option      | Behaviour                                        |
+|-------------|--------------------------------------------------|
+| constant    | Clamp to the boundary value outside the range    |
+| linear | Linear extrapolation beyond the range            |
 
-Sophisticated checking prevents circular dependencies:
-- Tracks dependency chains during processing in `PropertyProcessor`
-- Detects cycles before they cause infinite loops
-- Provides clear error messages through `CircularDependencyError`
+---
 
-### Processing Order
+## Regression Configuration
 
-Properties are processed in dependency order:
-- Independent properties first
-- Dependent properties after their dependencies
-- Automatic topological sorting of the dependency graph
+Reduces expression complexity and smooths noisy data:
 
-## Validation and Quality Assurance
+```yaml
+regression:
+    simplify: pre     # 'pre': applied to raw data before symbolic processing
+                      # 'post': applied after symbolic expressions are evaluated
+    degree: 1         # polynomial degree per segment (1=linear, 2=quadratic, ...)
+    segments: 3       # number of piecewise segments (<=8 recommended)
+```
 
-### Data Validation
+Note: High segment counts (>6) risk overfitting. MaterForge will warn if this
+threshold is exceeded.
 
-Comprehensive validation includes:
-- Temperature monotonicity checking through `is_monotonic`
-- Energy density monotonicity validation via `validate_monotonic_energy_density`
-- Physical reasonableness checks
-- Data quality assessment in file processing
+---
 
-### Error Handling
+## Complete Example
 
-Clear, actionable error messages for:
-- Invalid property configurations through `PropertyTypeDetector`
-- Missing dependencies via `DependencyError`
-- Data quality issues in file processing
-- Physical inconsistencies in material properties
+```yaml
+name: "myAlloy"
 
-## Integration with Simulations
+properties:
+    density: 7000.0
 
-### SymPy Integration
+    solidus_temp: 1605.
+    liquidus_temp: 1735.
 
-Properties as SymPy expressions enable:
-- Symbolic differentiation and integration
-- Algebraic manipulation and simplification
-- Direct evaluation at specific temperatures
+    latent_heat_of_fusion:
+        dependency: solidus_temp + 5
+        value: [0.0, 171401.0]
+        bounds: [constant, constant]
 
-### Simulation Framework Integration
+    heat_conductivity:
+        dependency: [500, 1000, 1600, 1700, 1750, 2000, 2500]
+        value: [19.25, 25.47, 32.94, 33.52, 31.53, 35.33, 42.95]
+        bounds: [linear, linear]
 
-Properties can be used in:
-- pystencils-based simulations through symbolic expressions
-- Custom simulation frameworks via `.evalf()` method
-- Scientific computing workflows through NumPy integration
+    heat_capacity:
+        file_path: ./myAlloy.csv
+        dependency_column: T (K)
+        property_column: Specific heat (J/(Kg K))
+        bounds: [constant, constant]
+        regression:
+            simplify: pre
+            degree: 3
+            segments: 6
+
+    viscosity:
+        dependency: [300, 1660, 1736, 3000]
+        equation: [7877.39-0.37*T, 11816.63-2.74*T, 8596.40-0.88*T]
+        bounds: [constant, constant]
+
+    thermal_diffusivity:
+        dependency: (3000, 300, -5.0)
+        equation: heat_conductivity / (density * heat_capacity)
+        bounds: [linear, linear]
+        regression:
+            simplify: post
+            degree: 3
+            segments: 7
+```
+
+Load it in Python:
+
+```python
+import sympy as sp
+from materforge.parsing.api import create_material
+
+T = sp.Symbol('T')   # any symbol works: sp.Symbol('P'), sp.Symbol('x'), etc.
+mat = create_material('myAlloy.yaml', dependency=T, enable_plotting=True)
+
+# Access symbolic expressions directly
+print(mat.heat_conductivity)     # SymPy Piecewise expression in T
+print(mat.density)               # 7000.0 (constant float)
+
+# Evaluate all properties at a specific value
+evaluated = mat.evaluate(T, 500.0)
+print(evaluated.heat_conductivity)           # sp.Float, prints as number e.g. 25.47
+print(float(evaluated.heat_conductivity))    # Python float if downstream code requires i
+```
+
+---
 
 ## Best Practices
 
-### Property Definition
-
-1. **Use Consistent Units**: All properties should use SI units
-2. **Cover Full Temperature Range**: Define properties across the entire simulation range
-3. **Add Points Around Transitions**: Use more data points near phase transitions
-4. **Validate Against Experiments**: Compare with experimental data when possible
-
-### Performance Optimization
-
-1. **Use Appropriate Property Types**: Choose the most efficient definition method
-2. **Consider Regression**: Use regression for large datasets via `RegressionProcessor`
-3. **Optimize Temperature Arrays**: Balance accuracy and performance
-
-### Maintainability
-
-1. **Document Property Sources**: Keep track of data origins
-2. **Use Descriptive Names**: Clear property and file naming
-3. **Validate Configurations**: Use `validate_yaml_file` function
-4. **Version Control**: Track changes to material definitions
-
-This framework provides a robust, flexible foundation for modeling complex material behavior in scientific simulations while maintaining ease of use and extensibility.
-
+- Use SI units throughout and document units in comments
+- Cover the full range of your dependency variable in tabular and piecewise data
+- Validate property values against experimental data where possible
+- All numeric values must use '.' as the decimal separator, not ','
+- Interpolation between data points is automatic for tabular and file-import properties
+- Keep regression segments <= 8; prefer simplify: post for computed properties

@@ -12,7 +12,7 @@ symbolic and numerical property evaluation for various material properties.
    tutorials/getting_started
    tutorials/first_simulation
    how-to/define_materials
-   how-to/energy_temperature_conversion
+   how-to/property_inversion
    explanation/design_philosophy
    explanation/material_properties
    reference/yaml_schema

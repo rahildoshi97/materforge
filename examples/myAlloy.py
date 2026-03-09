@@ -8,39 +8,50 @@ import sympy as sp
 
 from materforge.parsing.api import (
     create_material,
-    get_supported_properties,
     evaluate_material_properties,
     get_material_property_names,
     validate_yaml_file,
-    get_material_info
+    get_material_info,
 )
 
+MATERIAL_CONFIGS = [
+    #("src/materforge/data/materials/Al.yaml", "T_Al"),
+    #("src/materforge/data/materials/1.4301.yaml", "T_SS"),
+    ("examples/myAlloy.yaml", "u_C"),
+    #("src/materforge/data/materials/Al2O3.yaml", "T_Al2O3"),
+]
 
-def setup_logging():
-    """Setup logging configuration."""
+def setup_logging() -> None:
     logging.basicConfig(
-        level=logging.WARNING,  # DEBUG/INFO/WARNING/ERROR/CRITICAL
-        format="%(asctime)s %(levelname)s %(name)s -> %(message)s"
+        level=logging.WARNING,
+        format="%(asctime)s %(levelname)s %(name)s -> %(message)s",
     )
-    # Silence noisy libraries
     logging.getLogger('matplotlib').setLevel(logging.WARNING)
     logging.getLogger('PIL').setLevel(logging.WARNING)
     logging.getLogger('fontTools').setLevel(logging.WARNING)
 
 
-def demonstrate_material_properties():
-    """Comprehensive demonstration of material property evaluation."""
-    setup_logging()
+def _scalar_properties(mat) -> dict:
+    """Return all constant (non-symbolic) properties on the material."""
+    return {
+        n: getattr(mat, n)
+        for n in mat.property_names()
+        if not (hasattr(getattr(mat, n), 'free_symbols') and getattr(mat, n).free_symbols)
+        and isinstance(getattr(mat, n), (int, float, sp.Float, sp.Integer))
+    }
 
-    # Create symbolic temperature variables for different materials
-    T = sp.Symbol('T')  # Temperature symbol for myAlloy
+def demonstrate_material_properties() -> None:
+    repo_root = Path(__file__).parent.parent
 
-    # Set up file paths
-    current_file = Path(__file__)
-    yaml_path = current_file.parent / "myAlloy.yaml"
+    targets = []
+    for rel_path, sym_name in MATERIAL_CONFIGS:
+        yaml_path = repo_root / rel_path
+        if not yaml_path.exists():
+            raise FileNotFoundError(f"YAML file not found: {yaml_path} (configured in {Path(__file__)})")
+        targets.append((yaml_path, sp.Symbol(sym_name)))
 
     materials = []
-    material_symbols = {}  # Dictionary to track which symbol goes with which material
+    material_symbols = {}
 
     print(f"\n{'=' * 80}")
     print("MaterForge MATERIAL PROPERTY DEMONSTRATION")
@@ -52,15 +63,9 @@ def demonstrate_material_properties():
     print(f"\n{'1. YAML FILE VALIDATION':<50}")
     print(f"{'-' * 50}")
 
-    for yaml_path, name in [(yaml_path, "myAlloy")]:
-        if yaml_path.exists():
-            try:
-                is_valid = validate_yaml_file(yaml_path)
-                print(f"✓ {name} YAML validation: {'PASSED' if is_valid else 'FAILED'}")
-            except Exception as e:
-                print(f"✗ {name} YAML validation: FAILED - {e}")
-        else:
-            print(f"✗ {name} YAML file not found: {yaml_path}")
+    for yaml_path, _ in targets:
+        is_valid = validate_yaml_file(yaml_path)
+        print(f"{yaml_path.stem} YAML validation: {'PASSED' if is_valid else 'FAILED'}")
 
     # ===================================================================
     # 2. MATERIAL INFO EXTRACTION
@@ -68,26 +73,16 @@ def demonstrate_material_properties():
     print(f"\n{'2. MATERIAL INFO EXTRACTION':<50}")
     print(f"{'-' * 50}")
 
-    for yaml_path, name in [(yaml_path, "myAlloy")]:
-        if yaml_path.exists():
-            try:
-                info = get_material_info(yaml_path)
-                print(f"\n{name} Information:")
-                print(f"  Name: {info['name']}")
-                print(f"  Type: {info['material_type']}")
-                print(f"  Total Properties: {info['total_properties']}")
-                print(f"  Composition: {info['composition']}")
-
-                # Temperature properties
-                if info['material_type'] == 'pure_metal':
-                    print(f"  Melting Temperature: {info.get('melting_temperature', 'N/A')} K")
-                    print(f"  Boiling Temperature: {info.get('boiling_temperature', 'N/A')} K")
-                else:
-                    print(f"  Solidus Temperature: {info.get('solidus_temperature', 'N/A')} K")
-                    print(f"  Liquidus Temperature: {info.get('liquidus_temperature', 'N/A')} K")
-
-            except Exception as e:
-                print(f"✗ Failed to get {name} info: {e}")
+    for yaml_path, _ in targets:
+        info = get_material_info(yaml_path)
+        print(f"\n{info['name']} Information:")
+        print(f"  Name:             {info['name']}")
+        print(f"  Total Properties: {info['total_properties']}")
+        print(f"  Properties:       {info['properties']}")
+        if 'property_types' in info:
+            print("  Property Types:")
+            for ptype, count in info['property_types'].items():
+                print(f"    {ptype:<30}: {count}")
 
     # ===================================================================
     # 3. MATERIAL CREATION
@@ -95,25 +90,32 @@ def demonstrate_material_properties():
     print(f"\n{'3. MATERIAL CREATION':<50}")
     print(f"{'-' * 50}")
 
-    if yaml_path.exists():
-        try:
-            myAlloy = create_material(yaml_path=yaml_path, dependency=T, enable_plotting=True)
-            materials.append(myAlloy)
-            material_symbols[myAlloy.name] = T
-            print(f"Successfully created: {myAlloy.name} (using symbol {T})")
-        except Exception as e:
-            print(f"Failed to create myAlloy: {e}")
+    for yaml_path, T in targets:
+        mat = create_material(yaml_path=yaml_path, dependency=T, enable_plotting=True)
+        materials.append(mat)
+        material_symbols[mat.name] = T
+        print(f"Successfully created: {mat.name} (symbol: {T})")
+        print(f"Representation: {repr(mat)}")
+        scalars = _scalar_properties(mat)
+        if scalars:
+            first_name, first_val = next(iter(sorted(scalars.items())))
+            print(f"{first_name}: {first_val}  (type: {type(first_val).__name__})")
 
     # ===================================================================
-    # 4. SUPPORTED PROPERTIES OVERVIEW
+    # 4. PROPERTY TYPES OVERVIEW
     # ===================================================================
-    print(f"\n{'4. SUPPORTED PROPERTIES OVERVIEW':<50}")
+    print(f"\n{'4. PROPERTY TYPES OVERVIEW':<50}")
     print(f"{'-' * 50}")
-
-    supported_props = get_supported_properties()
-    print(f"MaterForge supports {len(supported_props)} property types:")
-    for i, prop in enumerate(sorted(supported_props), 0):
-        print(f"  {i:2d}. {prop}")
+    print("MaterForge supports 6 property definition types (any property name is valid):")
+    for i, (ptype, desc) in enumerate([
+        ("CONSTANT_VALUE",     "Single numeric value, e.g. density: 7000."),
+        ("STEP_FUNCTION",      "Two values split at a scalar-property reference"),
+        ("TABULAR_DATA",       "Paired dependency / value lists"),
+        ("FILE_IMPORT",        "Load from .csv / .xlsx / .txt"),
+        ("PIECEWISE_EQUATION", "Symbolic equations over dependency breakpoints"),
+        ("COMPUTED_PROPERTY",  "Derived from other properties via expression"),
+    ], 1):
+        print(f"  {i}. {ptype:<30} - {desc}")
 
     # ===================================================================
     # 5. MATERIAL PROPERTY ANALYSIS
@@ -122,118 +124,78 @@ def demonstrate_material_properties():
     print(f"{'-' * 50}")
 
     for mat in materials:
-        # Get the appropriate temperature symbol for this material
         T_mat = material_symbols[mat.name]
 
         print(f"\n{'=' * 80}")
-        print(f"MATERIAL: {mat.name} (Temperature symbol: {T_mat})")
+        print(f"MATERIAL: {mat.name}  (dependency symbol: {T_mat})")
         print(f"{'=' * 80}")
 
-        # Basic material info
-        print(f"Name: {mat.name}")
-        print(f"Type: {mat.material_type}")
-        print(f"Elements: {[elem.name for elem in mat.elements]}")
-        print(f"Composition: {mat.composition}")
-        for i in range(len(mat.composition)):
-            print(f"  {mat.elements[i].name}: {mat.composition[i]}")
-
-        # Temperature properties
-        if hasattr(mat, 'solidus_temperature') and hasattr(mat, 'liquidus_temperature'):
-            print(f"Solidus Temperature: {mat.solidus_temperature}")
-            print(f"Liquidus Temperature: {mat.liquidus_temperature}")
-        if hasattr(mat, 'melting_temperature') and hasattr(mat, 'boiling_temperature'):
-            print(f"Melting Temperature: {mat.melting_temperature}")
-            print(f"Boiling Temperature: {mat.boiling_temperature}")
-        if hasattr(mat, 'initial_boiling_temperature') and hasattr(mat, 'final_boiling_temperature'):
-            print(f"Initial Boiling Temperature: {mat.initial_boiling_temperature} K")
-            print(f"Final Boiling Temperature: {mat.final_boiling_temperature} K")
-
-        # ===================================================================
-        # 5.1 Available Properties on Material
-        # ===================================================================
-        print(f"\n{'AVAILABLE PROPERTIES:':<50}")
-        print(f"{'-' * 50}")
+        scalars = _scalar_properties(mat)
+        if scalars:
+            print("Scalar constants:")
+            for prop_name, val in sorted(scalars.items()):
+                print(f"  {prop_name:<35}: {val}")
 
         available_props = get_material_property_names(mat)
-        print(f"{myAlloy.name} has {len(available_props)} properties:")
-        print(available_props)
 
-        # ===================================================================
-        # 5.2 Property Evaluation at Specific Temperature
-        # ===================================================================
-        test_temp = 500.15  # Kelvin
-        print(f"\n{'PROPERTY VALUES AT ' + str(test_temp) + 'K:':<50}")
+        # -------------------------------------------------------------------
+        # 5.1 Available Properties
+        # -------------------------------------------------------------------
+        print(f"\n{'AVAILABLE PROPERTIES:':<50}")
         print(f"{'-' * 50}")
+        print(f"{mat.name} has {len(available_props)} processed properties:")
+        for prop in sorted(available_props):
+            print(f"  - {prop}")
 
-        # Method 1: Manual evaluation (old way)
-        print("Method 1: Manual Property Evaluation")
+        # -------------------------------------------------------------------
+        # 5.2 Full Symbolic Expressions
+        # -------------------------------------------------------------------
+        print(f"\n{'PROPERTY EXPRESSIONS:':<50}")
+        print(f"{'-' * 50}")
         for prop_name in sorted(available_props):
-            try:
-                prop_value = getattr(mat, prop_name)
-                if isinstance(prop_value, sp.Expr):
-                    numerical_value = prop_value.subs(T_mat, test_temp).evalf() # type: ignore
-                    print(f"{prop_name:<30}: {numerical_value} (symbolic)")
-                else:
-                    print(f"{prop_name:<30}: {prop_value} (constant)")
-            except Exception as e:
-                print(f"{prop_name:<30}: Error - {str(e)}")
+            prop_value = getattr(mat, prop_name)
+            if isinstance(prop_value, sp.Expr) and prop_value.free_symbols:
+                print(f"  {prop_name:<30}: {prop_value}")
+            else:
+                print(f"  {prop_name:<30}: {prop_value}  (constant)")
 
-        # ===================================================================
-        # 5.3 Using New Property Evaluation APIs
-        # ===================================================================
-        print(f"\n{'NEW API METHODS:':<50}")
+        # -------------------------------------------------------------------
+        # 5.3 Numerical Evaluation at a Single Temperature
+        # -------------------------------------------------------------------
+        test_temp = 500.15
+        print(f"\n{'PROPERTY VALUES AT ' + str(test_temp) + ' K:':<50}")
         print(f"{'-' * 50}")
 
-        # Method 2: Object-oriented approach
-        print("Method 2: Material.evaluate_properties_at_temperature()")
-        try:
-            all_values = mat.evaluate_properties_at_temperature(test_temp)
-            print(f"All properties at {test_temp}K:")
-            for prop, value in sorted(all_values.items()):
-                print(f"  {prop:<28}: {value:.6e}")
-        except Exception as e:
-            print(f"Error: {e}")
-
-        # Method 3: Functional approach
-        print("\nMethod 3: evaluate_material_properties()")
-        try:
-            all_values_func = evaluate_material_properties(mat, test_temp)
-            print(f"Functional API results match: {all_values == all_values_func}") # type: ignore
-        except Exception as e:
-            print(f"Error: {e}")
-
-        # Method 4: Specific properties only
-        print("\nMethod 4: Specific Properties Only")
-        try:
-            specific_props = ['density', 'heat_capacity', 'energy_density']
-            available_specific = [p for p in specific_props if p in available_props]
-
-            if available_specific:
-                specific_values = mat.evaluate_properties_at_temperature(
-                    test_temp,
-                    properties=available_specific
-                )
-                print(f"Specific properties at {test_temp}K:")
-                for prop, value in sorted(specific_values.items()):
-                    print(f"  {prop:<28}: {value:.6e}")
+        print("Method 1: Manual substitution")
+        for prop_name in sorted(available_props):
+            prop_value = getattr(mat, prop_name)
+            if isinstance(prop_value, sp.Expr) and prop_value.free_symbols:
+                numerical = prop_value.subs(T_mat, test_temp).evalf()
+                print(f"  {prop_name:<30}: {numerical}  (symbolic)")
             else:
-                print("None of the requested specific properties available")
-        except Exception as e:
-            print(f"Error: {e}")
+                print(f"  {prop_name:<30}: {prop_value}  (constant)")
 
-        # Method 5: Temperature-dependent properties only (exclude constants)
-        print("\nMethod 5: Temperature-Dependent Properties Only")
-        try:
-            temp_dependent = mat.evaluate_properties_at_temperature(
-                test_temp,
-                include_constants=False
-            )
-            print(f"Temperature-dependent properties at {test_temp}K:")
-            for prop, value in sorted(temp_dependent.items()):
-                print(f"  {prop:<28}: {value:.6e}")
-        except Exception as e:
-            print(f"Error: {e}")
+        # -------------------------------------------------------------------
+        # 5.4 API Evaluation Methods
+        # -------------------------------------------------------------------
+        print(f"\n{'API METHODS:':<50}")
+        print(f"{'-' * 50}")
+
+        print("Method 2: material.evaluate()")
+        evaluated_mat = mat.evaluate(T_mat, test_temp)
+        print(f"All properties at {test_temp} K:")
+        for prop in sorted(evaluated_mat.property_names()):
+            value = getattr(evaluated_mat, prop)
+            print(f"  {prop:<30}: {type(value).__name__:<15}  {float(value):.6e}")
+
+        print("\nMethod 3: evaluate_material_properties()")
+        all_values = evaluate_material_properties(mat, T_mat, test_temp)
+        print(f"  Results type: {type(all_values).__name__}")
+        for prop in sorted(all_values.property_names()):
+            value = getattr(all_values, prop)
+            print(f"  {prop:<30}: {float(value):.6e}")
 
 
 if __name__ == "__main__":
+    setup_logging()
     demonstrate_material_properties()

@@ -2,125 +2,116 @@
 
 import pytest
 import numpy as np
-from materforge.parsing.validation.property_validator import (
-    validate_monotonic_energy_density,
-    validate_monotonic_property
-)
+from materforge.parsing.validation.property_validator import validate_monotonic_property
 
-class TestPropertyValidator:
-    """Test cases for property validation functions."""
-    def test_validate_monotonic_energy_density_valid(self):
-        """Test validation with valid monotonic energy density."""
-        temp_array = np.array([300, 400, 500, 600])
-        energy_array = np.array([1000, 1500, 2000, 2500])  # Increasing
-        # Should not raise any exception
-        validate_monotonic_energy_density("energy_density", temp_array, energy_array)
 
-    def test_validate_monotonic_energy_density_invalid(self):
-        """Test validation with non-monotonic energy density."""
-        temp_array = np.array([300, 400, 500, 600])
-        energy_array = np.array([1000, 1500, 1200, 2500])  # Not monotonic
-        # Match the actual error message from your implementation
+class TestValidateMonotonicProperty:
+    """Tests for the pure validate_monotonic_property validator."""
+
+    # --- Strictly increasing (default mode) ---
+
+    def test_strictly_increasing_valid(self):
+        dep = np.array([300, 400, 500, 600])
+        prop = np.array([1000, 1500, 2000, 2500])
+        validate_monotonic_property("energy_density", dep, prop)
+
+    def test_strictly_increasing_invalid(self):
+        dep = np.array([300, 400, 500, 600])
+        prop = np.array([1000, 1500, 1200, 2500])
         with pytest.raises(ValueError, match="violates strictly increasing constraint"):
-            validate_monotonic_energy_density("energy_density", temp_array, energy_array)
+            validate_monotonic_property("energy_density", dep, prop)
 
-    def test_validate_monotonic_property_valid(self):
-        """Test validation with valid monotonic property."""
-        temp_array = np.array([300, 400, 500])
-        prop_array = np.array([100, 150, 200])
-        # Should not raise any exception
-        validate_monotonic_property("test_property", temp_array, prop_array)
-
-    def test_validate_monotonic_property_invalid(self):
-        """Test validation with non-monotonic property."""
-        temp_array = np.array([300, 400, 500])
-        prop_array = np.array([100, 150, 120])  # Not monotonic
-        # Test that it raises an error for non-monotonic data
+    def test_constant_values_fail_strictly_increasing(self):
+        dep = np.array([300, 400, 500])
+        prop = np.array([100, 100, 100])
         with pytest.raises(ValueError, match="violates strictly increasing constraint"):
-            validate_monotonic_property("test_property", temp_array, prop_array)
+            validate_monotonic_property("some_prop", dep, prop)
 
-    def test_validate_monotonic_property_with_mode(self):
-        """Test validation with specific monotonicity mode."""
-        temp_array = np.array([300, 400, 500])
-        prop_array = np.array([200, 150, 100])  # Decreasing
-        # Test with strictly_decreasing mode if supported
-        try:
-            validate_monotonic_property("test_property", temp_array, prop_array,
-                                        mode="strictly_decreasing")
-        except TypeError:
-            # If mode parameter doesn't exist, test default behavior
-            with pytest.raises(ValueError, match="violates strictly increasing constraint"):
-                validate_monotonic_property("test_property", temp_array, prop_array)
+    def test_constant_values_pass_non_decreasing(self):
+        dep = np.array([300, 400, 500])
+        prop = np.array([100, 100, 100])
+        validate_monotonic_property("some_prop", dep, prop, mode="non_decreasing")
 
-    def test_validate_monotonic_property_edge_cases(self):
-        """Test validation with edge cases."""
-        # Single element array
-        temp_array = np.array([300])
-        prop_array = np.array([100])
-        # Should not raise any exception
-        validate_monotonic_property("single_point", temp_array, prop_array)
-        # Two element array - increasing
-        temp_array = np.array([300, 400])
-        prop_array = np.array([100, 150])
-        # Should not raise any exception
-        validate_monotonic_property("two_points", temp_array, prop_array)
+    # --- Strictly decreasing ---
 
-    def test_validate_monotonic_property_constant_values(self):
-        """Test validation with constant property values."""
-        temp_array = np.array([300, 400, 500])
-        prop_array = np.array([100, 100, 100])  # Constant values
-        # Based on your implementation, constant values should pass non_decreasing validation
-        try:
-            validate_monotonic_property("constant_property", temp_array, prop_array)
-            # If it passes, that's the expected behavior
-        except ValueError:
-            # If it fails, that's also valid behavior for some implementations
-            pass
+    def test_strictly_decreasing_valid(self):
+        dep = np.array([300, 400, 500])
+        prop = np.array([200, 150, 100])
+        validate_monotonic_property("density", dep, prop, mode="strictly_decreasing")
 
-    def test_validate_monotonic_energy_density_empty_arrays(self):
-        """Test validation with empty arrays."""
-        temp_array = np.array([])
-        energy_array = np.array([])
-        # Should handle empty arrays gracefully or raise appropriate error
-        try:
-            validate_monotonic_energy_density("empty_property", temp_array, energy_array)
-        except (ValueError, IndexError):
-            # Expected behavior for empty arrays
-            pass
+    def test_strictly_decreasing_invalid(self):
+        dep = np.array([300, 400, 500])
+        prop = np.array([200, 150, 160])
+        with pytest.raises(ValueError, match="violates strictly decreasing constraint"):
+            validate_monotonic_property("density", dep, prop, mode="strictly_decreasing")
 
-    def test_validate_monotonic_property_mismatched_lengths(self):
-        """Test validation with mismatched array lengths."""
-        temp_array = np.array([300, 400, 500])
-        prop_array = np.array([100, 150])  # Different length
-        # This might not raise an error
-        # because is_monotonic() will just process the shorter array
-        try:
-            validate_monotonic_property("mismatched_property", temp_array, prop_array)
-            # If no error is raised, that's the actual behavior
-        except (ValueError, IndexError) as e:
-            # If an error is raised, that's also valid
-            pass
+    # --- Non-increasing ---
 
-    def test_validate_monotonic_property_with_tolerance(self):
-        """Test validation with tolerance parameter."""
-        temp_array = np.array([300, 400, 500])
-        prop_array = np.array([100, 150, 200])
-        # Test with tolerance parameter if it exists
-        try:
-            validate_monotonic_property("test_property", temp_array, prop_array,
-                                        tolerance=1e-10)
-        except TypeError:
-            # If tolerance parameter doesn't exist, test without it
-            validate_monotonic_property("test_property", temp_array, prop_array)
+    def test_non_increasing_valid(self):
+        dep = np.array([300, 400, 500])
+        prop = np.array([200, 200, 100])
+        validate_monotonic_property("some_prop", dep, prop, mode="non_increasing")
 
-    def test_validate_monotonic_property_realistic_data(self):
-        """Test validation with realistic material property data."""
-        # Heat capacity typically increases with temperature
-        temp_array = np.array([273.15, 373.15, 473.15, 573.15, 673.15])
-        heat_capacity = np.array([900, 950, 1000, 1050, 1100])
-        # Should pass validation
-        validate_monotonic_property("heat_capacity", temp_array, heat_capacity)
-        # Density typically decreases with temperature (should fail default validation)
+    # --- Tolerance ---
+
+    def test_tolerance_respected(self):
+        dep = np.array([300, 400, 500])
+        # Tiny dip well within tolerance - should pass
+        prop = np.array([100.0, 200.0, 200.0 - 1e-13])
+        validate_monotonic_property("some_prop", dep, prop,
+                                    mode="non_decreasing", tolerance=1e-10)
+
+    # --- Edge cases ---
+
+    def test_single_element(self):
+        dep = np.array([300.0])
+        prop = np.array([100.0])
+        validate_monotonic_property("single_point", dep, prop)
+
+    def test_two_elements_increasing(self):
+        dep = np.array([300, 400])
+        prop = np.array([100, 150])
+        validate_monotonic_property("two_points", dep, prop)
+
+    def test_two_elements_decreasing_fails_default(self):
+        dep = np.array([300, 400])
+        prop = np.array([150, 100])
+        with pytest.raises(ValueError, match="violates strictly increasing constraint"):
+            validate_monotonic_property("two_points", dep, prop)
+
+    def test_error_message_contains_ranges(self):
+        dep = np.array([300.0, 400.0, 500.0])
+        prop = np.array([100.0, 80.0, 120.0])
+        with pytest.raises(ValueError) as exc_info:
+            validate_monotonic_property("heat_capacity", dep, prop)
+        msg = str(exc_info.value)
+        assert "Dependency range" in msg
+        assert "Property range" in msg
+        assert "Validation details" in msg
+
+    # --- Realistic material data ---
+
+    def test_energy_density_realistic(self):
+        dep = np.array([273.15, 373.15, 473.15, 573.15, 673.15])
+        energy_density = np.array([0.0, 90.0, 190.0, 300.0, 420.0])
+        validate_monotonic_property("energy_density", dep, energy_density)
+
+    def test_heat_capacity_non_monotone_passes_by_default(self):
+        """heat_capacity is not monotone - the validator is pure and raises.
+        The calling code is responsible for deciding whether to call it at all.
+        """
+        dep = np.array([273.15, 373.15, 473.15, 573.15, 673.15])
+        heat_capacity = np.array([900, 950, 1000, 920, 1100])  # dip at index 3
+        with pytest.raises(ValueError, match="violates strictly increasing constraint"):
+            validate_monotonic_property("heat_capacity", dep, heat_capacity)
+
+    def test_density_decreasing_fails_default_mode(self):
+        dep = np.array([273.15, 373.15, 473.15, 573.15, 673.15])
         density = np.array([2700, 2690, 2680, 2670, 2660])
         with pytest.raises(ValueError, match="violates strictly increasing constraint"):
-            validate_monotonic_property("density", temp_array, density)
+            validate_monotonic_property("density", dep, density)
+
+    def test_density_decreasing_passes_correct_mode(self):
+        dep = np.array([273.15, 373.15, 473.15, 573.15, 673.15])
+        density = np.array([2700, 2690, 2680, 2670, 2660])
+        validate_monotonic_property("density", dep, density, mode="strictly_decreasing")

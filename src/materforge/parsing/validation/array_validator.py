@@ -1,4 +1,5 @@
-# SPDX-FileCopyrightText: 2025 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
+# SPDX-FileCopyrightText: 2025 - 2026 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
+# SPDX-FileCopyrightText: 2026 Matthias Markl, Friedrich-Alexander-Universität Erlangen-Nürnberg
 # SPDX-License-Identifier: BSD-3-Clause
 
 """General data validation utilities."""
@@ -8,7 +9,6 @@ import numpy as np
 from materforge.data.constants import ProcessingConstants
 
 logger = logging.getLogger(__name__)
-
 
 def is_monotonic(arr: np.ndarray, name: str = "Array",
                  mode: str = "strictly_increasing",

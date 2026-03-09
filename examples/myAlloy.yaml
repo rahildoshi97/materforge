@@ -10,22 +10,7 @@
 # The final equation will depend on the symbol passed via the API.
 # ====================================================================================================
 
-name: "myAlloy"
-material_type: alloy  # Must be 'alloy' or 'pure_metal'
-
-# Composition fractions must sum to 1.0
-composition:
-  Fe: 0.675
-  Cr: 0.170
-  Ni: 0.120
-  Mo: 0.025
-  Mn: 0.01
-
-# Required temperature properties for alloys
-solidus_temperature: 1605.          # Temperature where melting begins (K)
-liquidus_temperature: 1735.         # Temperature where material is completely melted (K)
-initial_boiling_temperature: 3090.  # Temperature where boiling begins (K)
-final_boiling_temperature: 3200.    # Temperature where material is completely vaporized (K)
+name: myAlloy
 
 properties:
 
@@ -35,7 +20,7 @@ properties:
   # Note: Must be float, not integer (use 1.0 instead of 1)
   # ====================================================================================================
 
-  density: 7000.  # kg/m^3
+  density1: 7000.  # kg/m^3
 
   # ====================================================================================================
   # PROPERTY TYPE 2: STEP_FUNCTION
@@ -43,8 +28,8 @@ properties:
   # Supports temperature references and arithmetic expressions
   # ====================================================================================================
 
-  latent_heat_of_fusion:
-    dependency: solidus_temperature
+  latent_heat_of_fusion1:
+    dependency: solidus_temp1 + 5
     value: [0.0, 171401.0]
     bounds: [constant, constant]
 
@@ -54,10 +39,10 @@ properties:
   # Supports temperature references, explicit lists, and tuple notation
   # ====================================================================================================
 
-  heat_conductivity:
+  heat_conductivity1:
     dependency: [500, 1000, 1600, 1700, 1750, 2000, 2500]
     value: [19.25, 25.47, 32.94, 33.52, 31.53, 35.33, 42.95]
-    bounds: [extrapolate, extrapolate]
+    bounds: [linear, linear]
 
   # ====================================================================================================
   # PROPERTY TYPE 4: FILE_IMPORT
@@ -65,7 +50,7 @@ properties:
   # Supports .txt, .csv, .xlsx files with automatic missing value handling
   # ====================================================================================================
 
-  heat_capacity:
+  heat_capacity1:
     file_path: ./myAlloy.csv
     dependency_column: T (K)
     property_column: Specific heat (J/(Kg K))
@@ -81,7 +66,7 @@ properties:
   # Number of equations = number of breakpoints - 1
   # ====================================================================================================
 
-  viscosity:
+  viscosity1:
     dependency: [300, 1660, 1736, 3000]
     equation: [7877.39-0.37*T, 11816.63-2.74*T, 8596.40-0.88*T]
     bounds: [constant, constant]
@@ -92,10 +77,28 @@ properties:
   # Supports dependency resolution and automatic ordering
   # ====================================================================================================
 
-  thermal_diffusivity:
+  thermal_diffusivity1:
     dependency: (3000, 300, -5.0)
-    equation: heat_conductivity /(density * heat_capacity)
-    bounds: [extrapolate, extrapolate]
+    equation: heat_conductivity1 /(density1 * heat_capacity1)
+    bounds: [linear, linear]
+    regression:
+      simplify: post
+      degree: 3
+      segments: 7
+
+  specific_enthalpy1:
+    dependency: (3000, 300, 541)
+    equation: Integral(heat_capacity1, T)
+    bounds: [ constant, constant ]
+    regression:
+      simplify: post
+      degree: 2
+      segments: 4
+
+  solidus_temp1: 1605.          # Temperature where melting begins (K)
+  liquidus_temp1: 1735.         # Temperature where material is completely melted (K)
+  initial_boiling_temp1: 3090.  # Temperature where boiling begins (K)
+  final_boiling_temp1: 3200.    # Temperature where material is completely vaporized (K)
 
 # ====================================================================================================
 # TEMPERATURE DEFINITION FORMATS:
@@ -111,7 +114,7 @@ properties:
 #
 # BOUNDS OPTIONS:
 # - 'constant': Use boundary values as constants outside range
-# - 'extrapolate': Linear extrapolation outside range
+# - 'linear': Linear extrapolation outside range
 #
 # REGRESSION OPTIONS:
 # - simplify: 'pre' (before symbolic processing) or 'post' (after symbolic processing)

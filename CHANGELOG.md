@@ -5,6 +5,87 @@ All notable changes to MaterForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.5] - 2026-03-09
+
+### Added
+- `MaterialConfigError` and `PropertyConfigError` typed exception classes in `errors.py`;
+  both subclass `ValueError` so existing callers are unaffected
+- `UnicodeDecodeError` handler in `YAMLFileParser._load_config` with a clear actionable
+  message ("Save as UTF-8 and try again") instead of a generic crash
+- Al2O3 ceramic YAML material configuration
+- `__getattr__` on `Material` class to suppress Pylint E1101 false positives for
+  dynamically assigned properties
+- `docs/_static/.gitkeep` to ensure the directory is tracked in git and Sphinx
+  `html_static_path` resolves correctly in CI
+
+### Changed
+- **Breaking**: renamed `extrapolate` boundary keyword to `linear` in all YAML files
+  to accurately reflect linear extrapolation behaviour; update any custom YAML files
+- Enforced strict top-level YAML schema: only `name` and `properties` keys are allowed;
+  unknown keys raise `MaterialConfigError` immediately
+- Removed `material_type`, `composition`, and other non-essential top-level YAML keys;
+  schema is now intentionally minimal
+- Replaced fixed property list with dynamic tracker across all processors;
+  removed `get_supported_properties` from public API
+- All properties on `Material` are now stored in an internal dict via `__setattr__`;
+  `evaluate()` returns a new `Material` copy with all expressions substituted at the
+  given value - not a dict
+- Dependency is now always a `sp.Symbol`; numeric mode removed - use
+  `material.evaluate(symbol, value)` for constant properties instead
+- `T` restored as the fixed YAML placeholder symbol; equations in YAML files must
+  always use `T`, which is substituted at runtime with the caller-provided symbol
+- `_validate_config` now raises `MaterialConfigError` (was `ValueError`)
+- `_analyze_and_categorize_properties` now raises `PropertyConfigError` (was `ValueError`)
+- `create_material` in `material_yaml_parser.py` now wraps failures in
+  `MaterialConfigError` (was plain `ValueError`)
+- `validate_yaml_file` and `get_material_info` in `api.py` now re-raise typed
+  exceptions directly instead of wrapping everything in a new `ValueError`
+- `get_material_property_names` and `evaluate_material_properties` now raise
+  `TypeError` for wrong argument types (was `ValueError`)
+- `open()` call in `YAMLFileParser` now explicitly specifies `encoding='utf-8'`
+  for platform-independent behaviour (fixes Pylint W1514)
+- `DependencyError.__init__`: `available_props: List[str] = None` →
+  `Optional[List[str]] = None` (fixes Pylint type hint warning)
+- Simplified materials directory structure
+
+### Fixed
+- Removed unused exception variable bindings `as e` in bare `raise` handlers
+  (Ruff F841); affected `validate_yaml_file` and `get_material_info` in `api.py`
+- Eliminated duplicate error log entries that occurred when exceptions bubbled
+  through multiple layers
+- Removed unused imports across `api.py`, `material_yaml_parser.py`, and app files
+
+### Testing
+- Updated `test_api.py` to match refactored exception types:
+  - `test_get_material_property_names_rejects_non_material`: `ValueError` → `TypeError`
+  - `test_validate_incomplete_yaml_raises_value_error`: `ValueError` → `MaterialConfigError`
+- Moved error class imports to module level in test files to prevent `pytest.raises`
+  class identity mismatches caused by local imports resolving to different class objects
+- All 295 unit tests passing
+
+### Documentation
+- Updated all docstring `Raises` sections in `api.py` and `material_yaml_parser.py`
+  to reflect actual exception types; removed stale `ValueError` references
+- `evaluate()` docstring in `materials.py`: corrected return description from
+  "dict of float values" to "new Material instance with substituted properties"
+- `reference/api/material.md`: updated error table entries from `ValueError` to
+  `MaterialConfigError`/`PropertyConfigError`; corrected `get_material_property_names`
+  description (removed incorrect `sorted()` equivalence claim); updated all `Raises`
+  sections; fixed `evaluate()` example to use attribute access on returned `Material`
+- `explanation/material_properties.md`: fixed `evaluate()` example (dict access →
+  attribute access on `Material`); removed duplicate T-placeholder paragraph
+- `how-to/define_materials.md`: fixed `evaluate()` example (dict access →
+  attribute access on `Material`)
+- `how-to/property_inversion.md`: fixed `evaluate()` example; fixed `create_inverse()`
+  calls to pass `sp.Symbol` instances instead of string literals
+- `tutorials/getting_started.md`: fixed `evaluate()` iteration - `results.items()`
+  replaced with `property_names()` + `getattr()` since `evaluate()` returns `Material`
+- `tutorials/first_simulation.md`: fixed `create_material()` to use a plain
+  `sp.Symbol` - `u.center()` is not a valid `sp.Symbol` and raises `TypeError`;
+  added `.subs(T, u.center())` at the assignment level as the single pystencils
+  coupling point; fixed `create_inverse()` string args → `sp.Symbol` instances;
+  removed redundant second `create_material()` call in complete example
+
 ## [0.6.4] - 2026-02-22
 
 ### Added
@@ -95,8 +176,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Critical bug in piecewise inversion**: Constant pieces in inverse functions now correctly map to boundary temperatures instead of constant energy values
-  - Previously: `T=300K → E=1.20e+05 → T=119597.6K (Error: 1.19e+05)`
-  - Now: `T=300K → E=1.20e+05 → T=300.0K (Error: ~0)`
+  - Previously: `T=300K -> E=1.20e+05 -> T=119597.6K (Error: 1.19e+05)`
+  - Now: `T=300K -> E=1.20e+05 -> T=300.0K (Error: ~0)`
 - Fixed boundary condition direction for decreasing (negative slope) piecewise pieces
 - Corrected inverse condition logic: now uses `E > boundary_energy` for decreasing functions and `E < boundary_energy` for increasing functions
 - Missing `boundary_temp` parameter in loop iteration (was causing 4500K offset errors)
@@ -179,8 +260,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Temperature-dependent property evaluation
 
 ### Changed
-- Package name: `pymatlib` → `materforge`
-- Import statements: `from pymatlib` → `from materforge`
+- Package name: `pymatlib` -> `materforge`
+- Import statements: `from pymatlib` -> `from materforge`
 - Repository structure and naming conventions
 - Enhanced error handling and validation
 - Improved logging and debugging capabilities

@@ -5,9 +5,7 @@ import tempfile
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from materforge.parsing.io.data_handler import (
-    load_property_data, _extract_data_columns, _clean_and_validate_data
-)
+from materforge.parsing.io.data_handler import load_property_data, _clean_and_validate_data
 
 
 class TestLoadPropertyData:
