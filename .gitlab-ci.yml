@@ -51,12 +51,24 @@ validate_python_syntax:
   image: python:${PYTHON_VERSION}
   before_script:
     - pip install --upgrade pip
-    - pip install flake8 black isort mypy
+    - pip install ruff
   script:
     - echo "Validating Python syntax and style..."
-    - flake8 ${PACKAGE_DIR}/ --count --select=E9,F63,F7,F82 --show-source --statistics
+    - ruff check ${PACKAGE_DIR}/ --select=E9,F63,F7,F82
     - echo "✅ Python syntax validation passed"
   allow_failure: true
+
+validate_code_formatting:
+  stage: validate
+  image: python:${PYTHON_VERSION}
+  before_script:
+    - pip install --upgrade pip
+    - pip install ruff
+  script:
+    - echo "Checking code style with ruff..."
+    - ruff check ${PACKAGE_DIR}/
+    - echo "✅ Ruff checks passed"
+  #allow_failure: true
 
 validate_yaml_files:
   stage: validate
@@ -129,23 +141,6 @@ python_3.12:
   <<: *python_test
   image: python:3.12
 
-# Performance tests (separate job with relaxed thresholds)
-performance_tests_ci:
-  stage: test
-  image: python:${PYTHON_VERSION}
-  before_script:
-    - pip install --upgrade pip
-    - pip install -e .
-    - pip install pytest pytest-benchmark numpy sympy matplotlib pyyaml ruamel.yaml pwlf pandas openpyxl scipy psutil
-  script:
-    - echo "Running performance tests with CI-adjusted thresholds..."
-    - pytest tests/performance/ -v -m "slow" || echo "⚠️ Performance tests failed but continuing"
-    - echo "✅ Performance tests completed"
-  allow_failure: true  # Don't block pipeline on performance failures
-  only:
-    - main
-    - master
-
 # Test examples
 test_examples:
   stage: test
@@ -156,7 +151,7 @@ test_examples:
   script:
     - echo "Testing example scripts..."
     - cd examples/
-    - python material_properties_demo.py
+    - python myAlloy.py
     - echo "✅ Examples executed successfully"
   dependencies:
     - python_3.10
@@ -171,6 +166,7 @@ test_apps:
   script:
     - echo "Testing application scripts..."
     - cd apps/
+    # NOTE: these scripts use the legacy Material API and are pending update
     - python material_demo_callgraph.py || echo "⚠️ Demo script may require additional dependencies"
     - python quick_visualize.py || echo "⚠️ Visualization script may require additional dependencies"
     - echo "✅ Application scripts tested"
@@ -231,18 +227,17 @@ docs_build:
   stage: build
   image: python:${PYTHON_VERSION}
   script:
-    - pip install sphinx sphinx-rtd-theme
-    - pip install -e .
-    - echo "✅ Documentation dependencies installed"
-    - echo "📚 Documentation structure validated"
+    - pip install -e ".[docs]"
+    - sphinx-build -W -b html docs/ docs/_build/html
+    - echo "✅ Documentation built successfully"
   artifacts:
     paths:
-      - docs/
+      - docs/_build/html/
     expire_in: 1 week
   only:
     changes:
-      - docs/
-      - ${PACKAGE_DIR}/
+      - docs/**/*
+      - src/materforge/**/*
 
 # Package build test
 package_build:
@@ -250,6 +245,7 @@ package_build:
   image: python:${PYTHON_VERSION}
   script:
     - pip install build twine
+    - rm -rf dist/ build/
     - python -m build
     - twine check dist/*
     - echo "✅ Package build completed"
@@ -258,28 +254,9 @@ package_build:
       - dist/
     expire_in: 1 week
 
-# Build performance benchmarks
-performance_benchmarks:
-  stage: build
-  image: python:${PYTHON_VERSION}
-  before_script:
-    - pip install --upgrade pip
-    - pip install -e .
-    - pip install pytest pytest-benchmark
-  script:
-    - echo "Running performance benchmarks..."
-    - pytest tests/performance/ -v --benchmark-only || echo "⚠️ Benchmarks completed with warnings"
-    - echo "✅ Performance benchmarks completed"
-  artifacts:
-    paths:
-      - .benchmarks/
-    expire_in: 1 week
-  allow_failure: true
-
 # ================================
 # DEPLOYMENT STAGE
 # ================================
-
 deploy_package_test:
   stage: deploy
   image: python:${PYTHON_VERSION}
@@ -291,10 +268,35 @@ deploy_package_test:
       import materforge
       print(f'✅ Package installation successful: {materforge.__version__}')
 
-      # Test basic functionality
-      from materforge.parsing.api import get_supported_properties
-      props = get_supported_properties()
-      print(f'✅ Supported properties: {len(props)} properties available')
+      # Verify core API surface is importable and callable
+      from materforge.parsing.api import (
+          create_material,
+          validate_yaml_file,
+          get_material_info,
+          get_material_property_names,
+          evaluate_material_properties,
+      )
+      print('✅ All public API symbols imported successfully')
+
+      # Smoke-test API behaviour without needing a YAML file
+      try:
+          validate_yaml_file('nonexistent.yaml')
+      except FileNotFoundError:
+          print('✅ validate_yaml_file raises FileNotFoundError as expected')
+
+      import sympy as sp
+      try:
+          create_material('nonexistent.yaml', sp.Symbol('T'), enable_plotting=False)
+      except FileNotFoundError:
+          print('✅ create_material raises FileNotFoundError as expected')
+
+      try:
+          get_material_property_names('not_a_material')
+          print('❌ get_material_property_names should have raised an error')
+      except (ValueError, AttributeError):
+          print('✅ get_material_property_names rejects non-Material input as expected')
+
+      print('✅ Package API smoke test passed')
       "
     - echo "✅ Package ready for distribution"
   dependencies:

@@ -1,6 +1,3 @@
 [submodule "apps/walberla"]
 	path = apps/walberla
 	url = https://i10git.cs.fau.de/walberla/walberla.git
-[submodule "apps/sfg-walberla"]
-	path = apps/sfg-walberla
-	url = https://i10git.cs.fau.de/da15siwa/sfg-walberla.git

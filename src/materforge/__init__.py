@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 - 2026 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 MaterForge - Materials Formulation Engine with Python
 
@@ -22,31 +25,25 @@ Main Components:
 - Data: Material databases and physical constants
 """
 
-# Enhanced version handling with multiple fallbacks
+# Version handling - Python >=3.10 guarantees importlib.metadata is available
 try:
     from ._version import version as __version__
 except ImportError:
+    from importlib.metadata import version, PackageNotFoundError
     try:
-        from importlib.metadata import version
         __version__ = version("materforge")
-    except ImportError:
-        try:
-            from importlib_metadata import version
-            __version__ = version("materforge")
-        except ImportError:
-            __version__ = "0.5.5+unknown"  # Updated fallback version
+    except PackageNotFoundError:
+        __version__ = "0.6.4+unknown"
 
 # Core material definitions
 from .core.materials import Material
-from .core.elements import ChemicalElement
 from .core.symbol_registry import SymbolRegistry
 
 # Main API functions
 from .parsing.api import (
     create_material,
-    get_supported_properties,
     validate_yaml_file,
-    get_material_info
+    get_material_info,
 )
 
 # Property processing
@@ -63,31 +60,24 @@ from .visualization.plotters import PropertyVisualizer
 
 __all__ = [
     # Version
-    '__version__',
-
+    "__version__",
     # Core classes
-    'Material',
-    'ChemicalElement',
-    'SymbolRegistry',
-
+    "Material",
+    "SymbolRegistry",
     # Main API
-    'create_material',
-    'get_supported_properties',
-    'validate_yaml_file',
-    'get_material_info',
-
+    "create_material",
+    "validate_yaml_file",
+    "get_material_info",
     # Processing
-    'PropertyProcessor',
-    'PropertyType',
-
+    "PropertyProcessor",
+    "PropertyType",
     # Algorithms
-    'interpolate_value',
-    'ensure_ascending_order',
-    'PiecewiseBuilder',
-    'PiecewiseInverter',
-
+    "interpolate_value",
+    "ensure_ascending_order",
+    "PiecewiseBuilder",
+    "PiecewiseInverter",
     # Visualization
-    'PropertyVisualizer'
+    "PropertyVisualizer",
 ]
 
 # Package metadata

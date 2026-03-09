@@ -1,0 +1,123 @@
+# ====================================================================================================
+# MaterForge MATERIAL CONFIGURATION FILE
+# ====================================================================================================
+# This is an example file that defines material properties for a hypothetical alloy using the new materforge format.
+# MaterForge supports 6 property types: CONSTANT_VALUE, STEP_FUNCTION, FILE_IMPORT, TABULAR_DATA, PIECEWISE_EQUATION, and COMPUTED_PROPERTY
+#
+# IMPORTANT: All property configurations must include 'bounds' parameter (except CONSTANT properties)
+#
+# Note: T is just a placeholder in equations.
+# The final equation will depend on the symbol passed via the API.
+# ====================================================================================================
+
+name: myAlloy
+
+properties:
+
+  # ====================================================================================================
+  # PROPERTY TYPE 1: CONSTANT_VALUE
+  # Format: property_name: numeric_value
+  # Note: Must be float, not integer (use 1.0 instead of 1)
+  # ====================================================================================================
+
+  density1: 7000.  # kg/m^3
+
+  # ====================================================================================================
+  # PROPERTY TYPE 2: STEP_FUNCTION
+  # Format: Uses 'dependency' (single reference) and 'value' (list of 2 values)
+  # Supports temperature references and arithmetic expressions
+  # ====================================================================================================
+
+  latent_heat_of_fusion1:
+    dependency: solidus_temp1 + 5
+    value: [0.0, 171401.0]
+    bounds: [constant, constant]
+
+  # ====================================================================================================
+  # PROPERTY TYPE 3: TABULAR_DATA
+  # Format: Uses 'dependency' (list/tuple) and 'value' (list) with same length
+  # Supports temperature references, explicit lists, and tuple notation
+  # ====================================================================================================
+
+  heat_conductivity1:
+    dependency: [500, 1000, 1600, 1700, 1750, 2000, 2500]
+    value: [19.25, 25.47, 32.94, 33.52, 31.53, 35.33, 42.95]
+    bounds: [linear, linear]
+
+  # ====================================================================================================
+  # PROPERTY TYPE 4: FILE_IMPORT
+  # Format: Uses 'file_path', 'dependency_column', 'property_column'
+  # Supports .txt, .csv, .xlsx files with automatic missing value handling
+  # ====================================================================================================
+
+  heat_capacity1:
+    file_path: ./myAlloy.csv
+    dependency_column: T (K)
+    property_column: Specific heat (J/(Kg K))
+    bounds: [constant, constant]
+    regression:
+      simplify: pre
+      degree: 3
+      segments: 6
+
+  # ====================================================================================================
+  # PROPERTY TYPE 5: PIECEWISE_EQUATION
+  # Format: Uses 'dependency' (breakpoints) and 'equation' (list of expressions)
+  # Number of equations = number of breakpoints - 1
+  # ====================================================================================================
+
+  viscosity1:
+    dependency: [300, 1660, 1736, 3000]
+    equation: [7877.39-0.37*T, 11816.63-2.74*T, 8596.40-0.88*T]
+    bounds: [constant, constant]
+
+  # ====================================================================================================
+  # PROPERTY TYPE 6: COMPUTED_PROPERTY
+  # Format: Uses 'equation' (single expression) and 'temperature' (range definition)
+  # Supports dependency resolution and automatic ordering
+  # ====================================================================================================
+
+  thermal_diffusivity1:
+    dependency: (3000, 300, -5.0)
+    equation: heat_conductivity1 /(density1 * heat_capacity1)
+    bounds: [linear, linear]
+    regression:
+      simplify: post
+      degree: 3
+      segments: 7
+
+  specific_enthalpy1:
+    dependency: (3000, 300, 541)
+    equation: Integral(heat_capacity1, T)
+    bounds: [ constant, constant ]
+    regression:
+      simplify: post
+      degree: 2
+      segments: 4
+
+  solidus_temp1: 1605.          # Temperature where melting begins (K)
+  liquidus_temp1: 1735.         # Temperature where material is completely melted (K)
+  initial_boiling_temp1: 3090.  # Temperature where boiling begins (K)
+  final_boiling_temp1: 3200.    # Temperature where material is completely vaporized (K)
+
+# ====================================================================================================
+# TEMPERATURE DEFINITION FORMATS:
+#
+# 1. Single value: 1000.0
+# 2. List: [300, 400, 500, 600]
+# 3. Temperature references: solidus_temperature, liquidus_temperature, etc.
+# 4. Arithmetic expressions: melting_temperature + 50, solidus_temperature - 10
+# 5. Tuple formats:
+#    - (start, increment): (300, 50) with n_values parameter
+#    - (start, stop, step): (300, 1000, 10.0) for 10K increments
+#    - (start, stop, points): (300, 1000, 71) for 71 evenly spaced points
+#
+# BOUNDS OPTIONS:
+# - 'constant': Use boundary values as constants outside range
+# - 'linear': Linear extrapolation outside range
+#
+# REGRESSION OPTIONS:
+# - simplify: 'pre' (before symbolic processing) or 'post' (after symbolic processing)
+# - degree: Polynomial degree (1=linear, 2=quadratic, etc.)
+# - segments: Number of piecewise segments for regression
+# ====================================================================================================
