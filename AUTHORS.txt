@@ -3,3 +3,4 @@ Contributors:
 -------------
 
   - Rahil Doshi <rahil.doshi@fau.de>
+  - Matthias Markl <matthias.mark@fau.de>
