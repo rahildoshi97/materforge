@@ -8,6 +8,7 @@ import sympy as sp
 from ruamel.yaml import YAML, constructor, scanner
 from materforge.core.materials import Material
 from materforge.parsing.processors.property_processor import PropertyProcessor
+from materforge.parsing.validation.errors import MaterialConfigError, PropertyConfigError
 from materforge.parsing.validation.property_type_detector import PropertyType, PropertyTypeDetector
 from materforge.visualization.plotters import PropertyVisualizer
 from materforge.parsing.config.yaml_keys import NAME_KEY, PROPERTIES_KEY
@@ -37,7 +38,7 @@ class YAMLFileParser(BaseFileParser):
         yaml.allow_duplicate_keys = False
         try:
             logger.debug("Loading YAML file: %s", self.config_path)
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, 'r', encoding='utf-8') as f:
                 config = yaml.load(f)
             logger.debug("YAML loaded - %d top-level keys", len(config) if config else 0)
             return config
@@ -57,6 +58,7 @@ class YAMLFileParser(BaseFileParser):
 
 class MaterialYAMLParser(YAMLFileParser):
     """Parser for material YAML configuration files.
+
     Validates and processes a schema-agnostic YAML file containing a name
     and a properties block. All thermophysical properties live in the properties
     block and are assigned dynamically to the Material instance.
@@ -75,7 +77,7 @@ class MaterialYAMLParser(YAMLFileParser):
     # --- Public API ---
     def create_material(self, dependency: sp.Symbol, enable_plotting: bool = True) -> Material:
         """Creates a Material instance from the parsed configuration.
-    
+
         Args:
             dependency:      SymPy symbol used as the independent variable in
                              property expressions (e.g. sp.Symbol('T')).
@@ -83,7 +85,7 @@ class MaterialYAMLParser(YAMLFileParser):
         Returns:
             Fully initialised Material with all properties assigned.
         Raises:
-            ValueError: If configuration is invalid or property processing fails.
+            MaterialConfigError: If configuration is invalid or property processing fails.
         """
         name = self.config.get(NAME_KEY, "Unnamed Material")
         logger.info("Creating material: '%s'", name)
@@ -98,8 +100,8 @@ class MaterialYAMLParser(YAMLFileParser):
                 logger.info("Visualization enabled")
             else:
                 logger.debug("Visualization disabled - %s",
-                             "numeric dependency" if not isinstance(dependency, sp.Symbol)
-                             else "plotting not requested")
+                    "numeric dependency" if not isinstance(dependency, sp.Symbol)
+                    else "plotting not requested")
             logger.info("Processing properties for '%s'", name)
             self.property_processor.process_properties(
                 material=material,
@@ -115,51 +117,53 @@ class MaterialYAMLParser(YAMLFileParser):
             logger.info("Successfully created material: '%s'", name)
             return material
         except Exception as e:
-            # Intermediate layer — do not log here, bubble up to api.py
-            raise ValueError(f"Failed to create material \n -> {str(e)}") from e
+            # Intermediate layer - do not log here, bubble up to api.py
+            raise MaterialConfigError(f"Failed to create material \n -> {str(e)}") from e
 
     # --- Validation ---
     def _validate_config(self) -> None:
         """Validates the top-level YAML structure.
+
         Raises:
-            ValueError: If the config is not a dict, contains unknown top-level keys,
-                or if name/properties fields are missing or invalid.
+            MaterialConfigError: If the config is not a dict, contains unknown
+                top-level keys, or if name/properties fields are missing or invalid.
         """
         logger.debug("Validating configuration structure")
         if not isinstance(self.config, dict):
-            raise ValueError(f"YAML file must contain a top-level mapping, got {type(self.config).__name__}")
+            raise MaterialConfigError(f"YAML file must contain a top-level mapping, got {type(self.config).__name__}")
         unknown_keys = set(self.config.keys()) - _REQUIRED_TOP_LEVEL_KEYS
         if unknown_keys:
-            raise ValueError(f"Unknown top-level keys: {sorted(unknown_keys)}. "
+            raise MaterialConfigError(f"Unknown top-level keys: {sorted(unknown_keys)}. "
                 f"Only {sorted(_REQUIRED_TOP_LEVEL_KEYS)} are allowed.")
         if NAME_KEY not in self.config:
-            raise ValueError(f"Missing required field: '{NAME_KEY}'")
+            raise MaterialConfigError(f"Missing required field: '{NAME_KEY}'")
         name = self.config[NAME_KEY]
         if name is None or not isinstance(name, str) or not name.strip():
-            raise ValueError(f"'{NAME_KEY}' must be a non-empty string, "
+            raise MaterialConfigError(f"'{NAME_KEY}' must be a non-empty string, "
                 f"got {type(name).__name__!r}: {name!r}")
         if len(name) > 100:
             logger.warning("Material name '%s' exceeds 100 characters", name)
         if PROPERTIES_KEY not in self.config:
-            raise ValueError(f"Missing required field: '{PROPERTIES_KEY}'")
+            raise MaterialConfigError(f"Missing required field: '{PROPERTIES_KEY}'")
         props = self.config[PROPERTIES_KEY]
         if not isinstance(props, dict):
-            raise ValueError(f"'{PROPERTIES_KEY}' must be a mapping, got {type(props).__name__}")
+            raise MaterialConfigError(f"'{PROPERTIES_KEY}' must be a mapping, got {type(props).__name__}")
         if not props:
-            raise ValueError(f"'{PROPERTIES_KEY}' block cannot be empty")
+            raise MaterialConfigError(f"'{PROPERTIES_KEY}' block cannot be empty")
         logger.info("Configuration validation passed")
 
     # --- Property categorisation ---
     @staticmethod
     def _analyze_and_categorize_properties(properties: Dict[str, Any]) -> Dict[PropertyType, List[Tuple[str, Any]]]:
         """Detects and categorises all properties by their type.
+
         Args:
             properties: Raw properties mapping from the YAML config.
         Returns:
             Dict keyed by PropertyType, each entry a list of
             (property_name, config) tuples.
         Raises:
-            ValueError: If any property config is structurally invalid.
+            PropertyConfigError: If any property config is structurally invalid.
         """
         logger.debug("Categorising %d properties", len(properties))
         categorized: Dict[PropertyType, List[Tuple[str, Any]]] = {
@@ -172,7 +176,7 @@ class MaterialYAMLParser(YAMLFileParser):
                 categorized[prop_type].append((prop_name, config))
                 logger.debug("'%s' -> %s", prop_name, prop_type.name)
             except ValueError as e:
-                raise ValueError(f"Configuration error for property '{prop_name}': {str(e)}") from e
+                raise PropertyConfigError(f"Configuration error for property '{prop_name}': {str(e)}") from e
         for prop_type, prop_list in categorized.items():
             if prop_list:
                 logger.info("%d %s: %s", len(prop_list), prop_type.name, [p[0] for p in prop_list])

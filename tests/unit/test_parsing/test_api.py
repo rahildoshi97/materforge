@@ -5,6 +5,7 @@ import tempfile
 from pathlib import Path
 import sympy as sp
 from materforge.parsing.api import create_material, validate_yaml_file, get_material_property_names
+from materforge.parsing.validation.errors import MaterialConfigError, PropertyConfigError
 
 
 VALID_PURE_METAL_YAML = """
@@ -73,14 +74,13 @@ class TestCreateMaterial:
             yaml_path.unlink()
 
     def test_create_material_invalid_yaml(self):
-        """Malformed YAML raises an exception during parsing."""
+        """Malformed YAML raises a scanner error during parsing."""
         yaml_path = _write_temp_yaml(INVALID_STRUCTURE_YAML)
         try:
-            with pytest.raises(Exception):
+            with pytest.raises(Exception):   # scanner.ScannerError - keeping Exception is fine here
                 create_material(yaml_path, sp.Symbol('T'), enable_plotting=False)
         finally:
             yaml_path.unlink()
-
 
 
 class TestValidateYamlFile:
@@ -99,11 +99,11 @@ class TestValidateYamlFile:
         with pytest.raises(FileNotFoundError):
             validate_yaml_file("nonexistent.yaml")
 
-    def test_validate_incomplete_yaml_raises_value_error(self):
-        """YAML missing the 'properties' block raises ValueError."""
+    def test_validate_incomplete_yaml_raises_material_config_error(self):
+        """YAML missing the 'properties' block raises MaterialConfigError."""
         yaml_path = _write_temp_yaml(INCOMPLETE_YAML)
         try:
-            with pytest.raises(ValueError):
+            with pytest.raises(MaterialConfigError):
                 validate_yaml_file(yaml_path)
         finally:
             yaml_path.unlink()
@@ -159,6 +159,6 @@ class TestDynamicPropertyTracker:
             yaml_path.unlink()
 
     def test_get_material_property_names_rejects_non_material(self):
-        """get_material_property_names() raises ValueError for wrong input type."""
-        with pytest.raises(ValueError):
+        """get_material_property_names() raises TypeError for wrong input type."""
+        with pytest.raises(TypeError):
             get_material_property_names("not_a_material")  # type: ignore

@@ -10,6 +10,7 @@ import sympy as sp
 from materforge.core.materials import Material
 from materforge.parsing.config.material_yaml_parser import MaterialYAMLParser
 from materforge.parsing.config.yaml_keys import NAME_KEY, PROPERTIES_KEY
+from materforge.parsing.validation.errors import MaterialConfigError, PropertyConfigError
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +32,10 @@ def create_material(yaml_path: Union[str, Path], dependency: sp.Symbol,
     Returns:
         Fully initialised Material instance.
     Raises:
-        FileNotFoundError: YAML file does not exist.
-        TypeError:         dependency is not a sp.Symbol.
-        ValueError:        YAML content is invalid or material creation fails.
+        FileNotFoundError:  YAML file does not exist.
+        TypeError:          dependency is not a sp.Symbol.
+        MaterialConfigError: YAML content is invalid or material creation fails.
+        PropertyConfigError: A specific property block is structurally invalid.
     Example:
         >>> material = create_material('steel.yaml', sp.Symbol('T'))
         >>> material = create_material('copper.yaml', sp.Symbol('u_C'), enable_plotting=False)
@@ -42,7 +44,9 @@ def create_material(yaml_path: Union[str, Path], dependency: sp.Symbol,
                 yaml_path, dependency, enable_plotting)
     if not isinstance(dependency, sp.Symbol):
         raise TypeError(
-            f"dependency '{dependency}' must be a sympy Symbol, got {type(dependency).__name__}")
+            f"dependency '{dependency}' must be a sympy Symbol, "
+            f"got {type(dependency).__name__}"
+        )
     try:
         parser = MaterialYAMLParser(yaml_path=yaml_path)
         material = parser.create_material(dependency=dependency, enable_plotting=enable_plotting)
@@ -50,7 +54,8 @@ def create_material(yaml_path: Union[str, Path], dependency: sp.Symbol,
                     material.name, len(material.property_names()))
         return material
     except Exception as e:
-        # Top of the materforge stack - log once here, then re-raise as-is
+        # Top of the materforge stack - log once here, then re-raise as-is.
+        # MaterialConfigError / PropertyConfigError propagate with their types intact.
         logger.error("Failed to create material from %s: %s", yaml_path, e)
         raise
 
@@ -63,8 +68,9 @@ def validate_yaml_file(yaml_path: Union[str, Path]) -> bool:
     Returns:
         True if the file is structurally valid.
     Raises:
-        FileNotFoundError: File does not exist.
-        ValueError:        Content is invalid.
+        FileNotFoundError:  File does not exist.
+        PropertyConfigError: A specific property block is structurally invalid.
+        MaterialConfigError: Top-level YAML content is invalid.
     Example:
         >>> is_valid = validate_yaml_file('steel.yaml')
     """
@@ -73,15 +79,18 @@ def validate_yaml_file(yaml_path: Union[str, Path]) -> bool:
         _ = MaterialYAMLParser(yaml_path)
         logger.info("YAML validation successful for: %s", yaml_path)
         return True
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         logger.error("YAML file not found: %s", yaml_path)
-        raise FileNotFoundError(f"YAML file not found: {yaml_path}") from e
-    except ValueError as e:
+        raise
+    except PropertyConfigError as e:
+        logger.error("Property config invalid in %s: %s", yaml_path, e)
+        raise
+    except MaterialConfigError as e:
         logger.error("YAML validation failed for %s: %s", yaml_path, e)
-        raise ValueError(f"YAML validation failed: {str(e)}") from e
+        raise
     except Exception as e:
         logger.error("Unexpected error validating YAML %s: %s", yaml_path, e, exc_info=True)
-        raise ValueError(f"Unexpected error validating YAML: {str(e)}") from e
+        raise MaterialConfigError(f"Unexpected error validating YAML: {str(e)}") from e
 
 
 # ====================================================================
@@ -97,8 +106,9 @@ def get_material_info(yaml_path: Union[str, Path]) -> Dict:
         Dict with keys: name, properties, total_properties, property_types,
         and any additional top-level YAML fields.
     Raises:
-        FileNotFoundError: File does not exist.
-        ValueError:        Content is invalid or a required field is missing.
+        FileNotFoundError:  File does not exist.
+        PropertyConfigError: A specific property block is structurally invalid.
+        MaterialConfigError: Content is invalid or a required field is missing.
     Example:
         >>> info = get_material_info('steel.yaml')
         >>> print(info['name'], info['total_properties'])
@@ -123,15 +133,21 @@ def get_material_info(yaml_path: Union[str, Path]) -> Dict:
             }
         logger.info("Successfully extracted info for material: '%s'", info['name'])
         return info
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         logger.error("YAML file not found: %s", yaml_path)
-        raise FileNotFoundError(f"YAML file not found: {yaml_path}") from e
+        raise
+    except PropertyConfigError as e:
+        logger.error("Property config invalid in %s: %s", yaml_path, e)
+        raise
+    except MaterialConfigError as e:
+        logger.error("Failed to extract material info from %s: %s", yaml_path, e)
+        raise
     except KeyError as e:
         logger.error("Missing required field in YAML %s: %s", yaml_path, e)
-        raise ValueError(f"Missing required field in YAML: {str(e)}") from e
+        raise MaterialConfigError(f"Missing required field in YAML: {str(e)}") from e
     except Exception as e:
         logger.error("Failed to extract material info from %s: %s", yaml_path, e, exc_info=True)
-        raise ValueError(f"Failed to extract material info: {str(e)}") from e
+        raise MaterialConfigError(f"Failed to extract material info: {str(e)}") from e
 
 
 def get_material_property_names(material: Material) -> Set[str]:
@@ -142,13 +158,13 @@ def get_material_property_names(material: Material) -> Set[str]:
     Returns:
         Property names assigned during processing.
     Raises:
-        ValueError: Argument is not a Material instance.
+        TypeError: Argument is not a Material instance.
     Example:
         >>> material = create_material('steel.yaml', sp.Symbol('T'))
         >>> print(get_material_property_names(material))
     """
     if not isinstance(material, Material):
-        raise ValueError(f"Expected Material instance, got {type(material).__name__}")
+        raise TypeError(f"Expected Material instance, got {type(material).__name__}")
     return material.property_names()
 
 
@@ -166,12 +182,12 @@ def evaluate_material_properties(material: Material, symbol: sp.Symbol, value) -
     Returns:
         New Material with all properties evaluated to numeric values.
     Raises:
-        ValueError: If material is not a Material instance.
+        TypeError: If material is not a Material instance.
     Example:
         >>> evaluate_material_properties(material, T, 500.0)
     """
     if not isinstance(material, Material):
-        raise ValueError(f"Expected Material instance, got {type(material).__name__}")
+        raise TypeError(f"Expected Material instance, got {type(material).__name__}")
     return material.evaluate(symbol, value)
 
 
@@ -188,7 +204,7 @@ def _test_api() -> None:
             logger.info("API test passed")
         else:
             logger.warning("Test file not found, skipping API test")
-    except (FileNotFoundError, ValueError, AssertionError) as e:
+    except (FileNotFoundError, MaterialConfigError, AssertionError) as e:
         logger.error("API test failed: %s", e)
 
 
