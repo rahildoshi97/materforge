@@ -20,7 +20,8 @@ Before starting, ensure you have:
 
 We will create a 2D heat equation simulation where material properties are driven by the
 field variable `u` (representing temperature). MaterForge expresses all dependency-driven
-properties as SymPy expressions - these plug directly into pystencils assignment collections.
+properties as SymPy expressions in a plain `sp.Symbol`. These are then substituted with
+the pystencils field accessor at the point of use in the assignment collection.
 
 ---
 
@@ -47,17 +48,18 @@ with SourceFileGenerator() as sfg:
 
 ## Step 2: Create the Material
 
-Pass `u.center()` as the dependency so MaterForge substitutes the field variable
-directly into all symbolic property expressions.
+Always create the material with a plain `sp.Symbol`. pystencils field accessors such as
+`u.center()` are not valid `sp.Symbol` instances and will raise `TypeError`. Substitute
+`u.center()` later, at the point of use in the assignment collection.
+
 
 ```python
-    # u.center() is a pystencils field access - MaterForge treats it as the
-    # dependency variable, replacing the T placeholder in all YAML equations
-    material = create_material("simple_steel.yaml", dependency=u.center())
+    # Create material with a plain sp.Symbol
+    T = sp.Symbol('T')
+    material = create_material("simple_steel.yaml", dependency=T)
 
-    # Access the symbolic expression for thermal diffusivity
-    # This is a SymPy Piecewise expression in u.center()
-    thermal_diffusivity = material.thermal_diffusivity
+    # material.thermal_diffusivity is a SymPy Piecewise expression in T.
+    # T is substituted with u.center() when building the assignment below.
 ```
 
 ---
@@ -85,11 +87,16 @@ directly into all symbolic property expressions.
 
 ## Step 4: Build the Assignment Collection and Generate Code
 
+Substitute `T` with `u.center()` when assigning the property expression. This is the
+single, explicit coupling point between MaterForge and pystencils.
+
+
 ```python
     from sfg_walberla import Sweep
 
     subexp = [
-        ps.Assignment(thermal_diffusivity_sym, material.thermal_diffusivity),
+        ps.Assignment(thermal_diffusivity_sym,
+            material.thermal_diffusivity.subs(T, u.center()),),
     ]
 
     ac = ps.AssignmentCollection(
@@ -122,10 +129,10 @@ material = create_material("simple_steel.yaml", dependency=T)
 
 if hasattr(material, 'energy_density'):
     E = sp.Symbol('E')
-    # Creates inverse: given energy density E, returns T
-    inverse = PiecewiseInverter.create_inverse(material.energy_density, 'T', 'E')
+    # input_symbol and output_symbol must be sp.Symbol instances, not strings
+    inverse = PiecewiseInverter.create_inverse(material.energy_density, T, E)
 
-    # Evaluate
+    # Evaluate: given energy density, recover temperature
     energy_value = 1.5e9   # J/m^3
     recovered_T = float(inverse.subs(E, energy_value))
     print(f"Recovered temperature: {recovered_T:.2f}")
@@ -168,19 +175,19 @@ with SourceFileGenerator() as sfg:
         heat_pde_discretized.args[1] + heat_pde_discretized.args[0].simplify()
     )
 
-    # Load material - u.center() is the dependency variable
-    material = create_material("simple_steel.yaml", dependency=u.center())
+    # Load material with a plain sp.Symbol - never pass u.center() to create_material()
+    T = sp.Symbol('T')
+    material = create_material("simple_steel.yaml", dependency=T)
 
     # Optional: build inverse for energy-to-temperature recovery
     if hasattr(material, 'energy_density'):
-        T = sp.Symbol('T')
         E = sp.Symbol('E')
-        # Rebuild with symbolic T for inversion (inversion needs a sp.Symbol)
-        mat_sym = create_material("simple_steel.yaml", dependency=T)
-        inverse = PiecewiseInverter.create_inverse(mat_sym.energy_density, 'T', 'E')
+        inverse = PiecewiseInverter.create_inverse(material.energy_density, T, E)
 
+    # Substitute T -> u.center() at the assignment level
     subexp = [
-        ps.Assignment(thermal_diffusivity_sym, material.thermal_diffusivity),
+        ps.Assignment(thermal_diffusivity_sym,
+            material.thermal_diffusivity.subs(T, u.center()),),
     ]
 
     ac = ps.AssignmentCollection(

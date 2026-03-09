@@ -42,7 +42,7 @@ def evaluate(self, symbol: sp.Symbol, value: Union[float, int]) -> Material:
 
 **Returns:**
 - A new `Material` named `"{name}@{symbol}={value}"` with all properties
-  evaluated to numeric SymPy scalars
+  evaluated to numeric SymPy scalars (`sp.Float`)
 
 **Raises:**
 - `ValueError`: If `symbol` is not `sp.Symbol`
@@ -58,7 +58,8 @@ mat = create_material('myAlloy.yaml', dependency=T)
 
 # Evaluate all properties at T = 500 K - returns a new Material
 mat_at_500 = mat.evaluate(T, 500.0)
-print(mat_at_500.properties['heat_capacity'])   # sp.Float numeric value
+print(mat_at_500.heat_capacity)           # sp.Float numeric value
+print(float(mat_at_500.heat_capacity))    # Python float if needed
 
 # Access symbolic expressions directly via dot notation on the original
 print(mat.density)            # sp.Float(7000.0) for a constant
@@ -110,8 +111,10 @@ def create_material(
 - `Material`: Fully initialised material with all properties assigned
 
 **Raises:**
-- `ValueError`: If configuration is invalid or property processing fails
+- `FileNotFoundError`: If the YAML file does not exist
 - `TypeError`: If `dependency` is not a `sp.Symbol` instance
+- `MaterialConfigError`: If the YAML content is invalid or property processing fails
+- `PropertyConfigError`: If a specific property block is structurally invalid
 
 **Example:**
 ```python
@@ -143,17 +146,21 @@ def validate_yaml_file(yaml_path: Union[str, Path]) -> bool:
 
 **Raises:**
 - `FileNotFoundError`: If the file does not exist
-- `ValueError`: If the YAML content is invalid
+- `MaterialConfigError`: If the top-level YAML structure is invalid
+- `PropertyConfigError`: If a specific property block is structurally invalid
 
 **Example:**
 ```python
 from materforge.parsing.api import validate_yaml_file
+from materforge.parsing.validation.errors import MaterialConfigError, PropertyConfigError
 
 try:
     is_valid = validate_yaml_file('myAlloy.yaml')
     print(f"Valid: {is_valid}")
-except ValueError as e:
-    print(f"Validation error: {e}")
+except PropertyConfigError as e:
+    print(f"Property config error: {e}")
+except MaterialConfigError as e:
+    print(f"Config error: {e}")
 ```
 
 ---
@@ -177,14 +184,16 @@ print(info['property_types'])    # {'CONSTANT_VALUE': 5, 'TABULAR_DATA': 1, ...}
 ### `get_material_property_names`
 
 Returns all property names on an already-created material. Equivalent to
-`sorted(mat.property_names())` - prefer calling `mat.property_names()` directly.
+`mat.property_names()` - prefer calling `mat.property_names()` directly.
 
 ```python
 from materforge.parsing.api import get_material_property_names
 
-names = get_material_property_names(mat)
-# ['density', 'heat_capacity', 'heat_conductivity', ...]
+names = get_material_property_names(mat)   # returns a set
 ```
+
+**Raises:**
+- `TypeError`: If `material` is not a `Material` instance
 
 ---
 
@@ -199,12 +208,15 @@ from materforge.parsing.api import evaluate_material_properties
 mat_at_500 = evaluate_material_properties(mat, T, 500.0)
 ```
 
+**Raises:**
+- `TypeError`: If `material` is not a `Material` instance
+
 ---
 
 ## YAML Placeholder Contract
 
-All YAML equation strings **must** use `T` as the integration and dependency
-variable. `T` is the fixed placeholder (`YAML_PLACEHOLDER = sp.Symbol('T')`),
+All YAML equation strings **must** use `T` as the dependency variable.
+`T` is the fixed placeholder (`YAML_PLACEHOLDER = sp.Symbol('T')`),
 hardcoded in materforge. At runtime, `T` is substituted with whatever
 `sp.Symbol` the caller passes to `create_material()`.
 
@@ -288,18 +300,20 @@ include the property name and config path where the failure occurred.
 | YAML file not found | `FileNotFoundError` |
 | Invalid YAML syntax | `ruamel.yaml.scanner.ScannerError` |
 | Duplicate key in YAML | `ruamel.yaml.constructor.DuplicateKeyError` |
-| Unknown top-level YAML key | `ValueError` |
-| Missing `name` or `properties` block | `ValueError` |
-| `properties` block is empty | `ValueError` |
+| Unknown top-level YAML key | `MaterialConfigError` |
+| Missing `name` or `properties` block | `MaterialConfigError` |
+| `properties` block is empty | `MaterialConfigError` |
 | `dependency` not `sp.Symbol` in `create_material()` | `TypeError` |
+| `material` wrong type in API helpers | `TypeError` |
 | `symbol` not `sp.Symbol` in `evaluate()` | `ValueError` |
 | `value` non-numeric in `evaluate()` | `ValueError` |
-| Invalid property configuration | `ValueError` |
+| Invalid property configuration | `PropertyConfigError` |
 | Non-`T` symbol in `PIECEWISE_EQUATION` | `ValueError` |
 | Non-`T` symbol in `COMPUTED_PROPERTY` | `DependencyError` |
 | Missing property dependency | `DependencyError` |
 | Circular property dependency | `CircularDependencyError` |
 | File import column not found | `ValueError` |
 
-`DependencyError` and `CircularDependencyError` are importable from
+`MaterialConfigError`, `PropertyConfigError`, `DependencyError`, and
+`CircularDependencyError` are importable from
 `materforge.parsing.validation.errors`.

@@ -91,11 +91,11 @@ print(repr(mat))  # Material(name='SimpleSteel', properties=[...])
 print(mat.density)             # SymPy Piecewise in T
 print(mat.thermal_diffusivity) # SymPy Piecewise in T
 
-# Evaluate all properties at a specific value
-results = mat.evaluate(T, 500.0)
-print(f"At 500 K:")
-for prop, value in sorted(results.items()):
-    print(f"  {prop:<30}: {value:.6e}")
+# Evaluate all properties at a specific value - returns a new Material
+evaluated = mat.evaluate(T, 500.0)
+print("At 500 K:")
+for prop in sorted(evaluated.property_names()):
+    print(f"  {prop:<30}: {float(getattr(evaluated, prop)):.6e}")
 ```
 
 Expected output:
