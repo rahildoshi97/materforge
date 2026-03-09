@@ -107,8 +107,6 @@ properties:
 The symbol in the equation (`T` here) is just a placeholder.
 It is replaced by the symbol passed to `create_material(..., dependency=X)` at runtime.
 The symbol used in equations (`T` in the example above) is a placeholder only.
-MaterForge replaces it with whatever symbol is passed to `create_material(..., dependency=...)` 
-at runtime - the final symbolic expressions will use that symbol, not `T`.
 
 So this is valid:
 
@@ -264,8 +262,9 @@ print(mat.heat_conductivity)     # SymPy Piecewise expression in T
 print(mat.density)               # 7000.0 (constant float)
 
 # Evaluate all properties at a specific value
-results = mat.evaluate(T, 500.0)
-print(results['heat_conductivity'])  # float
+evaluated = mat.evaluate(T, 500.0)
+print(evaluated.heat_conductivity)           # sp.Float, prints as number e.g. 25.47
+print(float(evaluated.heat_conductivity))    # Python float if downstream code requires i
 ```
 
 ---
