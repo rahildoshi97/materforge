@@ -2,7 +2,9 @@
 
 import pytest
 import numpy as np
-from pymatlib.algorithms.interpolation import interpolate_value, ensure_ascending_order
+
+from materforge.algorithms.interpolation import interpolate_value, ensure_ascending_order
+from materforge.parsing.config.yaml_keys import CONSTANT_KEY, LINEAR_KEY
 
 class TestInterpolation:
     """Test cases for interpolation functions."""
@@ -11,7 +13,7 @@ class TestInterpolation:
         x_array = np.array([300, 400, 500])
         y_array = np.array([900, 950, 1000])
         # Test interpolation at midpoint
-        result = interpolate_value(350, x_array, y_array, 'constant', 'constant')
+        result = interpolate_value(350, x_array, y_array, CONSTANT_KEY, CONSTANT_KEY)
         expected = 925.0  # Linear interpolation between 900 and 950
         assert np.isclose(result, expected)
 
@@ -19,21 +21,21 @@ class TestInterpolation:
         """Test interpolation below range with constant boundary."""
         x_array = np.array([300, 400, 500])
         y_array = np.array([900, 950, 1000])
-        result = interpolate_value(250, x_array, y_array, 'constant', 'constant')
+        result = interpolate_value(250, x_array, y_array, CONSTANT_KEY, CONSTANT_KEY)
         assert result == 900.0  # Should return first value
 
     def test_interpolate_value_above_range_constant(self):
         """Test interpolation above range with constant boundary."""
         x_array = np.array([300, 400, 500])
         y_array = np.array([900, 950, 1000])
-        result = interpolate_value(600, x_array, y_array, 'constant', 'constant')
+        result = interpolate_value(600, x_array, y_array, CONSTANT_KEY, CONSTANT_KEY)
         assert result == 1000.0  # Should return last value
 
     def test_interpolate_value_below_range_extrapolate(self):
         """Test interpolation below range with extrapolation."""
         x_array = np.array([300, 400, 500])
         y_array = np.array([900, 950, 1000])
-        result = interpolate_value(200, x_array, y_array, 'extrapolate', 'constant')
+        result = interpolate_value(200, x_array, y_array, LINEAR_KEY, CONSTANT_KEY)
         # Slope between first two points: (950-900)/(400-300) = 0.5
         # Extrapolated value: 900 + 0.5 * (200-300) = 900 - 50 = 850
         expected = 850.0
@@ -61,7 +63,7 @@ class TestInterpolation:
         """Test ensure_ascending_order with non-monotonic array."""
         temp_array = np.array([300, 500, 400])
         prop_array = np.array([900, 1000, 950])
-        with pytest.raises(ValueError, match="not strictly ascending or strictly descending"):
+        with pytest.raises(ValueError, match="Array is neither strictly ascending nor descending"):
             ensure_ascending_order(temp_array, prop_array)
 
     def test_interpolate_value_exact_match(self):
@@ -69,15 +71,15 @@ class TestInterpolation:
         x_array = np.array([300, 400, 500])
         y_array = np.array([900, 950, 1000])
         # Test exact matches
-        assert interpolate_value(300, x_array, y_array, 'constant', 'constant') == 900.0
-        assert interpolate_value(400, x_array, y_array, 'constant', 'constant') == 950.0
-        assert interpolate_value(500, x_array, y_array, 'constant', 'constant') == 1000.0
+        assert interpolate_value(300, x_array, y_array, CONSTANT_KEY, CONSTANT_KEY) == 900.0
+        assert interpolate_value(400, x_array, y_array, CONSTANT_KEY, CONSTANT_KEY) == 950.0
+        assert interpolate_value(500, x_array, y_array, CONSTANT_KEY, CONSTANT_KEY) == 1000.0
 
     def test_interpolate_value_edge_cases(self):
         """Test interpolation edge cases."""
         x_array = np.array([300, 400])
         y_array = np.array([900, 950])
         # Test with minimum data points
-        result = interpolate_value(350, x_array, y_array, 'constant', 'constant')
+        result = interpolate_value(350, x_array, y_array, CONSTANT_KEY, CONSTANT_KEY)
         expected = 925.0
         assert np.isclose(result, expected)

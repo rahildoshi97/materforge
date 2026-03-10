@@ -1,0 +1,113 @@
+# ====================================================================================================
+# MaterForge MATERIAL CONFIGURATION FILE - ALUMINA (alpha-Al2O3)
+# ====================================================================================================
+# Source: R. G. Munro, "Evaluated Material Properties for a Sintered alpha-Al2O3,"
+#         Journal of the American Ceramic Society, Vol. 80, pp. 1919-1928 (1997).
+#         NIST Standard Reference Database 150, NIST Ceramics Data Portal.
+#         URL: https://srdata.nist.gov/CeramicDataPortal/Pds/Scdaos
+#
+# Material: High-purity (>=99.5%) sintered alpha-alumina, nominal grain size 5 microns,
+#           >=98% theoretical density.
+#
+# Temperature range: 293 K - 1773 K (20 °C - 1500 °C)
+# All temperatures in Kelvin.
+#
+# Note: T is just a placeholder in equations.
+# The final equation will depend on the symbol passed via the API.
+# ====================================================================================================
+
+name: Al2O3
+
+properties:
+
+  melting_temperature: 2323.0    # K  (2050 °C, NIST/Munro 1997)
+  boiling_temperature: 3800.0    # K  (approx., Al2O3 decomposes before clean boiling)
+
+  # --------------------------------------------------
+  # DENSITY  [kg/m³]
+  # NIST/Munro 1997: 3984 @ 293K, 3943 @ 773K, 3891 @ 1273K, 3868 @ 1473K, 3845 @ 1673K, 3834 @ 1773K
+  # --------------------------------------------------
+  density:
+    dependency: [293, 773, 1273, 1473, 1673, 1773]
+    value:      [3984, 3943, 3891, 3868, 3845, 3834]
+    bounds: [linear, linear]
+
+  # --------------------------------------------------
+  # SPECIFIC HEAT  [J/(kg-K)]
+  # NIST/Munro 1997: 755 @ 293K, 1165 @ 773K, 1255 @ 1273K, 1285 @ 1473K, 1315 @ 1673K, 1330 @ 1773K
+  # --------------------------------------------------
+  specific_heat:
+    dependency: [293, 773, 1273, 1473, 1673, 1773]
+    value:      [755, 1165, 1255, 1285, 1315, 1330]
+    bounds: [linear, constant]
+
+  # --------------------------------------------------
+  # THERMAL CONDUCTIVITY  [W/(m-K)]
+  # NIST/Munro 1997: 33.0 @ 293K, 11.4 @ 773K, 7.22 @ 1273K, 6.67 @ 1473K, 6.34 @ 1673K, 6.23 @ 1773K
+  # --------------------------------------------------
+  thermal_conductivity:
+    dependency: [293, 773, 1273, 1473, 1673, 1773]
+    value:      [33.0, 11.4, 7.22, 6.67, 6.34, 6.23]
+    bounds: [linear, constant]
+
+  # --------------------------------------------------
+  # THERMAL DIFFUSIVITY  [m²/s]   (COMPUTED from k / (rho * cp))
+  # --------------------------------------------------
+  thermal_diffusivity:
+    dependency: (1773, 293, -5.0)
+    equation: thermal_conductivity / (density * specific_heat)
+    bounds: [linear, constant]
+    regression:
+      simplify: post
+      degree: 2
+      segments: 3
+
+  # --------------------------------------------------
+  # ELASTIC (YOUNG'S) MODULUS  [Pa]
+  # NIST/Munro 1997: 416e9 @ 293K, 390e9 @ 773K, 364e9 @ 1273K, 354e9 @ 1473K, 343e9 @ 1673K, 338e9 @ 1773K
+  # --------------------------------------------------
+  Youngs_modulus_of_elasticity:
+    dependency: [293, 773, 1273, 1473, 1673, 1773]
+    value:      [416e9, 390e9, 364e9, 354e9, 343e9, 338e9]
+    bounds: [linear, linear]
+
+  # --------------------------------------------------
+  # FLEXURAL STRENGTH  [Pa]
+  # NIST/Munro 1997: 380e6 @ 293K, 375e6 @ 773K, 345e6 @ 1273K, 300e6 @ 1473K, 210e6 @ 1673K, 130e6 @ 1773K
+  # --------------------------------------------------
+  flexure_strength:
+    dependency: [293, 773, 1273, 1473, 1673, 1773]
+    value:      [380e6, 375e6, 345e6, 300e6, 210e6, 130e6]
+    bounds: [constant, linear]
+
+  # --------------------------------------------------
+  # LINEAR THERMAL EXPANSION COEFFICIENT  [1/K]
+  # NIST/Munro 1997 (expansion from 0°C):
+  # 4.6e-6 @ 293K, 7.1e-6 @ 773K, 8.1e-6 @ 1273K, 8.3e-6 @ 1473K, 8.5e-6 @ 1673K, 8.6e-6 @ 1773K
+  # --------------------------------------------------
+  linear_thermal_expansion_coefficient:
+    dependency: [293, 773, 1273, 1473, 1673, 1773]
+    value:      [4.6e-6, 7.1e-6, 8.1e-6, 8.3e-6, 8.5e-6, 8.6e-6]
+    bounds: [linear, constant]
+
+# ====================================================================================================
+# TEMPERATURE DEFINITION FORMATS:
+#
+# 1. Single value: 1000.0
+# 2. List: [300, 400, 500, 600]
+# 3. Temperature references: solidus_temperature, liquidus_temperature, etc.
+# 4. Arithmetic expressions: melting_temperature + 50, solidus_temperature - 10
+# 5. Tuple formats:
+#    - (start, increment): (300, 50) with n_values parameter
+#    - (start, stop, step): (300, 1000, 10.0) for 10K increments
+#    - (start, stop, points): (300, 1000, 71) for 71 evenly spaced points
+#
+# BOUNDS OPTIONS:
+# - 'constant': Use boundary values as constants outside range
+# - 'linear': Linear extrapolation outside range
+#
+# REGRESSION OPTIONS:
+# - simplify: 'pre' (before symbolic processing) or 'post' (after symbolic processing)
+# - degree: Polynomial degree (1=linear, 2=quadratic, etc.)
+# - segments: Number of piecewise segments for regression
+# ====================================================================================================

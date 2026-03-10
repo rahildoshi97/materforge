@@ -3,7 +3,7 @@
 import pytest
 import numpy as np
 import sympy as sp
-from pymatlib.algorithms.regression_processor import RegressionProcessor
+from materforge.algorithms.regression_processor import RegressionProcessor
 
 class TestRegressionProcessor:
     """Test cases for RegressionProcessor."""

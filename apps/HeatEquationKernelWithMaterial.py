@@ -1,12 +1,17 @@
+# SPDX-FileCopyrightText: 2025 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This application depends on waLBerla and pystencils (GPLv3), requiring GPL licensing.
+
 import logging
 import sympy as sp
 import pystencils as ps
 from pathlib import Path
 from pystencilssfg import SourceFileGenerator
-from walberla.codegen import Sweep
+from sweepgen import Sweep
 
-from pymatlib.parsing.api import create_material
-from pymatlib.algorithms.piecewise_inverter import PiecewiseInverter
+from materforge.parsing.api import create_material
+from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 logging.basicConfig(
     level=logging.WARNING,  # DEBUG/INFO/WARNING/ERROR/CRITICAL
@@ -26,19 +31,20 @@ with SourceFileGenerator() as sfg:
     thermal_diffusivity_field = ps.fields(f"thermal_diffusivity_field: {data_type}[2D]", layout='fzyx')
     dx, dt = sp.Symbol("dx"), sp.Symbol("dt")
 
-    heat_pde = ps.fd.transient(u) - thermal_diffusivity_symbol * (ps.fd.diff(u, 0, 0) + ps.fd.diff(u, 1, 1))
+    heat_pde = ps.fd.transient(u) - thermal_diffusivity_symbol * (ps.fd.diff(u, 0, 0) + ps.fd.diff(u, 1, 1)) # type: ignore
 
     discretize = ps.fd.Discretization2ndOrder(dx=dx, dt=dt)
     heat_pde_discretized = discretize(heat_pde)
-    heat_pde_discretized = heat_pde_discretized.args[1] + heat_pde_discretized.args[0].simplify()
+    heat_pde_discretized = heat_pde_discretized.args[1] + heat_pde_discretized.args[0].simplify() # type: ignore
 
-    yaml_path = Path(__file__).parent / 'SS304L_HeatEquationKernelWithMaterial.yaml'
-    yaml_path_Al = Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
-    yaml_path_SS304L = Path(__file__).parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "SS304L" / "SS304L.yaml"
+    yaml_path = Path(__file__).parent / '1.4301_HeatEquationKernelWithMaterial.yaml'
+    #yaml_path_Al = Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "Al.yaml"
+    #yaml_path_SS304L = Path(__file__).parent.parent / "src" / "materforge" / "data" / "materials" / "1.4301.yaml"
 
-    mat = create_material(yaml_path=yaml_path, T=u.center(), enable_plotting=True)
-    mat_Al = create_material(yaml_path=yaml_path_Al, T=u.center(), enable_plotting=True)
-    mat_SS304L = create_material(yaml_path=yaml_path_SS304L, T=u.center(), enable_plotting=True)
+    S = sp.Symbol('S')
+    mat = create_material(yaml_path=yaml_path, dependency=S, enable_plotting=True)
+    #mat_Al = create_material(yaml_path=yaml_path_Al, dependency=u.center(), enable_plotting=True) # type: ignore
+    #mat_SS304L = create_material(yaml_path=yaml_path_SS304L, dependency=u.center(), enable_plotting=True) # type: ignore
 
     print(f"Energy density function: {mat.energy_density}")
     print(f"Type: {type(mat.energy_density)}")
@@ -59,180 +65,88 @@ with SourceFileGenerator() as sfg:
         3000, 3500, 4000
     ]
 
-    # Create inverse energy density function
-        # Method 1: Using the convenience function
-        # E = sp.Symbol('E')  # Energy density symbol
-        # inverse_energy_density = create_energy_density_inverse(mat, 'E')
-
-        # Method 2: Using PiecewiseInverter directly (alternative approach)
-        # inverter = PiecewiseInverter()
-        # T_symbol = sp.Symbol('T')  # or extract from energy_density function
-        # E_symbol = sp.Symbol('E')
-        # inverse_energy_density = inverter.create_inverse(mat.energy_density, T_symbol, E_symbol)
-
-    # Method 1: Using convenience function
-    print("METHOD 1: Using create_energy_density_inverse()")
+    print("Create inverse energy density function Using PiecewiseInverter")
     print("-" * 60)
 
     if hasattr(mat, 'energy_density'):
         try:
-            E = sp.Symbol('E')
-            inverse_energy_density = PiecewiseInverter.create_energy_density_inverse(mat, 'E')
-            print(f"✓ Inverse energy density created successfully")
-            print(f"Inverse function: {inverse_energy_density}")
-
-            # Test round-trip accuracy for Method 1
-            print("\nMethod 1 - Round-trip accuracy test:")
-            method1_errors = []
-            method1_passed = 0
-            method1_failed = 0
-
-            for temp in test_temperatures:
-                try:
-                    # Forward: T -> E
-                    energy_val = float(mat.energy_density.subs(u.center(), temp).evalf())
-                    # Backward: E -> T
-                    recovered_temp = float(inverse_energy_density.subs(E, energy_val))
-                    error = abs(temp - recovered_temp)
-                    method1_errors.append(error)
-
-                    status = "✓" if error < 1e-6 else "!" if error < 1e-3 else "✗"
-                    if error < 1e-3:
-                        method1_passed += 1
-                    else:
-                        method1_failed += 1
-
-                    print(f"{status} T={temp:6.1f}K -> E={energy_val:12.2e} -> T={recovered_temp:6.1f}K, Error={error:.2e}")
-
-                except Exception as e:
-                    method1_failed += 1
-                    print(f"✗ Error at T={temp}K: {e}")
-
-            max_error_method1 = max(method1_errors) if method1_errors else float('inf')
-            print(f"\nMethod 1 Summary:")
-            print(f"  Passed: {method1_passed}/{len(test_temperatures)}")
-            print(f"  Failed: {method1_failed}/{len(test_temperatures)}")
-            print(f"  Maximum error: {max_error_method1:.2e}")
-
-        except Exception as e:
-            print(f"✗ Method 1 failed: {e}")
-            method1_passed = 0
-            method1_failed = len(test_temperatures)
-    else:
-        print("✗ Material does not have energy_density property")
-        method1_passed = 0
-        method1_failed = len(test_temperatures)
-
-    print("\n" + "=" * 80)
-
-    # METHOD 2: Using PiecewiseInverter directly
-    print("METHOD 2: Using PiecewiseInverter directly")
-    print("-" * 60)
-
-    if hasattr(mat, 'energy_density'):
-        try:
-            # Extract the temperature symbol from the energy density function
-            energy_symbols = mat.energy_density.free_symbols
+            energy_symbols = mat.energy_density.free_symbols # type: ignore
             if len(energy_symbols) != 1:
                 raise ValueError(f"Energy density function must have exactly one symbol, found: {energy_symbols}")
 
-            temp_symbol = list(energy_symbols)[0]  # This should be u.center()
+            temp_symbol = list(energy_symbols)[0]
             E_symbol = sp.Symbol('E')
 
             # Create inverter with custom tolerance
-            inverse_func = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol, E_symbol)
+            inverse_func = PiecewiseInverter.create_inverse(mat.energy_density, temp_symbol, E_symbol) # type: ignore
 
-            print(f"✓ Method 2 inverse created successfully!")
+            print("Inverse created successfully!")
             print(f"Temperature symbol used: {temp_symbol}")
             print(f"Inverse function: {inverse_func}")
 
-            # Test round-trip accuracy for Method 2
-            print("\nMethod 2 - Round-trip accuracy test:")
-            method2_errors = []
-            method2_passed = 0
-            method2_failed = 0
+            print("\nRound-trip accuracy test:")
+            errors = []
+            passed = 0
+            failed = 0
 
             for temp in test_temperatures:
                 try:
                     # Forward: T -> E
-                    energy_val = float(mat.energy_density.subs(temp_symbol, temp).evalf())
+                    energy_val = float(mat.energy_density.subs(temp_symbol, temp).evalf()) # type: ignore
                     # Backward: E -> T
-                    recovered_temp = float(inverse_func.subs(E_symbol, energy_val))
+                    recovered_temp = float(inverse_func.subs(E_symbol, energy_val)) # type: ignore
                     error = abs(temp - recovered_temp)
-                    method2_errors.append(error)
+                    errors.append(error)
 
-                    status = "✓" if error < 1e-6 else "!" if error < 1e-3 else "✗"
+                    status = "✅" if error < 1e-6 else "⚠️" if error < 1e-3 else "❌"
                     if error < 1e-3:
-                        method2_passed += 1
+                        passed += 1
                     else:
-                        method2_failed += 1
+                        failed += 1
 
                     print(f"{status} T={temp:6.1f}K -> E={energy_val:12.2e} -> T={recovered_temp:6.1f}K, Error={error:.2e}")
 
                 except Exception as e:
-                    method2_failed += 1
-                    print(f"✗ Error at T={temp}K: {e}")
+                    failed += 1
+                    print(f"Error at T={temp}K: {e}")
 
-            max_error_method2 = max(method2_errors) if method2_errors else float('inf')
-            print(f"\nMethod 2 Summary:")
-            print(f"  Passed: {method2_passed}/{len(test_temperatures)}")
-            print(f"  Failed: {method2_failed}/{len(test_temperatures)}")
-            print(f"  Maximum error: {max_error_method2:.2e}")
+            max_error = max(errors) if errors else float('inf')
+            print("\nSummary:")
+            print(f"  Passed: {passed}/{len(test_temperatures)}")
+            print(f"  Failed: {failed}/{len(test_temperatures)}")
+            print(f"  Maximum error: {max_error:.2e}")
 
         except ValueError as e:
             if "degree" in str(e).lower():
-                print(f"✗ Expected error: {e}")
+                print(f"Expected error: {e}")
                 print("  This is expected if the material has non-linear energy density.")
                 print("  The simplified inverter only supports linear piecewise functions.")
-                method2_passed = 0
-                method2_failed = len(test_temperatures)
+                passed = 0
+                failed = len(test_temperatures)
             else:
-                print(f"✗ Method 2 failed: {e}")
-                method2_passed = 0
-                method2_failed = len(test_temperatures)
+                print(f"Failed: {e}")
+                passed = 0
+                failed = len(test_temperatures)
         except Exception as e:
-            print(f"✗ Method 2 failed with unexpected error: {e}")
-            method2_passed = 0
-            method2_failed = len(test_temperatures)
+            print(f"Failed with unexpected error: {e}")
+            passed = 0
+            failed = len(test_temperatures)
     else:
-        print("✗ Material does not have energy_density property")
-        method2_passed = 0
-        method2_failed = len(test_temperatures)
-
-    print("\n" + "=" * 80)
-
-    # COMPARISON SUMMARY
-    print("COMPARISON SUMMARY")
-    print("-" * 60)
-    print(f"Method 1 (Convenience function):")
-    print(f"  Success rate: {method1_passed}/{len(test_temperatures)} ({100*method1_passed/len(test_temperatures):.1f}%)")
-    if 'max_error_method1' in locals():
-        print(f"  Max error: {max_error_method1:.2e}")
-
-    print(f"\nMethod 2 (Direct PiecewiseInverter):")
-    print(f"  Success rate: {method2_passed}/{len(test_temperatures)} ({100*method2_passed/len(test_temperatures):.1f}%)")
-    if 'max_error_method2' in locals():
-        print(f"  Max error: {max_error_method2:.2e}")
-
-    # Determine which method performed better
-    if method1_passed > method2_passed:
-        print(f"\nMethod 1 (Convenience function) performed better!")
-    elif method2_passed > method1_passed:
-        print(f"\nMethod 2 (Direct PiecewiseInverter) performed better!")
-    else:
-        print(f"\nBoth methods performed equally!")
+        print("Material does not have energy_density property")
+        passed = 0
+        failed = len(test_temperatures)
 
     print("\n" + "=" * 80)
 
     subexp = [
-        ps.Assignment(thermal_diffusivity_symbol, mat.thermal_diffusivity),
+        ps.Assignment(thermal_diffusivity_symbol, mat.thermal_diffusivity.subs(S, u.center())),
     ]
 
     ac = ps.AssignmentCollection(
         subexpressions=subexp,
         main_assignments=[
-            ps.Assignment(u_tmp.center(), heat_pde_discretized),
-            ps.Assignment(thermal_diffusivity_field.center(), thermal_diffusivity_symbol)
+            ps.Assignment(u_tmp.center(), heat_pde_discretized), # type: ignore
+            ps.Assignment(thermal_diffusivity_field.center(), thermal_diffusivity_symbol) # type: ignore
         ])
 
     print(f"ac\n{ac}, type = {type(ac)}")

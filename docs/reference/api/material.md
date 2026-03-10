@@ -4,272 +4,316 @@
 
 ### Material
 
-A dataclass representing a material (pure metal or alloy) with temperature-dependent properties.
+A dataclass representing a material with fully dynamic property tracking.
+All properties - constants and dependency-driven expressions - are assigned
+dynamically and tracked automatically via a `properties` dict. No material
+type, composition, or fixed schema required.
 
 ```python
-from pymatlib.core.materials import Material
+from materforge.core.materials import Material
 ```
-
-#### Properties
-
-**Basic Properties:**
-- `name`: String identifier for the material
-- `material_type`: Either 'pure_metal' or 'alloy'
-- `elements`: List of ChemicalElement objects
-- `composition`: List/array of element fractions (must sum to 1.0)
-
-**Temperature Properties (Pure Metals):**
-- `melting_temperature`: Melting point in Kelvin
-- `boiling_temperature`: Boiling point in Kelvin
-
-**Temperature Properties (Alloys):**
-- `solidus_temperature`: Solidus temperature in Kelvin
-- `liquidus_temperature`: Liquidus temperature in Kelvin
-- `initial_boiling_temperature`: Initial boiling temperature in Kelvin
-- `final_boiling_temperature`: Final boiling temperature in Kelvin
-
-**Computed Properties:**
-- `atomic_mass`: Composition-weighted atomic mass
-- `atomic_number`: Composition-weighted atomic number
-
-**Material Properties (Optional):**
-- `density`: Density as function of temperature
-- `dynamic_viscosity`: Dynamic viscosity as function of temperature
-- `energy_density`: Energy density as function of temperature
-- `heat_capacity`: Specific heat capacity as function of temperature
-- `heat_conductivity`: Thermal conductivity as function of temperature
-- `kinematic_viscosity`: Kinematic viscosity as function of temperature
-- `latent_heat_of_fusion`: Latent heat of fusion
-- `latent_heat_of_vaporization`: Latent heat of vaporization
-- `specific_enthalpy`: Specific enthalpy as function of temperature
-- `surface_tension`: Surface tension as function of temperature
-- `thermal_diffusivity`: Thermal diffusivity as function of temperature
-- `thermal_expansion_coefficient`: Thermal expansion coefficient
 
 #### Methods
 
-**solidification_interval()**
-```python
-def solidification_interval(self) -> Tuple[sp.Float, sp.Float]:
-```
-Returns the solidification interval (solidus, liquidus) for alloys.
+##### `property_names() -> set`
 
-#### Example Usage
+Returns all dynamically assigned property names.
+
+```python
+props = material.property_names()
+# {'density', 'heat_capacity', 'solidus_temperature', ...}
+```
+
+##### `evaluate(symbol, value) -> Material`
+
+Evaluates all properties by substituting `symbol = value`. Returns a **new
+`Material`** instance with all expressions reduced to numeric SymPy values.
+Properties that still have free symbols after substitution, or that fail
+evaluation, are excluded and logged as errors.
+
+```python
+def evaluate(self, symbol: sp.Symbol, value: Union[float, int]) -> Material:
+```
+
+**Parameters:**
+- `symbol`: SymPy symbol to substitute - must match the symbol passed to
+  `create_material()`. Must be `sp.Symbol`.
+- `value`: Numeric value to substitute - must be convertible to `float`
+
+**Returns:**
+- A new `Material` named `"{name}@{symbol}={value}"` with all properties
+  evaluated to numeric SymPy scalars (`sp.Float`)
+
+**Raises:**
+- `ValueError`: If `symbol` is not `sp.Symbol`
+- `ValueError`: If `value` is `None` or not convertible to `float`
+
+**Example:**
 ```python
 import sympy as sp
-from pymatlib.parsing.api import create_material
+from materforge.parsing.api import create_material
 
-# Create symbolic temperature
 T = sp.Symbol('T')
+mat = create_material('myAlloy.yaml', dependency=T)
 
-# Load material from YAML
-material = create_material('steel.yaml', T)
+# Evaluate all properties at T = 500 K - returns a new Material
+mat_at_500 = mat.evaluate(T, 500.0)
+print(mat_at_500.heat_capacity)           # sp.Float numeric value
+print(float(mat_at_500.heat_capacity))    # Python float if needed
 
-# Access basic properties
-print(f"Material: {material.name}")
-print(f"Type: {material.material_type}")
-print(f"Composition: {dict(zip([e.name for e in material.elements], material.composition))}")
-
-# Access temperature-dependent properties
-if hasattr(material, 'density'):
-    density_at_500K = material.density.evalf(T, 500)
-    print(f"Density at 500K: {density_at_500K} kg/m³")
-
-# For alloys, get solidification interval
-if material.material_type == 'alloy':
-    solidus, liquidus = material.solidification_interval()
-    print(f"Solidification range: {solidus}K - {liquidus}K")
+# Access symbolic expressions directly via dot notation on the original
+print(mat.density)            # sp.Float(7000.0) for a constant
+print(mat.heat_conductivity)  # SymPy Piecewise expression in T
 ```
 
-### ChemicalElement
+> **pystencils users:** Do not pass `u.center()` to `create_material()`.
+> Always create the material with a plain `sp.Symbol`, then substitute
+> to the field accessor at the pystencils boundary:
+> ```python
+> T = sp.Symbol('T')
+> mat = create_material('myAlloy.yaml', dependency=T)
+> expr = mat.thermal_diffusivity.subs(T, u.center())   # one explicit coupling point
+> ```
 
-A dataclass representing a chemical element with its properties.
-````python
-from pymatlib.core.elements import ChemicalElement
-````
+#### Repr
 
-#### Properties
-
-- `name`: Element name (e.g., "Iron")
-- `atomic_number`: Atomic number
-- `atomic_mass`: Atomic mass in u
-- `melting_temperature`: Melting temperature in K
-- `boiling_temperature`: Boiling temperature in K
-- `latent_heat_of_fusion`: Latent heat of fusion in J/kg
-- `latent_heat_of_vaporization`: Latent heat of vaporization in J/kg
-
-#### Example Usage
 ```python
-from pymatlib.data.elements.element_data import element_map
-
-# Access element data
-iron = element_map['Fe']
-print(f"Iron melting point: {iron.melting_temperature}K")
-print(f"Iron atomic mass: {iron.atomic_mass}u")
+str(mat)   # Material: myAlloy (10 properties)
+repr(mat)  # Material(name='myAlloy', properties=['density', 'heat_capacity', ...])
 ```
+
+---
 
 ## Main API Functions
 
-### create_material
+### `create_material`
 
-Create material instance from YAML configuration file.
+Creates a `Material` instance from a YAML configuration file.
+
 ```python
-from pymatlib.parsing.api import create_material
+from materforge.parsing.api import create_material
 
-def create_material(yaml_path: Union[str, Path],
-                    T: Union[float, sp.Symbol],
-                    enable_plotting: bool = True) -> Material:
+def create_material(
+    yaml_path: Union[str, Path],
+    dependency: sp.Symbol,
+    enable_plotting: bool = True,
+) -> Material:
 ```
 
 **Parameters:**
 - `yaml_path`: Path to the YAML configuration file
-- `T`: Temperature value or symbol for property evaluation
-    - Use a float value for a specific temperature
-    - Use a symbolic variable (e.g., `sp.Symbol('T')`) for symbolic expressions
-- `enable_plotting`: Whether to generate visualization plots (default: True)
+- `dependency`: SymPy symbol used as the independent variable in all property
+  expressions. Must be a plain `sp.Symbol`. pystencils field accessors such
+  as `u.center()` are not valid here - apply `.subs()` after creation instead.
+- `enable_plotting`: Whether to generate and save property plots (default: `True`)
 
 **Returns:**
-- `Material`: The material instance with all properties initialized
+- `Material`: Fully initialised material with all properties assigned
+
+**Raises:**
+- `FileNotFoundError`: If the YAML file does not exist
+- `TypeError`: If `dependency` is not a `sp.Symbol` instance
+- `MaterialConfigError`: If the YAML content is invalid or property processing fails
+- `PropertyConfigError`: If a specific property block is structurally invalid
 
 **Example:**
 ```python
 import sympy as sp
-from pymatlib.parsing.api import create_material
+from materforge.parsing.api import create_material
 
-# Create material at specific temperature
-material = create_material('aluminum.yaml', 500.0)
-
-# Create material with symbolic temperature
 T = sp.Symbol('T')
-material = create_material('steel.yaml', T)
-
-# Create material with custom temperature symbol
-u_C = sp.Symbol('u_C')
-material = create_material('copper.yaml', u_C)
+mat = create_material('myAlloy.yaml', dependency=T)
+mat_no_plots = create_material('myAlloy.yaml', dependency=T, enable_plotting=False)
 ```
 
-### get_supported_properties
+---
 
-Returns a list of all supported material properties.
+### `validate_yaml_file`
+
+Validates a YAML file structure without creating the material.
+
 ```python
-from pymatlib.parsing.api import get_supported_properties
-
-def get_supported_properties() -> list:
-```
-**Returns:**
-- `list`: List of strings representing valid property names
-
-**Example:**
-```python
-properties = get_supported_properties()
-print("Supported properties:", properties)
-```
-
-### validate_yaml_file
-
-Validate a YAML file without creating the material.
-```python
-from pymatlib.parsing.api import validate_yaml_file
+from materforge.parsing.api import validate_yaml_file
 
 def validate_yaml_file(yaml_path: Union[str, Path]) -> bool:
 ```
 
 **Parameters:**
-- `yaml_path`: Path to the YAML configuration file to validate
+- `yaml_path`: Path to the YAML configuration file
 
 **Returns:**
-- `bool`: True if the file is valid
+- `bool`: `True` if the file is structurally valid
 
 **Raises:**
-- `FileNotFoundError`: If the file doesn't exist
-- `ValueError`: If the YAML content is invalid
+- `FileNotFoundError`: If the file does not exist
+- `MaterialConfigError`: If the top-level YAML structure is invalid
+- `PropertyConfigError`: If a specific property block is structurally invalid
 
 **Example:**
 ```python
+from materforge.parsing.api import validate_yaml_file
+from materforge.parsing.validation.errors import MaterialConfigError, PropertyConfigError
+
 try:
-  is_valid = validate_yaml_file('material.yaml')
-  print(f"File is valid: {is_valid}")
-  except ValueError as e:
-  print(f"Validation error: {e}")
+    is_valid = validate_yaml_file('myAlloy.yaml')
+    print(f"Valid: {is_valid}")
+except PropertyConfigError as e:
+    print(f"Property config error: {e}")
+except MaterialConfigError as e:
+    print(f"Config error: {e}")
 ```
 
-## Utility Functions
+---
 
-### Element Interpolation Functions
-```python
-from pymatlib.core.elements import (
-interpolate_atomic_number,
-interpolate_atomic_mass,
-interpolate_melting_temperature,
-interpolate_boiling_temperature
-)
-```
+### `get_material_info`
 
-These functions interpolate element properties based on composition:
+Returns metadata about a YAML file without fully processing the material.
 
 ```python
-# Example usage
+from materforge.parsing.api import get_material_info
 
-elements = [element_map['Fe'], element_map['C']]
-composition = [0.98, 0.02]
-
-avg_atomic_mass = interpolate_atomic_mass(elements, composition)
-avg_melting_temp = interpolate_melting_temperature(elements, composition)
+info = get_material_info('myAlloy.yaml')
+print(info['name'])              # 'myAlloy'
+print(info['total_properties'])  # 10
+print(info['properties'])        # ['density', 'heat_capacity', ...]
+print(info['property_types'])    # {'CONSTANT_VALUE': 5, 'TABULAR_DATA': 1, ...}
 ```
 
-## Symbol Registry
+---
 
-### SymbolRegistry
+### `get_material_property_names`
 
-Registry for SymPy symbols to ensure uniqueness across the application.
-```python
-from pymatlib.core.symbol_registry import SymbolRegistry
-
-# Get or create a symbol
-T = SymbolRegistry.get('T')
-
-# Get all registered symbols
-all_symbols = SymbolRegistry.get_all()
-
-# Clear all symbols (useful for testing)
-SymbolRegistry.clear()
-```
-
-## Error Classes
-
-### Material Errors
+Returns all property names on an already-created material. Equivalent to
+`mat.property_names()` - prefer calling `mat.property_names()` directly.
 
 ```python
-from pymatlib.core.materials import MaterialCompositionError, MaterialTemperatureError
-```
-These are raised automatically during material validation
+from materforge.parsing.api import get_material_property_names
 
-### Property Errors
+names = get_material_property_names(mat)   # returns a set
+```
+
+**Raises:**
+- `TypeError`: If `material` is not a `Material` instance
+
+---
+
+### `evaluate_material_properties`
+
+Functional wrapper around `Material.evaluate()`. Equivalent to
+`mat.evaluate(symbol, value)` - prefer calling `mat.evaluate()` directly.
 
 ```python
-from pymatlib.parsing.validation.errors import (
-  PropertyError,
-  DependencyError,
-  CircularDependencyError
-)
+from materforge.parsing.api import evaluate_material_properties
+
+mat_at_500 = evaluate_material_properties(mat, T, 500.0)
 ```
-These are raised during property processing
 
-## Type Definitions
+**Raises:**
+- `TypeError`: If `material` is not a `Material` instance
 
-### PropertyType Enum
+---
+
+## YAML Placeholder Contract
+
+All YAML equation strings **must** use `T` as the dependency variable.
+`T` is the fixed placeholder (`YAML_PLACEHOLDER = sp.Symbol('T')`),
+hardcoded in materforge. At runtime, `T` is substituted with whatever
+`sp.Symbol` the caller passes to `create_material()`.
+
+```yaml
+# Correct - always use T in YAML equations
+specific_enthalpy:
+  dependency: (1773, 293, 541)
+  equation: Integral(heat_capacity, T)
+  bounds: [constant, constant]
+
+thermal_diffusivity:
+  dependency: (1773, 293, 100)
+  equation: thermal_conductivity / (density * specific_heat)
+  bounds: [constant, constant]
+```
+
+```yaml
+# Wrong - any symbol other than T in the equation will cause an error
+specific_enthalpy:
+  equation: Integral(heat_capacity, u_C)   # crashes unconditionally
+```
+
+When YAML uses any symbol other than `T`, the exact exception depends on
+property type:
+
+- **`COMPUTED_PROPERTY`**: raises `DependencyError` - `sp.sympify()` parses
+  the non-`T` symbol as a plain `sp.Symbol`. The dependency filter
+  (`if s != YAML_PLACEHOLDER`) does not exclude it, so it lands in the
+  dependency list. Since `u_C` (or any other name) is not a material property,
+  materforge raises:
+  ```
+  DependencyError: Missing dependencies ['u_C'] in expression
+      'Integral(heat_capacity, u_C)': u_C
+  Available properties: density, heat_capacity, ...
+  Please check for typos or add the missing properties to your configuration.
+  ```
+
+- **`PIECEWISE_EQUATION`**: raises `ValueError` - equations in this type are
+  validated upfront and may only reference `T`. Any other symbol is rejected
+  immediately:
+  ```
+  ValueError: Unexpected symbol(s) [u_C] in equation '7877.39-0.37*u_C'
+      for property 'viscosity'. PIECEWISE_EQUATION equations must use 'T'
+      as the only variable.
+  ```
+  To reference other material properties in an expression, use
+  `COMPUTED_PROPERTY` instead.
+
+Both errors occur regardless of what symbol the caller passes to
+`create_material()`. The YAML and the Python caller are fully decoupled -
+the YAML always uses `T`, and the caller can use any `sp.Symbol`.
+
+---
+
+## Property Type Enum
 
 ```python
-from pymatlib.parsing.validation.property_type_detector import PropertyType
+from materforge.parsing.validation.property_type_detector import PropertyType
 
-# Available property types:
-PropertyType.CONSTANT_VALUE
-PropertyType.STEP_FUNCTION
-PropertyType.FILE_IMPORT
-PropertyType.TABULAR_DATA
-PropertyType.PIECEWISE_EQUATION
-PropertyType.COMPUTED_PROPERTY
+PropertyType.CONSTANT_VALUE      # single numeric value
+PropertyType.STEP_FUNCTION       # discontinuous transition at a scalar reference
+PropertyType.FILE_IMPORT         # data loaded from .csv / .xlsx / .txt
+PropertyType.TABULAR_DATA        # explicit dependency-value pairs
+PropertyType.PIECEWISE_EQUATION  # symbolic equations over dependency ranges
+PropertyType.COMPUTED_PROPERTY   # derived from other properties via equation
 ```
 
-This API provides a comprehensive interface for working with materials in PyMatLib,
-from basic material creation to advanced property manipulation and validation.
+Note: `PIECEWISE_EQUATION` equations may only reference `T` (the YAML
+placeholder). To combine multiple material properties in an expression, use
+`COMPUTED_PROPERTY` instead.
+
+---
+
+## Error Handling
+
+MaterForge raises standard Python exceptions with descriptive messages that
+include the property name and config path where the failure occurred.
+
+| Situation | Exception |
+|---|---|
+| YAML file not found | `FileNotFoundError` |
+| Invalid YAML syntax | `ruamel.yaml.scanner.ScannerError` |
+| Duplicate key in YAML | `ruamel.yaml.constructor.DuplicateKeyError` |
+| Unknown top-level YAML key | `MaterialConfigError` |
+| Missing `name` or `properties` block | `MaterialConfigError` |
+| `properties` block is empty | `MaterialConfigError` |
+| `dependency` not `sp.Symbol` in `create_material()` | `TypeError` |
+| `material` wrong type in API helpers | `TypeError` |
+| `symbol` not `sp.Symbol` in `evaluate()` | `ValueError` |
+| `value` non-numeric in `evaluate()` | `ValueError` |
+| Invalid property configuration | `PropertyConfigError` |
+| Non-`T` symbol in `PIECEWISE_EQUATION` | `ValueError` |
+| Non-`T` symbol in `COMPUTED_PROPERTY` | `DependencyError` |
+| Missing property dependency | `DependencyError` |
+| Circular property dependency | `CircularDependencyError` |
+| File import column not found | `ValueError` |
+
+`MaterialConfigError`, `PropertyConfigError`, `DependencyError`, and
+`CircularDependencyError` are importable from
+`materforge.parsing.validation.errors`.

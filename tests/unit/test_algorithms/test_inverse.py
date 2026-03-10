@@ -3,7 +3,7 @@ import sympy as sp
 from typing import List, Tuple
 import logging
 from pathlib import Path
-from pymatlib.parsing.api import create_material
+from materforge.parsing.api import create_material
 
 logger = logging.getLogger(__name__)
 
@@ -11,8 +11,8 @@ T = sp.Symbol('T')
 E = sp.Symbol('E')
 
 current_file = Path(__file__)
-yaml_path = current_file.parent.parent.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "SS304L" / "SS304L.yaml"
-ss316l = create_material(yaml_path=yaml_path, T=T, enable_plotting=True)
+yaml_path = current_file.parent.parent.parent.parent / "src" / "materforge" / "data" / "materials" / "1.4301.yaml"
+ss316l = create_material(yaml_path=yaml_path, dependency=T, enable_plotting=True)
 
 # Display the energy density function
 print(f"Energy Density Function: {ss316l.energy_density}")
@@ -204,8 +204,8 @@ def test_with_real_material():
     T = sp.Symbol('T')
     E = sp.Symbol('E')
     current_file = Path(__file__)
-    yaml_path = current_file.parent.parent.parent.parent / "src" / "pymatlib" / "data" / "materials" / "alloys" / "SS304L" / "SS304L.yaml"
-    ss316l = create_material(yaml_path=yaml_path, T=T, enable_plotting=True)
+    yaml_path = current_file.parent.parent.parent.parent / "src" / "materforge" / "data" / "materials" / "1.4301.yaml"
+    ss316l = create_material(yaml_path=yaml_path, dependency=T, enable_plotting=True)
     print(f"Energy Density Function: {ss316l.energy_density}")
     # Create inverter
     inverter = PiecewiseInverter()
@@ -240,16 +240,16 @@ def test_with_real_material():
                 status = "✓" if error < 1e-6 else "⚠" if error < 1e-3 else "✗"
                 print(f"{status} T={temp:6.1f}K -> E={energy:12.2e} -> T={recovered_temp:6.1f}K, Error={error:.2e}")
             except Exception as e:
-                print(f"✗ Error at T={temp}K: {e}")
+                print(f"Error at T={temp}K: {e}")
         print(f"\nMaximum error: {max_error:.2e}")
         if max_error < 1e-6:
-            print("✓ EXCELLENT: All tests passed with high precision")
+            print("EXCELLENT: All tests passed with high precision")
         elif max_error < 1e-3:
-            print("✓ GOOD: All tests passed with acceptable precision")
+            print("GOOD: All tests passed with acceptable precision")
         else:
-            print("⚠ WARNING: Some tests have large errors")
+            print("WARNING: Some tests have large errors")
     except Exception as e:
-        print(f"✗ Failed to create inverse: {e}")
+        print(f"Failed to create inverse: {e}")
 
 if __name__ == "__main__":
     # Set up logging

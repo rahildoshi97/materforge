@@ -2,7 +2,7 @@
 
 import pytest
 import numpy as np
-from pymatlib.parsing.validation.array_validator import is_monotonic
+from materforge.parsing.validation.array_validator import is_monotonic
 
 class TestArrayValidator:
     """Test cases for array validation functions."""

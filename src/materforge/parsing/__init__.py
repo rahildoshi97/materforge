@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2025 - 2026 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
+# SPDX-License-Identifier: BSD-3-Clause
+
+"""
+Parsing and configuration modules for MaterForge.
+
+This package handles YAML parsing, property type detection, validation,
+and material creation from configuration files.
+"""
+
+from .api import create_material, validate_yaml_file, get_material_info, evaluate_material_properties, get_material_property_names
+from .config.material_yaml_parser import MaterialYAMLParser
+from .validation.property_type_detector import PropertyType, PropertyTypeDetector
+from .processors.property_processor import PropertyProcessor
+
+__all__ = [
+    'create_material',
+    'validate_yaml_file',
+    'MaterialYAMLParser',
+    'PropertyType',
+    'PropertyTypeDetector',
+    'PropertyProcessor',
+    'get_material_info',
+    'evaluate_material_properties',
+    'get_material_property_names',
+]
