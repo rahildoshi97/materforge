@@ -17,7 +17,7 @@ from materforge.parsing.api import (
 MATERIAL_CONFIGS = [
     #("src/materforge/data/materials/Al.yaml", "T_Al"),
     #("src/materforge/data/materials/1.4301.yaml", "T_SS"),
-    ("examples/myAlloy.yaml", "u_C"),
+    ("examples/myAlloy.yaml", "Temperature"),
     #("src/materforge/data/materials/Al2O3.yaml", "T_Al2O3"),
 ]
 

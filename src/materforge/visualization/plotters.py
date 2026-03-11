@@ -105,6 +105,9 @@ class PropertyVisualizer:
         if prop_name in self.visualized_properties:
             logger.debug("Property %r already visualized - skipping", prop_name)
             return
+        """if prop_type != 'COMPUTED_PROPERTY':
+            logger.debug("Skipping %r (%s) - only COMPUTED_PROPERTY is plotted", prop_name, prop_type)
+            return"""
         if self.fig is None:
             logger.warning("No figure available for %r - visualization skipped", prop_name)
             return
@@ -135,9 +138,9 @@ class PropertyVisualizer:
                 lower_bound = data_lower
             if upper_bound is None:
                 upper_bound = data_upper
-            padding = (upper_bound - lower_bound) * ProcessingConstants.DEPENDENCY_PADDING_FACTOR
-            padded_lower = lower_bound - padding
-            padded_upper = upper_bound + padding
+            #padding = (upper_bound - lower_bound) * ProcessingConstants.DEPENDENCY_PADDING_FACTOR
+            padded_lower = lower_bound
+            padded_upper = upper_bound
             num_points = int(np.ceil((padded_upper - padded_lower) / step)) + 1
             extended_dep = np.linspace(padded_lower, padded_upper, num_points)
             ax.set_title(f"{prop_name} ({prop_type})", fontsize=14, fontweight="bold", pad=15)
@@ -169,16 +172,16 @@ class PropertyVisualizer:
                 try:
                     f_current = sp.lambdify(dependency, current_prop, 'numpy')
                     y_extended = f_current(extended_dep)
-                    ax.plot(extended_dep, y_extended, color=colors['extended'],
+                    """ax.plot(extended_dep, y_extended, color=colors['extended'],
                             linestyle='-', linewidth=2.5, label='extended behavior',
-                            zorder=1, alpha=0.6)
+                            zorder=1, alpha=0.6)"""
                     if x_data is not None and y_data is not None:
                         ax.plot(x_data, y_data, color=colors['raw'], linestyle='-',
-                                linewidth=2.5, marker="o", markersize=6,
+                                linewidth=2.5, marker="", markersize=6,
                                 label='step function', zorder=3, alpha=0.8)
                         transition_idx = len(x_data) // 2
                         transition_point = x_data[transition_idx]
-                        ax.axvline(x=transition_point, color='red', linestyle='--',
+                        """ax.axvline(x=transition_point, color='red', linestyle='--',
                                    alpha=0.7, linewidth=2, label='transition point')
                         ax.text(transition_point, y_data[0], f" Before: {y_data[0]:.2e}",
                                 verticalalignment="bottom", horizontalalignment="left",
@@ -188,13 +191,13 @@ class PropertyVisualizer:
                                 verticalalignment="top", horizontalalignment="left",
                                 fontweight="bold",
                                 bbox=dict(facecolor='white', alpha=0.8, boxstyle='round,pad=0.3'))
-                        _y_value = float(np.mean(y_data))
+                        _y_value = float(np.mean(y_data))"""
                         logger.debug("Step %r - transition at %.1f", prop_name, transition_point)
                     else:
                         _y_value = float(f_current(lower_bound))
                 except Exception as e:
                     logger.warning("Could not evaluate step function %r: %s", prop_name, e)
-            else:
+            if prop_type == 'COMPUTED_PROPERTY':
                 try:
                     f_current = sp.lambdify(dependency, current_prop, 'numpy')
                     if has_regression and simplify_type == PRE_KEY:
@@ -242,7 +245,7 @@ class PropertyVisualizer:
                             horizontalalignment="center", fontweight="bold",
                             bbox=dict(facecolor='red', alpha=0.2))
             # --- Boundary annotations ---
-            ax.axvline(x=lower_bound, color=colors['bounds'], linestyle='--',
+            """ax.axvline(x=lower_bound, color=colors['bounds'], linestyle='--',
                        alpha=0.6, linewidth=1.5, label="_nolegend_")
             ax.axvline(x=upper_bound, color=colors['bounds'], linestyle='--',
                        alpha=0.6, linewidth=1.5, label="_nolegend_")
@@ -273,7 +276,7 @@ class PropertyVisualizer:
             if handles:
                 legend = ax.legend(handles, labels, loc='best', framealpha=0.9,
                                    fancybox=True, shadow=True, edgecolor="gray")
-                legend.get_frame().set_linewidth(1.2)
+                legend.get_frame().set_linewidth(1.2)"""
             self.visualized_properties.add(prop_name)
             logger.info("Successfully visualized %r", prop_name)
         except Exception as e:
@@ -287,7 +290,7 @@ class PropertyVisualizer:
             return
         try:
             material_name = self.parser.config[NAME_KEY]
-            self.fig.suptitle(f"Material Properties: {material_name}", fontsize=16, fontweight="bold", y=0.98)
+            #self.fig.suptitle(f"Material Properties: {material_name}", fontsize=16, fontweight="bold", y=0.98)
             try:
                 plt.tight_layout(rect=[0, 0.01, 1, 0.98], pad=1.0)
             except Exception as e:

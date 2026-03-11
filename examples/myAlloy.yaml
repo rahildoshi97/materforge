@@ -20,7 +20,7 @@ properties:
   # Note: Must be float, not integer (use 1.0 instead of 1)
   # ====================================================================================================
 
-  density1: 7000.  # kg/m^3
+  density: 7000.  # kg/m^3
 
   # ====================================================================================================
   # PROPERTY TYPE 2: STEP_FUNCTION
@@ -28,7 +28,7 @@ properties:
   # Supports temperature references and arithmetic expressions
   # ====================================================================================================
 
-  latent_heat_of_fusion1:
+  latent_heat_of_fusion:
     dependency: solidus_temp1 + 5
     value: [0.0, 171401.0]
     bounds: [constant, constant]
@@ -39,7 +39,7 @@ properties:
   # Supports temperature references, explicit lists, and tuple notation
   # ====================================================================================================
 
-  heat_conductivity1:
+  heat_conductivity:
     dependency: [500, 1000, 1600, 1700, 1750, 2000, 2500]
     value: [19.25, 25.47, 32.94, 33.52, 31.53, 35.33, 42.95]
     bounds: [linear, linear]
@@ -50,7 +50,7 @@ properties:
   # Supports .txt, .csv, .xlsx files with automatic missing value handling
   # ====================================================================================================
 
-  heat_capacity1:
+  heat_capacity:
     file_path: ./myAlloy.csv
     dependency_column: T (K)
     property_column: Specific heat (J/(Kg K))
@@ -66,7 +66,7 @@ properties:
   # Number of equations = number of breakpoints - 1
   # ====================================================================================================
 
-  viscosity1:
+  viscosity:
     dependency: [300, 1660, 1736, 3000]
     equation: [7877.39-0.37*T, 11816.63-2.74*T, 8596.40-0.88*T]
     bounds: [constant, constant]
@@ -77,28 +77,28 @@ properties:
   # Supports dependency resolution and automatic ordering
   # ====================================================================================================
 
-  thermal_diffusivity1:
+  thermal_diffusivity:
     dependency: (3000, 300, -5.0)
-    equation: heat_conductivity1 /(density1 * heat_capacity1)
+    equation: heat_conductivity /(density * heat_capacity)
     bounds: [linear, linear]
     regression:
       simplify: post
       degree: 3
       segments: 7
 
-  specific_enthalpy1:
+  specific_enthalpy:
     dependency: (3000, 300, 541)
-    equation: Integral(heat_capacity1, T)
+    equation: Integral(heat_capacity, T)
     bounds: [ constant, constant ]
     regression:
       simplify: post
       degree: 2
       segments: 4
 
-  solidus_temp1: 1605.          # Temperature where melting begins (K)
-  liquidus_temp1: 1735.         # Temperature where material is completely melted (K)
-  initial_boiling_temp1: 3090.  # Temperature where boiling begins (K)
-  final_boiling_temp1: 3200.    # Temperature where material is completely vaporized (K)
+  solidus_temp: 1605.          # Temperature where melting begins (K)
+  liquidus_temp: 1735.         # Temperature where material is completely melted (K)
+  initial_boiling_temp: 3090.  # Temperature where boiling begins (K)
+  final_boiling_temp: 3200.    # Temperature where material is completely vaporized (K)
 
 # ====================================================================================================
 # TEMPERATURE DEFINITION FORMATS:
