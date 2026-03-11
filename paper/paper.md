@@ -96,7 +96,7 @@ thermodynamic modeling tools. pycalphad generates the data; MaterForge prepares 
   (\autoref{fig:input_methods}).
   This versatility allows users to leverage data from diverse sources.
 
-![MaterForge's property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods}](figures/input_methods.jpg)
+![MaterForge's property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods}](figures/joss_fig_1.jpg)
 
 - **Schema-Agnostic Material Support**: The framework imposes no structural constraints on material definitions.
   Any material kind - pure metals, alloys, ceramics, polymers, composites, or hypothetical materials -
@@ -129,7 +129,7 @@ thermodynamic modeling tools. pycalphad generates the data; MaterForge prepares 
       degree: 2
       segments: 3
 ```
-![MaterForge's data processing capabilities: regression and data reduction showing raw data (points) fitted with different polynomial degrees and segment configurations, and configurable boundary behavior options demonstrating constant versus linear settings for the same density property, illustrating how MaterForge can reduce complexity while maintaining physical accuracy and providing flexible boundary control.\label{fig:regression_options_with_boundary_behavior_new}](figures/regression_options_with_boundary_behavior_new.png)
+![MaterForge's data processing capabilities: regression and data reduction showing raw data (points) fitted with different polynomial degrees and segment configurations, and configurable boundary behavior options demonstrating constant versus linear settings for the same density property, illustrating how MaterForge can reduce complexity while maintaining physical accuracy and providing flexible boundary control.\label{fig:regression_options_with_boundary_behavior_new}](figures/regression_options_with_boundary_behavior_new.jpg)
 
 - **Inverse Property Computation**: The library can generate inverse piecewise-linear functions,
   enabling the determination of independent variables from known property values.
