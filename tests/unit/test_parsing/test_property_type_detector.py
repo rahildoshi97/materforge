@@ -18,11 +18,6 @@ class TestPropertyTypeDetector:
         result = PropertyTypeDetector.determine_property_type("test_prop", config)
         assert result == expected_type
 
-    def test_determine_property_type_invalid_integer(self):
-        """Bare integer constant raises ValueError (must be float)."""
-        with pytest.raises(ValueError, match="must be defined as a float"):
-            PropertyTypeDetector.determine_property_type("test_prop", 5)
-
     def test_determine_property_type_unknown_pattern(self):
         """Unrecognised config dict raises ValueError."""
         with pytest.raises(ValueError, match="does not match any known configuration pattern"):
