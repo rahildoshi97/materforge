@@ -24,7 +24,7 @@ affiliations:
     index: 2
   - name: Erlangen National High Performance Computing Center (NHR@FAU), Erlangen, Germany
     index: 3
-date: 09 March 2026
+date: 12 March 2026
 bibliography: paper.bib
 ---
 
@@ -32,7 +32,7 @@ bibliography: paper.bib
 
 MaterForge is an extensible, open-source Python library that streamlines the definition and use of
 material properties in numerical simulations.
-The library supports complex material behaviors, from simple constants to experimental data
+The library supports complex material behaviors, from simple constants to experimental data,
 in user-friendly YAML configurations.
 These are internally converted into symbolic mathematical expressions for scientific computing frameworks.
 MaterForge supports any material type through a schema-agnostic design,
@@ -43,8 +43,8 @@ and serves as a bridge between experimental data and numerical simulation.
 
 # Statement of Need
 
-Accurate numerical simulation requires material properties such as thermal conductivity, density, and viscosity
-that depend on variables like temperature, pressure, or strain rate [@lewis1996finite].
+Accurate numerical simulations of physical processes rely on well-characterized material properties -
+quantities such as thermal conductivity, density, and viscosity that depend on state variables like temperature, pressure, or strain rate [@lewis1996finite].
 This challenge is compounded by the wide variation in data availability,
 from well-characterized models for established materials to sparse experimental points for novel materials.
 Property definitions consequently range from simple constants to complex tabular datasets or sophisticated equations,
@@ -52,7 +52,7 @@ creating significant integration hurdles for researchers.
 
 To manage this complexity, researchers often resort to manual interpolation, custom scripting, or proprietary software,
 which compromises reproducibility and standardization [@ashby2013materials].
-While valuable resources like the NIST WebBook [@linstrom2001nist] and CoolProp [@coolprop] provide valuable raw data,
+While valuable resources like the NIST WebBook [@linstrom2001nist] and CoolProp [@coolprop] provide raw data,
 they lack integrated processing to unify these varied formats into simulation-ready symbolic expressions.
 Thermodynamic modeling tools such as pycalphad [@pycalphad] and CALPHAD databases [@calphad]
 are powerful for phase equilibria calculations but operate at a different layer of the workflow:
@@ -60,7 +60,9 @@ they generate property data, not simulation-ready expressions.
 
 This creates a gap between property data generation and simulation integration,
 leading to ad hoc solutions that hinder workflow efficiency and FAIR data adoption [@wilkinson2016fair].
-MaterForge fills this gap by occupying a dedicated post-processing layer in the materials simulation workflow.
+MaterForge fills this gap by occupying a dedicated post-processing layer in the materials simulation workflow,
+complementing rather than competing with thermodynamic modeling tools:
+pycalphad generates the data; MaterForge prepares it for simulation.
 
 # Position in the Simulation Workflow
 
@@ -69,7 +71,7 @@ MaterForge is designed to operate as the intermediate layer in a three-stage wor
 **Stage 1 - Property Data Generation**: Raw material property data is produced by
 upstream tools such as pycalphad [@pycalphad] for thermodynamic phase equilibria,
 CoolProp [@coolprop] or the NIST WebBook [@linstrom2001nist] for fluid properties,
-commercial tools such as JMatPro for alloy properties,
+or commercial tools such as JMatPro and Thermo-Calc for alloy properties,
 or direct experimental measurement.
 These tools generate tabular data, equations, or database entries.
 
@@ -77,17 +79,13 @@ These tools generate tabular data, equations, or database entries.
 and converts it into optimized symbolic mathematical expressions using SymPy [@sympy].
 It performs automatic regression and data reduction, resolves inter-property dependencies,
 validates configurations, and generates visualization plots for verification.
-The output is a fully configured `Material` object with all properties expressed as
-SymPy expressions in a user-chosen independent variable (temperature, pressure, composition, or any symbol).
+The output is a fully configured `Material` object in which each property is stored as a symbolic expression - a callable function of a chosen dependency variable such as temperature, pressure, or composition - ready for direct use in simulation codes.
 
 **Stage 3 - Simulation Integration**: The symbolic expressions are passed directly into
 simulation frameworks such as pystencils [@pystencils] or waLBerla [@walberla]
 for code generation, or into any Python-based finite element or CFD solver.
 Because properties are SymPy expressions, they plug into symbolic assignment collections
 without any additional conversion.
-
-This layered design means MaterForge is complementary to, not competing with,
-thermodynamic modeling tools. pycalphad generates the data; MaterForge prepares it for simulation.
 
 # Key Functionality
 
@@ -96,7 +94,7 @@ thermodynamic modeling tools. pycalphad generates the data; MaterForge prepares 
   (\autoref{fig:input_methods}).
   This versatility allows users to leverage data from diverse sources.
 
-![MaterForge's property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods}](figures/joss_fig_1.jpg)
+![MaterForge's property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods}](figures/input_methods.jpg)
 
 - **Schema-Agnostic Material Support**: The framework imposes no structural constraints on material definitions.
   Any material kind - pure metals, alloys, ceramics, polymers, composites, or hypothetical materials -
@@ -109,18 +107,18 @@ thermodynamic modeling tools. pycalphad generates the data; MaterForge prepares 
   and detects circular references.
 
 - **Regression and Data Reduction**: The library performs piecewise regression for large datasets, 
-  simplifying complex property curves into efficient mathematical representations with configurable polynomial degrees and segments,
+  simplifying complex property curves into efficient mathematical representations with configurable polynomial degrees and segment counts, 
   reducing computational overhead while maintaining accuracy.
 
 - **Intelligent Simplification Timing**: MaterForge provides sophisticated control over when data simplification occurs
   via the `simplify` parameter.
-  `simplify: pre` optimizes performance by simplifying properties before being used in dependent calculations,
+  `simplify: pre` optimizes performance by simplifying properties before they are used in dependent calculations,
   while `simplify: post` defers simplification until all dependent properties have been computed, maximizing numerical accuracy.
 
 - **Configurable Boundary Behavior**: Users can define how properties behave outside their specified ranges,
   choosing between `constant`-value clamping or `linear` extrapolation to best match the physical behavior of the material.
   The boundary behavior options work seamlessly with the regression capabilities to provide comprehensive data processing control 
-  (\autoref{fig:regression_options_with_boundary_behavior_new}).
+  (\autoref{fig:regression_options_with_boundary_behavior}).
 
 ```yaml
     bounds: [constant, linear]
@@ -129,12 +127,12 @@ thermodynamic modeling tools. pycalphad generates the data; MaterForge prepares 
       degree: 2
       segments: 3
 ```
-![MaterForge's data processing capabilities: regression and data reduction showing raw data (points) fitted with different polynomial degrees and segment configurations, and configurable boundary behavior options demonstrating constant versus linear settings for the same density property, illustrating how MaterForge can reduce complexity while maintaining physical accuracy and providing flexible boundary control.\label{fig:regression_options_with_boundary_behavior_new}](figures/regression_options_with_boundary_behavior_new.jpg)
+![MaterForge's data processing capabilities: regression and data reduction showing raw data (green) fitted with different polynomial degrees and segment configurations, and configurable boundary behavior options demonstrating constant versus linear extrapolation for the same density property, illustrating how MaterForge reduces complexity while maintaining physical accuracy.\label{fig:regression_options_with_boundary_behavior}](figures/regression_options_with_boundary_behavior.jpg)
 
 - **Inverse Property Computation**: The library can generate inverse piecewise-linear functions,
-  enabling the determination of independent variables from known property values.
+  enabling the determination of the independent variable from a known property value.
   This capability is essential for energy-based numerical methods [@voller1987fixed],
-  where temperature is computed via the inverse function of the enthalpy.
+  where temperature is recovered via the inverse of the specific enthalpy function.
 
 - **Built-in Validation Framework**: A comprehensive validation framework checks YAML configurations for correctness,
   including structural validation, required fields, property type detection, and dependency cycle detection,
@@ -147,8 +145,10 @@ thermodynamic modeling tools. pycalphad generates the data; MaterForge prepares 
 # Usage
 
 Materials are defined in YAML files and loaded via `create_material`, which returns a fully configured `Material` object.
-All thermophysical properties live in the `properties` block - the only other required top-level field is `name`.
-Scalar constants defined in `properties` can be referenced by name in other property configurations.
+All material properties live in the `properties` block - the only other required top-level field is `name`.
+Named properties can be referenced in other property configurations: scalar constants are
+valid anywhere, while full expressions are valid in `COMPUTED_PROPERTY` equations only.
+MaterForge automatically resolves the correct evaluation order.
 
 ## YAML Configuration Example: `myAlloy.yaml`
 ```yaml
@@ -170,13 +170,13 @@ properties:
 ## Python Integration
 ```python
 import sympy as sp
-from materforge.parsing.api import create_material, evaluate_material_properties
+from materforge.parsing.api import create_material
 
-# Define the independent variable and load material from YAML
+# Define the dependency variable and load material from YAML
 T = sp.Symbol('T')
 myAlloy = create_material('myAlloy.yaml', T, enable_plotting=True)
 
-# Access symbolic property expression (SymPy Piecewise in T)
+# Access a symbolic property expression - a SymPy Piecewise function of T
 density_expr = myAlloy.density
 
 # Evaluate all properties at 500 K - returns a new Material with numeric values
@@ -202,11 +202,12 @@ The package can be installed via [PyPI](https://pypi.org/project/materforge/) us
 
 # AI Usage Disclosure
 
-GitHub Copilot (VS Code) was used during source code development for boilerplate
-completions, class scaffolding, and exception handling patterns. Claude Sonnet 4.6
-was used during the review and release cycle for targeted code refactoring, documentation
-correction. All AI-assisted outputs were reviewed, edited and validated by the human authors,
-who designed the code architecture, and take full responsibility for the accuracy and
+GitHub Copilot (VS Code) was used during source code development for boilerplate completions,
+class scaffolding, and exception handling patterns.
+Claude Sonnet 4.6 was used during the review and release cycle for targeted
+code refactoring, documentation correction, and manuscript editing.
+All AI-assisted outputs were reviewed, edited, and validated by the human authors,
+who designed the overall code architecture and take full responsibility for the accuracy and
 correctness of all submitted materials.
 
 # Acknowledgements
