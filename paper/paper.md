@@ -113,7 +113,7 @@ without any additional conversion.
   `simplify: pre` optimizes performance by simplifying properties before they are used in dependent calculations,
   while `simplify: post` defers simplification until all dependent properties have been computed, maximizing numerical accuracy.
 
-![MaterForge's property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods}](figures/input_methods.jpg)
+![MaterForge's property definition methods with illustrative YAML configuration snippets and automatically generated validation plots.\label{fig:input_methods}](figures/input_methods.jpg)
 
 - **Configurable Boundary Behavior**: Users can define how properties behave outside their specified ranges,
   choosing between `constant`-value clamping or `linear` extrapolation to best match the physical behavior of the material.
