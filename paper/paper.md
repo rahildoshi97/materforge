@@ -94,8 +94,6 @@ without any additional conversion.
   (\autoref{fig:input_methods}).
   This versatility allows users to leverage data from diverse sources.
 
-![MaterForge's property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods}](figures/input_methods.jpg)
-
 - **Schema-Agnostic Material Support**: The framework imposes no structural constraints on material definitions.
   Any material kind - pure metals, alloys, ceramics, polymers, composites, or hypothetical materials -
   and any property name are valid. The only required YAML fields are `name` and `properties`.
@@ -114,6 +112,8 @@ without any additional conversion.
   via the `simplify` parameter.
   `simplify: pre` optimizes performance by simplifying properties before they are used in dependent calculations,
   while `simplify: post` defers simplification until all dependent properties have been computed, maximizing numerical accuracy.
+
+![MaterForge's property definition methods with corresponding YAML examples and automatically generated validation plots.\label{fig:input_methods}](figures/input_methods.jpg)
 
 - **Configurable Boundary Behavior**: Users can define how properties behave outside their specified ranges,
   choosing between `constant`-value clamping or `linear` extrapolation to best match the physical behavior of the material.
