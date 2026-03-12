@@ -20,7 +20,7 @@ properties:
   # Note: Must be float, not integer (use 1.0 instead of 1)
   # ====================================================================================================
 
-  density1: 7000.  # kg/m^3
+  density1: 6950  # kg/m^3
 
   # ====================================================================================================
   # PROPERTY TYPE 2: STEP_FUNCTION
@@ -30,7 +30,7 @@ properties:
 
   latent_heat_of_fusion1:
     dependency: solidus_temp1 + 5
-    value: [0.0, 171401.0]
+    value: [0, 171401]
     bounds: [constant, constant]
 
   # ====================================================================================================
@@ -95,10 +95,10 @@ properties:
       degree: 2
       segments: 4
 
-  solidus_temp1: 1605.          # Temperature where melting begins (K)
-  liquidus_temp1: 1735.         # Temperature where material is completely melted (K)
-  initial_boiling_temp1: 3090.  # Temperature where boiling begins (K)
-  final_boiling_temp1: 3200.    # Temperature where material is completely vaporized (K)
+  solidus_temp1: 1605          # Temperature where melting begins (K)
+  liquidus_temp1: 1735         # Temperature where material is completely melted (K)
+  initial_boiling_temp1: 3090  # Temperature where boiling begins (K)
+  final_boiling_temp1: 3200    # Temperature where material is completely vaporized (K)
 
 # ====================================================================================================
 # TEMPERATURE DEFINITION FORMATS:
