@@ -6,27 +6,16 @@
 # ====================================================================================================
 
 name: "CouetteFlowSteel"
-material_type: alloy
-
-composition:
-  Fe: 0.70
-  C: 0.01
-  Cr: 0.18
-  Ni: 0.08
-  Mn: 0.02
-  Si: 0.01
-
-# Temperature properties
-solidus_temperature: 1673.0
-liquidus_temperature: 1723.0
-initial_boiling_temperature: 3100.0
-final_boiling_temperature: 3200.0
 
 properties:
   # ====================================================================================================
   # CONSTANT PROPERTIES
   # ====================================================================================================
-  
+  # Temperature properties
+  solidus_temperature: 1673.0
+  liquidus_temperature: 1723.0
+  initial_boiling_temperature: 3100.0
+  final_boiling_temperature: 3200.0
   latent_heat_of_fusion: 270000.0
   latent_heat_of_vaporization: 6300000.0
 
@@ -129,7 +118,7 @@ properties:
   energy_density:
     dependency: (300, 600, 31)
     equation: density * specific_enthalpy
-    bounds: [extrapolate, extrapolate]
+    bounds: [linear, linear]
     regression:
       simplify: post
       degree: 2
