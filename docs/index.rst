@@ -1,42 +1,9 @@
-Welcome to materforge's documentation!
-=======================================
+MaterForge - Materials Formulation Engine with Python
+=====================================================
 
-materforge is a Python library for materials science and thermophysical property calculations.
-
-Installation
-============
-
-Install materforge using pip:
-
-.. code-block:: bash
-
-   pip install materforge
-
-Or install from source:
-
-.. code-block:: bash
-
-   git clone https://github.com/rahildoshi97/materforge.git
-   cd materforge
-   pip install -e .
-
-Quick Start
-===========
-
-Here's a simple example to get you started:
-
-.. code-block:: python
-
-   import sympy as sp
-   from materforge import create_material
-
-   # Create a material with symbolic temperature
-   T = sp.Symbol('T')
-   material = create_material('steel.yaml', T)
-
-   # Evaluate properties at a specific temperature
-   properties = material.evaluate_properties_at_temperature(500.0)
-   print(properties)
+A high-performance Python library for material simulation and analysis. MaterForge enables
+efficient modeling of pure metals and alloys through YAML configuration files, providing
+symbolic and numerical property evaluation for various material properties.
 
 .. toctree::
    :maxdepth: 3
@@ -45,7 +12,7 @@ Here's a simple example to get you started:
    tutorials/getting_started
    tutorials/first_simulation
    how-to/define_materials
-   how-to/energy_temperature_conversion
+   how-to/property_inversion
    explanation/design_philosophy
    explanation/material_properties
    reference/yaml_schema

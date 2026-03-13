@@ -1,21 +1,17 @@
+# SPDX-FileCopyrightText: 2025 - 2026 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Core data structures and material definitions.
 
 This module contains the fundamental classes and interfaces that define
-materials, chemical elements, and the core abstractions used throughout
-the PyMatLib library.
+materials, and the core abstractions used throughout the MaterForge library.
 """
 
 from .materials import Material
-from .elements import ChemicalElement
 from .symbol_registry import SymbolRegistry
-from .exceptions import MaterialError, MaterialCompositionError, MaterialTemperatureError
 
 __all__ = [
     "Material",
-    "ChemicalElement",
     "SymbolRegistry",
-    "MaterialError",
-    "MaterialCompositionError",
-    "MaterialTemperatureError"
 ]

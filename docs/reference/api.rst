@@ -23,14 +23,7 @@ Material Class
    :members:
    :undoc-members:
    :show-inheritance:
-
-Chemical Elements
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: materforge.ChemicalElement
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   :no-index:
 
 Algorithms Module
 -----------------

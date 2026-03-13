@@ -25,7 +25,7 @@ class TestPiecewiseBuilder:
         """Test piecewise function with extrapolation boundaries."""
         temp_array = np.array([300, 400, 500])
         prop_array = np.array([900, 950, 1000])
-        config = {'bounds': ['extrapolate', 'extrapolate']}
+        config = {'bounds': ['linear', 'linear']}
         piecewise_func = PiecewiseBuilder.build_from_data(
             temp_array, prop_array, temp_symbol, config, "test_property"
         )
@@ -63,7 +63,7 @@ class TestPiecewiseBuilder:
         temp_array = np.array([300, 400, 500])
         prop_array = np.array([900, 950])  # Different length
         config = {'bounds': ['constant', 'constant']}
-        with pytest.raises(ValueError, match="must have same length"):
+        with pytest.raises(ValueError, match="Array length mismatch"):
             PiecewiseBuilder.build_from_data(
                 temp_array, prop_array, temp_symbol, config, "test_property"
             )
@@ -78,7 +78,7 @@ class TestPiecewiseBuilder:
         """Test piecewise function with mixed boundary conditions."""
         temp_array = np.array([300, 400, 500])
         prop_array = np.array([900, 950, 1000])
-        config = {'bounds': ['constant', 'extrapolate']}
+        config = {'bounds': ['constant', 'linear']}
         piecewise_func = PiecewiseBuilder.build_from_data(
             temp_array, prop_array, temp_symbol, config, "test_property"
         )

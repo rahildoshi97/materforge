@@ -150,7 +150,7 @@ materforge_reports/
 
 # Data files (unless specifically needed)
 # *.xlsx
-*.csv
+# *.csv
 *.dat
 *.txt
 !README.txt

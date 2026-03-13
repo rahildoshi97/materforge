@@ -1,5 +1,8 @@
+# SPDX-FileCopyrightText: 2025 - 2026 Rahil Miten Doshi, Friedrich-Alexander-Universität Erlangen-Nürnberg
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
-Property processing modules for PyMatLib.
+Property processing modules for MaterForge.
 
 This package contains the core property processing functionality,
 including specialized handlers for different property types,

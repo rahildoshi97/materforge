@@ -16,9 +16,8 @@ def test_all_imports():
         import materforge.visualization
         # Test core imports
         from materforge.core.materials import Material
-        from materforge.core.elements import ChemicalElement
         # Test parsing imports
-        from materforge.parsing.validation.property_validator import validate_monotonic_energy_density
+        from materforge.parsing.validation.property_validator import validate_monotonic_property
         # Test algorithm imports
         from materforge.algorithms.interpolation import interpolate_value
         from materforge.algorithms.piecewise_builder import PiecewiseBuilder
@@ -29,19 +28,17 @@ def test_all_imports():
 
 def test_basic_material_creation():
     """Test basic material creation functionality."""
-    T = sp.Symbol('T')  # Use standard temperature symbol
-    # Construct paths more reliably
+    T = sp.Symbol('T')
     current_file = Path(__file__)
     project_root = current_file.parent.parent.parent
-    yaml_path_Al = project_root / "src" / "materforge" / "data" / "materials" / "pure_metals" / "Al" / "Al.yaml"
-    yaml_path_SS304L = project_root / "src" / "materforge" / "data" / "materials" / "alloys" / "1.4301" / "1.4301.yaml"
+    yaml_path_Al = project_root / "src" / "materforge" / "data" / "materials" / "Al.yaml"
+    yaml_path_SS304L = project_root / "src" / "materforge" / "data" / "materials" / "1.4301.yaml"
     # Test aluminum material creation if file exists
     if yaml_path_Al.exists():
         try:
             mat_Al = create_material(yaml_path=yaml_path_Al, dependency=T, enable_plotting=False)
             assert mat_Al is not None
             assert mat_Al.name == "Aluminum"
-            assert mat_Al.material_type == "pure_metal"
         except Exception as e:
             pytest.fail(f"Failed to create aluminum material: {e}")
     else:
@@ -52,7 +49,6 @@ def test_basic_material_creation():
             mat_SS304L = create_material(yaml_path=yaml_path_SS304L, dependency=T, enable_plotting=False)
             assert mat_SS304L is not None
             assert "Steel" in mat_SS304L.name or "1.4301" in mat_SS304L.name
-            assert mat_SS304L.material_type == "alloy"
         except Exception as e:
             pytest.fail(f"Failed to create steel material: {e}")
     else:
