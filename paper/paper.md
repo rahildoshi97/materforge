@@ -100,7 +100,7 @@ Because properties are SymPy expressions, they plug into symbolic assignment col
 
 - **Integrated Visualization**: An integrated visualization tool automatically generates plots to verify property definitions, with the option to disable visualization for production workflows.
 
-![Automatically generated material property plots for the example alloy `myAlloy` defined in \autoref{sec:usage-yaml-example}, illustrating constant, step-function, file-based, tabular, piecewise-equation, and computed properties.\label{fig:myAlloy_properties}](figures/myAlloy_properties.png)
+![Automatically generated material property plots for the example alloy `myAlloy` defined in \autoref{sec:usage-yaml-example}, illustrating constant, step-function, file-based, tabular, piecewise-equation, and computed properties.\label{fig:myAlloy_properties}](figures/myAlloy_properties_3x2.png)
 
 # Usage
 
