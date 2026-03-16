@@ -154,7 +154,7 @@ class PropertyVisualizer:
             _y_value = 0.0
             if prop_type == 'CONSTANT_VALUE':
                 value = float(current_prop)
-                ax.axhline(y=value, color=colors['constant'], linestyle='-',
+                ax.plot(extended_dep, np.full_like(extended_dep, value), color=colors['constant'], linestyle='-',
                            linewidth=2.5, label='constant', alpha=0.8)
                 ax.text(0.5, 0.9, f"Value: {value:.3e}", transform=ax.transAxes,
                         horizontalalignment="center", fontweight="bold",
