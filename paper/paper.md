@@ -24,7 +24,7 @@ affiliations:
     index: 2
   - name: Erlangen National High Performance Computing Center (NHR@FAU), Erlangen, Germany
     index: 3
-date: 12 March 2026
+date: 16 March 2026
 bibliography: paper.bib
 ---
 
@@ -90,9 +90,9 @@ without any additional conversion.
 # Key Functionality
 
 - **Flexible Input Methods**: The library supports various property definition methods such as
-  constant values, step functions, file-based data (.xlsx, .csv, .txt), tabular data, piecewise equations, and computed properties 
-  (\autoref{fig:input_methods}).
-  This versatility allows users to leverage data from diverse sources.
+  constant values, step functions, file-based data (.xlsx, .csv, .txt), tabular data, piecewise equations, and computed properties.
+  The example configuration in \autoref{sec:usage-yaml-example} combines these input types in a single material,
+  and the resulting property curves are visualized in \autoref{fig:myAlloy_properties}.
 
 - **Schema-Agnostic Material Support**: The framework imposes no structural constraints on material definitions.
   Any material kind - pure metals, alloys, ceramics, polymers, composites, or hypothetical materials -
@@ -112,8 +112,6 @@ without any additional conversion.
   via the `simplify` parameter.
   `simplify: pre` optimizes performance by simplifying properties before they are used in dependent calculations,
   while `simplify: post` defers simplification until all dependent properties have been computed, maximizing numerical accuracy.
-
-![MaterForge's property definition methods with illustrative YAML configuration snippets and automatically generated validation plots.\label{fig:input_methods}](figures/input_methods.jpg)
 
 - **Configurable Boundary Behavior**: Users can define how properties behave outside their specified ranges,
   choosing between `constant`-value clamping or `linear` extrapolation to best match the physical behavior of the material.
@@ -142,6 +140,8 @@ without any additional conversion.
   automatically generates plots to verify property definitions,
   with the option to disable visualization for production workflows.
 
+![Automatically generated material property plots for the example alloy `myAlloy` defined in \autoref{sec:usage-yaml-example}, illustrating constant, step-function, file-based, tabular, piecewise-equation, and computed properties.\label{fig:myAlloy_properties}](figures/myAlloy_properties.png)
+
 # Usage
 
 Materials are defined in YAML files and loaded via `create_material`, which returns a fully configured `Material` object.
@@ -149,22 +149,52 @@ All material properties live in the `properties` block - the only other required
 Named properties can be referenced in other property configurations: scalar constants are
 valid anywhere, while full expressions are valid in `COMPUTED_PROPERTY` equations only.
 MaterForge automatically resolves the correct evaluation order.
+The example `myAlloy` configuration below combines several input methods and is used to generate the
+plots shown in \autoref{fig:myAlloy_properties}.
 
 ## YAML Configuration Example: `myAlloy.yaml`
+\label{sec:usage-yaml-example}
+
 ```yaml
 name: myAlloy
+
 properties:
-  solidus_temperature: 1605.0
-  liquidus_temperature: 1735.0
-  density:
+
+  density: 6950
+
+  latent_heat_of_fusion:
+    dependency: density / 4.33
+    value: [0, 171401]
+    bounds: [constant, constant]
+
+  heat_conductivity:
+    dependency: [500, 1000, 1600, 1700, 1750, 2000, 2500]
+    value: [19.25, 25.47, 32.94, 33.52, 31.53, 35.33, 42.95]
+    bounds: [linear, linear]
+
+  heat_capacity:
     file_path: ./myAlloy.csv
     dependency_column: T (K)
-    property_column: Density (kg/m^3)
-    bounds: [constant, linear]
+    property_column: Specific heat (J/(Kg K))
+    bounds: [constant, constant]
     regression:
       simplify: pre
-      degree: 1
-      segments: 3
+      degree: 3
+      segments: 6
+
+  viscosity:
+    dependency: [300, 1660, 1736, 3000]
+    equation: [7877.39-0.37*T, 11816.63-2.74*T, 8596.40-0.88*T]
+    bounds: [constant, constant]
+
+  thermal_diffusivity:
+    dependency: (3000, 300, -5.0)
+    equation: heat_conductivity /(density * heat_capacity)
+    bounds: [constant, linear]
+    regression:
+      simplify: post
+      degree: 3
+      segments: 7
 ```
 
 ## Python Integration
