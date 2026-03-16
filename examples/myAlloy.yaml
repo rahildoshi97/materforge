@@ -50,17 +50,6 @@ properties:
       degree: 3
       segments: 7
 
-  specific_enthalpy:
-    dependency: (3000, 300, 541)
-    equation: Integral(heat_capacity, T)
-    bounds: [ constant, constant ]
-    regression:
-      simplify: post
-      degree: 2
-      segments: 4
-
-  solidus_temp: 1605
-
 # ====================================================================================================
 # TEMPERATURE DEFINITION FORMATS:
 #
