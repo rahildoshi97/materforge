@@ -31,8 +31,6 @@ properties:
     density: 7000.0
 ```
 
-Note: Use float notation (e.g. `7000.0` not `7000`).
-
 ### 2. Step Functions
 
 For properties that change abruptly at a transition point:

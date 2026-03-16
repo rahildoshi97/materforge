@@ -191,22 +191,20 @@ test_material_files:
       from materforge.parsing.api import create_material, validate_yaml_file
       import sympy as sp
 
-      # Test YAML validation
       try:
           validate_yaml_file('1.4301_HeatEquationKernelWithMaterial.yaml')
           print('✅ YAML validation passed')
       except Exception as e:
           print(f'❌ YAML validation failed: {e}')
-          exit(1)
+          sys.exit(1)
 
-      # Test material creation
       try:
           T = sp.Symbol('T')
           material = create_material('1.4301_HeatEquationKernelWithMaterial.yaml', T, enable_plotting=False)
           print(f'✅ Material created: {material.name}')
       except Exception as e:
           print(f'❌ Material creation failed: {e}')
-          exit(1)
+          sys.exit(1)
       "
     - echo "✅ Material file tests completed"
   dependencies:
@@ -257,6 +255,7 @@ package_build:
 # ================================
 # DEPLOYMENT STAGE
 # ================================
+
 deploy_package_test:
   stage: deploy
   image: python:${PYTHON_VERSION}
@@ -265,10 +264,11 @@ deploy_package_test:
     - pip install dist/*.whl
     - |
       python3 -c "
+      import sys
+      import sympy as sp
       import materforge
       print(f'✅ Package installation successful: {materforge.__version__}')
 
-      # Verify core API surface is importable and callable
       from materforge.parsing.api import (
           create_material,
           validate_yaml_file,
@@ -278,23 +278,26 @@ deploy_package_test:
       )
       print('✅ All public API symbols imported successfully')
 
-      # Smoke-test API behaviour without needing a YAML file
       try:
           validate_yaml_file('nonexistent.yaml')
+          print('❌ validate_yaml_file should have raised FileNotFoundError')
+          sys.exit(1)
       except FileNotFoundError:
           print('✅ validate_yaml_file raises FileNotFoundError as expected')
 
-      import sympy as sp
       try:
           create_material('nonexistent.yaml', sp.Symbol('T'), enable_plotting=False)
+          print('❌ create_material should have raised FileNotFoundError')
+          sys.exit(1)
       except FileNotFoundError:
           print('✅ create_material raises FileNotFoundError as expected')
 
       try:
           get_material_property_names('not_a_material')
-          print('❌ get_material_property_names should have raised an error')
-      except (ValueError, AttributeError):
-          print('✅ get_material_property_names rejects non-Material input as expected')
+          print('❌ get_material_property_names should have raised TypeError')
+          sys.exit(1)
+      except TypeError:
+          print('✅ get_material_property_names raises TypeError as expected')
 
       print('✅ Package API smoke test passed')
       "

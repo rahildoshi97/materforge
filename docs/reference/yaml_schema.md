@@ -32,7 +32,7 @@ properties:
     thermal_expansion_coefficient: 16.3e-6
 ```
 
-Note: Use float notation (`7000.0` not `7000`). Scientific notation is supported (`1.71401e5`).
+Note: Scientific notations are also supported (`1.71401e5`).
 
 ---
 
@@ -231,12 +231,6 @@ from materforge.parsing.api import create_material
 T = sp.Symbol('T')   # any symbol - not limited to temperature
 mat = create_material('myAlloy.yaml', dependency=T, enable_plotting=True)
 # Plots saved automatically
-```
-
-Pass a float instead to skip plotting and evaluate immediately:
-
-```python
-mat = create_material('myAlloy.yaml', dependency=500.0, enable_plotting=False)
 ```
 
 ---

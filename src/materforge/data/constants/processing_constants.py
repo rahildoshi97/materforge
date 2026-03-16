@@ -31,7 +31,7 @@ class ProcessingConstants:
     DEFAULT_DEPENDENCY_LOWER: Final[float] = 273.15
     DEFAULT_DEPENDENCY_UPPER: Final[float] = 3000.0
     # Shared regex for scalar property arithmetic expressions (e.g. solidus_temp + 5)
-    PROPERTY_ARITHMETIC_REGEX: Final[str] = r'^(\w+)\s*([+-])\s*(\d+(?:\.\d+)?)$'
+    PROPERTY_ARITHMETIC_REGEX: Final[str] = r'^(\w+)\s*([+\-*/])\s*(\d+(?:\.\d+)?)$'
 
 
 @dataclass(frozen=True)

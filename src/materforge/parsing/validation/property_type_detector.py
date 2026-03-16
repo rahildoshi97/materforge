@@ -100,15 +100,15 @@ class PropertyTypeDetector:
     # --- High-level detectors (used in DETECTION_RULES) ---
     @staticmethod
     def _is_constant_format(val: Any) -> bool:
-        """Returns True if val is a plain numeric constant (float or float-like string).
+        """Returns True if val is a plain numeric constant (int, float, or float-like string).
 
-        Raises:
-            ValueError: If val is a bare integer (must use float notation).
+        Note: bool is a subclass of int in Python - explicitly excluded to prevent
+        True/False from being misdetected as numeric constants.
         """
+        if isinstance(val, bool):
+            return False
         if isinstance(val, int):
-            raise ValueError(
-                f"must be defined as a float, not an integer. "
-                f"Use decimal format like '{val}.0'")
+            return True
         return isinstance(val, float) or (
             isinstance(val, str) and ('.' in val or 'e' in val.lower()))
 
