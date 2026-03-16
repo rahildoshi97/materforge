@@ -60,7 +60,7 @@ These tools generate tabular data, equations, or database entries.
 It performs automatic regression and data reduction, resolves inter-property dependencies, validates configurations, and generates visualization plots for verification.
 The output is a fully configured `Material` object in which each property is stored as a symbolic expression - a callable function of a chosen dependency variable such as temperature, pressure, or composition - ready for direct use in simulation codes.
 
-**Stage 3 - Simulation Integration**: The symbolic expressions are passed directly into simulation frameworks such as pystencils [@pystencils] or waLBerla [@walberla] for code generation, or into any Python-based finite element or CFD solver.
+**Stage 3 - Simulation Integration**: The symbolic expressions are passed directly into simulation frameworks such as pystencils [@pystencils] and waLBerla [@walberla] for code generation, or into any Python-based CFD solver.
 Because properties are SymPy expressions, they plug into symbolic assignment collections without any additional conversion.
 
 # Key Functionality
@@ -83,16 +83,6 @@ Because properties are SymPy expressions, they plug into symbolic assignment col
 - **Configurable Boundary Behavior**: Users can define how properties behave outside their specified ranges, choosing between `constant`-value clamping or `linear` extrapolation to best match the physical behavior of the material.
   The boundary behavior options work seamlessly with the regression capabilities to provide comprehensive data processing control (\autoref{fig:regression_options_with_boundary_behavior}).
 
-```yaml
-    bounds: [constant, linear]	
-    regression:
-      simplify: post
-      degree: 2
-      segments: 3
-```
-
-![MaterForge's data processing capabilities: regression and data reduction showing raw data (green) fitted with different polynomial degrees and segment configurations, and configurable boundary behavior options demonstrating constant versus linear extrapolation for the same density property, illustrating how MaterForge reduces complexity while maintaining physical accuracy.\label{fig:regression_options_with_boundary_behavior}](figures/regression_options_with_boundary_behavior.jpg)
-
 - **Inverse Property Computation**: The library can generate inverse piecewise-linear functions, enabling the determination of the independent variable from a known property value.
   This capability is essential for energy-based numerical methods [@voller1987fixed], where temperature is recovered via the inverse of the specific enthalpy function.
 
@@ -100,7 +90,15 @@ Because properties are SymPy expressions, they plug into symbolic assignment col
 
 - **Integrated Visualization**: An integrated visualization tool automatically generates plots to verify property definitions, with the option to disable visualization for production workflows.
 
-![Automatically generated material property plots for the example alloy `myAlloy` defined in \autoref{sec:usage-yaml-example}, illustrating constant, step-function, file-based, tabular, piecewise-equation, and computed properties.\label{fig:myAlloy_properties}](figures/myAlloy_properties_3x2.png)
+```yaml
+    bounds: [constant, linear]
+    regression:
+      simplify: post
+      degree: 2
+      segments: 3
+```
+
+![MaterForge's data processing capabilities: regression and data reduction showing raw data (green) fitted with different polynomial degrees and segment configurations, and configurable boundary behavior options demonstrating constant versus linear extrapolation for the same density property, illustrating how MaterForge reduces complexity while maintaining physical accuracy.\label{fig:regression_options_with_boundary_behavior}](figures/regression_options_with_boundary_behavior.jpg)
 
 # Usage
 
@@ -115,7 +113,6 @@ The example `myAlloy` configuration below combines several input methods and is 
 
 ```yaml
 name: myAlloy
-
 properties:
 
   density: 6950
@@ -172,6 +169,8 @@ density_expr = myAlloy.density
 myAlloy_at_500K = myAlloy.evaluate(T, 500.0)
 print(float(myAlloy_at_500K.density))   # numeric density at 500 K
 ```
+
+![Automatically generated material property plots for the example alloy `myAlloy` defined in \autoref{sec:usage-yaml-example}, illustrating constant, step-function, file-based, tabular, piecewise-equation, and computed properties.\label{fig:myAlloy_properties}](figures/myAlloy_properties_3x2.png)
 
 # Research Applications
 
