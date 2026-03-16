@@ -71,10 +71,12 @@ class PropertyVisualizer:
             raise ValueError("No properties to plot.")
         property_count = sum(len(props) for props in self.parser.categorized_properties.values())
         logger.info("Initializing visualization for %d properties", property_count)
+        ncols = 1
+        nrows = int(np.ceil(property_count / ncols))
         fig_width = 12
-        fig_height = max(4 * property_count, 4)  # Minimum height for readability
+        fig_height = max(4 * nrows, 4)  # scale by rows, not properties
         self.fig = plt.figure(figsize=(fig_width, fig_height))
-        self.gs = GridSpec(property_count, 1, figure=self.fig, )
+        self.gs = GridSpec(nrows, ncols, figure=self.fig)
         self.current_subplot = 0
         self.plot_directory.mkdir(exist_ok=True)
         logger.debug("Plot directory ready: %s", self.plot_directory)
@@ -113,7 +115,12 @@ class PropertyVisualizer:
             return
         logger.info("Visualizing %r (%s) for material %r", prop_name, prop_type, material.name)
         try:
-            ax = self.fig.add_subplot(self.gs[self.current_subplot])
+            rows, cols = self.gs.get_geometry()  # nrows, ncols
+            if self.current_subplot >= rows * cols:
+                raise RuntimeError("Not enough GridSpec slots for all properties")
+            row = self.current_subplot // cols
+            col = self.current_subplot % cols
+            ax = self.fig.add_subplot(self.gs[row, col])
             self.current_subplot += 1
             ax.set_aspect('auto')
             ax.grid(True, linestyle='--', alpha=0.3)
