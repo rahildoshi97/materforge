@@ -136,9 +136,9 @@ properties:
     bounds: [constant, constant]
 
   thermal_diffusivity:  # Fig. 2f
-    dependency: (3000, 300, -5.0)
-    equation: heat_conductivity /(density * heat_capacity)
-    bounds: [linear, linear]
+    dependency: (3000, 300, -5)
+    equation: heat_conductivity / (density * heat_capacity)
+    bounds: [constant, linear]
     regression:
       simplify: post
       degree: 3
