@@ -83,14 +83,14 @@ Because properties are SymPy expressions, they plug into symbolic assignment col
 - **Configurable Boundary Behavior**: Users can define how properties behave outside their specified ranges, choosing between `constant`-value clamping or `linear` extrapolation to best match the physical behavior of the material.
   The boundary behavior options work seamlessly with the regression capabilities to provide comprehensive data processing control (\autoref{fig:regression_options_with_boundary_behavior}).
 
+![MaterForge's data processing capabilities: regression and data reduction showing raw data (green) fitted with different polynomial degrees and segment configurations, and configurable boundary behavior options demonstrating constant versus linear extrapolation for the same density property, illustrating how MaterForge reduces complexity while maintaining physical accuracy.\label{fig:regression_options_with_boundary_behavior}](figures/regression_options_with_boundary_behavior.jpg)
+
 - **Inverse Property Computation**: The library can generate inverse piecewise-linear functions, enabling the determination of the independent variable from a known property value.
   This capability is essential for energy-based numerical methods [@voller1987fixed], where temperature is recovered via the inverse of the specific enthalpy function.
 
 - **Built-in Validation Framework**: A comprehensive validation framework checks YAML configurations for correctness, including structural validation, required fields, property type detection, and dependency cycle detection, preventing common configuration errors before simulation begins [@roache1998verification].
 
 - **Integrated Visualization**: An integrated visualization tool automatically generates plots to verify property definitions, with the option to disable visualization for production workflows.
-
-![MaterForge's data processing capabilities: regression and data reduction showing raw data (green) fitted with different polynomial degrees and segment configurations, and configurable boundary behavior options demonstrating constant versus linear extrapolation for the same density property, illustrating how MaterForge reduces complexity while maintaining physical accuracy.\label{fig:regression_options_with_boundary_behavior}](figures/regression_options_with_boundary_behavior.jpg)
 
 # Usage
 
