@@ -72,7 +72,7 @@ class PropertyVisualizer:
             raise ValueError("No properties to plot.")
         property_count = sum(len(props) for props in self.parser.categorized_properties.values())
         logger.info("Initializing visualization for %d properties", property_count)
-        ncols = 1
+        ncols = 2
         nrows = int(np.ceil(property_count / ncols))
         fig_width = 12
         fig_height = max(4 * nrows, 4)  # scale by rows, not properties
@@ -190,7 +190,7 @@ class PropertyVisualizer:
                                 label='step function', zorder=3, alpha=0.8)
                         transition_idx = len(x_data) // 2
                         transition_point = x_data[transition_idx]
-                        ax.axvline(x=transition_point, color='red', linestyle='--',
+                        """ax.axvline(x=transition_point, color='red', linestyle='--',
                                    alpha=0.7, linewidth=2, label='transition point')
                         ax.text(transition_point, y_data[0], f" Before: {y_data[0]:.2e}",
                                 verticalalignment="bottom", horizontalalignment="left",
@@ -199,7 +199,7 @@ class PropertyVisualizer:
                         ax.text(transition_point, y_data[-1], f" After: {y_data[-1]:.2e}",
                                 verticalalignment="top", horizontalalignment="left",
                                 fontweight="bold",
-                                bbox=dict(facecolor='white', alpha=0.8, boxstyle='round,pad=0.3'))
+                                bbox=dict(facecolor='white', alpha=0.8, boxstyle='round,pad=0.3'))"""
                         _y_value = float(np.mean(y_data))
                         logger.debug("Step %r - transition at %.1f", prop_name, transition_point)
                     else:

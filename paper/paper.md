@@ -24,7 +24,7 @@ affiliations:
     index: 2
   - name: Erlangen National High Performance Computing Center (NHR@FAU), Erlangen, Germany
     index: 3
-date: 16 March 2026
+date: 17 March 2026
 bibliography: paper.bib
 ---
 
@@ -49,7 +49,7 @@ Thermodynamic modeling tools such as pycalphad [@pycalphad] and CALPHAD database
 This creates a gap between property data generation and simulation integration, leading to ad hoc solutions that hinder workflow efficiency and FAIR data adoption [@wilkinson2016fair].
 MaterForge fills this gap by occupying a dedicated post-processing layer in the materials simulation workflow, complementing rather than competing with thermodynamic modeling tools: pycalphad generates the data; MaterForge prepares it for simulation.
 
-# Position in the Simulation Workflow
+# Simulation Workflow
 
 MaterForge is designed to operate as the intermediate layer in a three-stage workflow:
 
@@ -83,14 +83,6 @@ Because properties are SymPy expressions, they plug into symbolic assignment col
 - **Configurable Boundary Behavior**: Users can define how properties behave outside their specified ranges, choosing between `constant`-value clamping or `linear` extrapolation to best match the physical behavior of the material.
   The boundary behavior options work seamlessly with the regression capabilities to provide comprehensive data processing control (\autoref{fig:regression_options_with_boundary_behavior}).
 
-```yaml
-    bounds: [constant, linear]
-    regression:
-      simplify: post
-      degree: 2
-      segments: 3
-```
-
 - **Inverse Property Computation**: The library can generate inverse piecewise-linear functions, enabling the determination of the independent variable from a known property value.
   This capability is essential for energy-based numerical methods [@voller1987fixed], where temperature is recovered via the inverse of the specific enthalpy function.
 
@@ -116,19 +108,19 @@ name: myAlloy
 
 properties:
 
-  density: 6950
+  density: 6950  # Fig. 2a
 
-  latent_heat_of_fusion:
+  latent_heat_of_fusion:  # Fig. 2b
     dependency: density / 4.33
     value: [0, 171401]
     bounds: [constant, constant]
 
-  heat_conductivity:
+  heat_conductivity:  # Fig. 2c
     dependency: [500, 1000, 1600, 1700, 1750, 2000, 2500]
     value: [19.25, 25.47, 32.94, 33.52, 31.53, 35.33, 42.95]
     bounds: [linear, linear]
 
-  heat_capacity:
+  heat_capacity:  # Fig. 2d
     file_path: ./myAlloy.csv
     dependency_column: T (K)
     property_column: Specific heat (J/(Kg K))
@@ -138,15 +130,15 @@ properties:
       degree: 3
       segments: 6
 
-  viscosity:
+  viscosity:  # Fig. 2e
     dependency: [300, 1660, 1736, 3000]
     equation: [7877.39-0.37*T, 11816.63-2.74*T, 8596.40-0.88*T]
     bounds: [constant, constant]
 
-  thermal_diffusivity:
+  thermal_diffusivity:  # Fig. 2f
     dependency: (3000, 300, -5.0)
     equation: heat_conductivity /(density * heat_capacity)
-    bounds: [constant, linear]
+    bounds: [linear, linear]
     regression:
       simplify: post
       degree: 3
@@ -171,7 +163,7 @@ myAlloy_at_500K = myAlloy.evaluate(T, 500.0)
 print(float(myAlloy_at_500K.density))   # numeric density at 500 K
 ```
 
-![Automatically generated material property plots for the example alloy `myAlloy` defined in \autoref{sec:usage-yaml-example}, illustrating constant, step-function, file-based, tabular, piecewise-equation, and computed properties.\label{fig:myAlloy_properties}](figures/myAlloy_properties_3x2.png)
+![Automatically generated material property plots for the example alloy `myAlloy` defined in \autoref{sec:usage-yaml-example}, illustrating constant (a), step-function (b), file-based (c), tabular (d), piecewise-equation (e), and computed (f) properties.\label{fig:myAlloy_properties}](figures/myAlloy_properties_3x2.png)
 
 # Research Applications
 
@@ -186,7 +178,7 @@ The package can be installed via [PyPI](https://pypi.org/project/materforge/) us
 
 # AI Usage Disclosure
 
-GitHub Copilot (VS Code) was used during source code development for boilerplate completions, class scaffolding, and exception handling patterns.
+GitHub Copilot was used during source code development for boilerplate completions, class scaffolding, and exception handling patterns.
 Claude Sonnet 4.6 was used during the review and release cycle for targeted code refactoring, documentation correction, and manuscript editing.
 All AI-assisted outputs were reviewed, edited, and validated by the human authors, who designed the overall code architecture and take full responsibility for the accuracy and correctness of all submitted materials.
 
