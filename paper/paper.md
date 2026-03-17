@@ -130,11 +130,6 @@ properties:
             degree: 3
             segments: 6
 
-    viscosity:  # Fig. 2e
-        dependency: [300, 1660, 1736, 3000]
-        equation: [7877.39-0.37*T, 11816.63-2.74*T, 8596.40-0.88*T]
-        bounds: [constant, constant]
-
     thermal_diffusivity:  # Fig. 2f
         dependency: (3000, 300, -5.0)
         equation: heat_conductivity / (density * heat_capacity)
@@ -143,6 +138,11 @@ properties:
             simplify: post
             degree: 3
             segments: 7
+
+    viscosity:  # Fig. 2e
+        dependency: [300, 1660, 1736, 3000]
+        equation: [7877.39-0.37*T, 11816.63-2.74*T, 8596.40-0.88*T]
+        bounds: [constant, constant]
 ```
 
 ## Python Integration
