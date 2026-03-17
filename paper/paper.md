@@ -105,16 +105,20 @@ The example `myAlloy` configuration below combines several input methods and is 
 
 ```yaml
 name: myAlloy
-
+```
+```yaml
 properties:
-
+```
+```yaml
     density: 6950  # Fig. 2a
-
+```
+```yaml
     latent_heat_of_fusion:  # Fig. 2b
-        dependency: density / 4.32
+        dependency: density / 4.33
         value: [0, 171401]
         bounds: [constant, constant]
-
+```
+```yaml
     heat_capacity:  # Fig. 2c
         file_path: ./myAlloy.csv
         dependency_column: T (K)
@@ -124,18 +128,19 @@ properties:
             simplify: pre
             degree: 3
             segments: 6
-  
+```
+```yaml
     heat_conductivity:  # Fig. 2d
         dependency: [500, 1000, 1600, 1700, 1750, 2000, 2500]
         value: [19.25, 25.47, 32.94, 33.52, 31.53, 35.33, 42.95]
         bounds: [linear, linear]
-
+```
+```yaml
     viscosity:  # Fig. 2e
         dependency: [300, 1660, 1736, 3000]
         equation: [7877.39-0.37*T, 11816.63-2.74*T, 8596.40-0.88*T]
         bounds: [constant, constant]
 ```
-
 ```yaml
     thermal_diffusivity:  # Fig. 2f
         dependency: (3000, 300, -5.0)
