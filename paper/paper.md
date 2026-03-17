@@ -111,7 +111,7 @@ properties:
     density: 6950  # Fig. 2a
 
     latent_heat_of_fusion:  # Fig. 2b
-        dependency: density / 4.33
+        dependency: density / 4.32
         value: [0, 171401]
         bounds: [constant, constant]
 
@@ -134,7 +134,9 @@ properties:
         dependency: [300, 1660, 1736, 3000]
         equation: [7877.39-0.37*T, 11816.63-2.74*T, 8596.40-0.88*T]
         bounds: [constant, constant]
+```
 
+```yaml
     thermal_diffusivity:  # Fig. 2f
         dependency: (3000, 300, -5.0)
         equation: heat_conductivity / (density * heat_capacity)
