@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2026 Matthias Markl, Friedrich-Alexander-Universität Erlangen-Nürnberg
 # SPDX-License-Identifier: BSD-3-Clause
 
+
 import logging
 from datetime import datetime
 from typing import Optional, Union
@@ -115,12 +116,16 @@ class PropertyVisualizer:
             return
         logger.info("Visualizing %r (%s) for material %r", prop_name, prop_type, material.name)
         try:
-            rows, cols = self.gs.get_geometry()  # nrows, ncols
-            if self.current_subplot >= rows * cols:
+            nrows, ncols = self.gs.get_geometry()  # nrows, ncols
+            if self.current_subplot >= nrows * ncols:
                 raise RuntimeError("Not enough GridSpec slots for all properties")
-            row = self.current_subplot // cols
-            col = self.current_subplot % cols
+            row = self.current_subplot // ncols
+            col = self.current_subplot % ncols
             ax = self.fig.add_subplot(self.gs[row, col])
+            # panel label: a, b, c, ...
+            panel_label = chr(ord('a') + self.current_subplot)
+            ax.text(0.02, 0.95, f"({panel_label})", transform=ax.transAxes,
+                    fontsize=12, fontweight="bold", ha="left", va="top")
             self.current_subplot += 1
             ax.set_aspect('auto')
             ax.grid(True, linestyle='--', alpha=0.3)
@@ -162,7 +167,7 @@ class PropertyVisualizer:
             if prop_type == 'CONSTANT_VALUE':
                 value = float(current_prop)
                 ax.plot(extended_dep, np.full_like(extended_dep, value), color=colors['constant'], linestyle='-',
-                           linewidth=2.5, label='constant', alpha=0.8)
+                        linewidth=2.5, label='constant', alpha=0.8)
                 ax.text(0.5, 0.9, f"Value: {value:.3e}", transform=ax.transAxes,
                         horizontalalignment="center", fontweight="bold",
                         bbox=dict(facecolor='white', alpha=0.8, boxstyle='round,pad=0.5',
