@@ -24,7 +24,7 @@ Given a material with a dependency-driven property, evaluate it at a specific va
 
 ```python
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 T = sp.Symbol('T')   # any symbol works
 mat = create_material('myAlloy.yaml', dependency=T)
@@ -48,7 +48,7 @@ as a new SymPy Piecewise expression:
 
 ```python
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 T = sp.Symbol('T')
@@ -92,7 +92,7 @@ The workflow is identical regardless of what symbol drives the property:
 
 ```python
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 P   = sp.Symbol('P')    # pressure-driven material

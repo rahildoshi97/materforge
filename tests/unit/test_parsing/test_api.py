@@ -4,8 +4,8 @@ import pytest
 import tempfile
 from pathlib import Path
 import sympy as sp
-from materforge.parsing.api import create_material, validate_yaml_file, get_material_property_names
-from materforge.parsing.validation.errors import MaterialConfigError, PropertyConfigError
+from materforge import create_material, validate_yaml_file, get_material_property_names
+from materforge.parsing.validation.errors import MaterialConfigError
 
 
 VALID_PURE_METAL_YAML = """

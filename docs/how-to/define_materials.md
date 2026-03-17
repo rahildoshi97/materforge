@@ -270,7 +270,7 @@ Load it in Python:
 
 ```python
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 # Any symbol works - T, P, x, or anything else
 T = sp.Symbol('T')

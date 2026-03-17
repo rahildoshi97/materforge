@@ -31,7 +31,7 @@ the pystencils field accessor at the point of use in the assignment collection.
 import sympy as sp
 import pystencils as ps
 from pystencilssfg import SourceFileGenerator
-from materforge.parsing.api import create_material
+from materforge import create_material
 from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 with SourceFileGenerator() as sfg:
@@ -121,7 +121,7 @@ This works for any piecewise-linear property - not just energy density.
 
 ```python
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 T = sp.Symbol('T')
@@ -151,7 +151,7 @@ import pystencils as ps
 from pystencilssfg import SourceFileGenerator
 from sfg_walberla import Sweep
 
-from materforge.parsing.api import create_material
+from materforge import create_material
 from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 with SourceFileGenerator() as sfg:

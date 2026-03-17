@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import sympy as sp
 from ruamel.yaml import YAML
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 class TestRegressionSuite:
     """Regression tests for known issues and bug fixes."""

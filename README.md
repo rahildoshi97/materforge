@@ -78,7 +78,7 @@ intended for development only. Use `pip install materforge` for regular use.
 
 ```python
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 # Any SymPy symbol works as the dependency variable
 T = sp.Symbol('T')
@@ -100,7 +100,7 @@ print(results['heat_capacity'])   # float
 ```python
 from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 T = sp.Symbol('T')
 mat = create_material('examples/myAlloy.yaml', dependency=T)
