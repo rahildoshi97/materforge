@@ -149,7 +149,7 @@ properties:
 
 ```python
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 # Define the dependency variable and load material from YAML
 T = sp.Symbol('T')
