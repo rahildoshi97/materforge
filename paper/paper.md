@@ -115,12 +115,7 @@ properties:
         value: [0, 171401]
         bounds: [constant, constant]
 
-    heat_conductivity:  # Fig. 2c
-        dependency: [500, 1000, 1600, 1700, 1750, 2000, 2500]
-        value: [19.25, 25.47, 32.94, 33.52, 31.53, 35.33, 42.95]
-        bounds: [linear, linear]
-
-    heat_capacity:  # Fig. 2d
+    heat_capacity:  # Fig. 2c
         file_path: ./myAlloy.csv
         dependency_column: T (K)
         property_column: Specific heat (J/(Kg K))
@@ -129,6 +124,11 @@ properties:
             simplify: pre
             degree: 3
             segments: 6
+  
+    heat_conductivity:  # Fig. 2d
+        dependency: [500, 1000, 1600, 1700, 1750, 2000, 2500]
+        value: [19.25, 25.47, 32.94, 33.52, 31.53, 35.33, 42.95]
+        bounds: [linear, linear]
 
     viscosity:  # Fig. 2e
         dependency: [300, 1660, 1736, 3000]
