@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 import sympy as sp
 
-from materforge.parsing.api import (
+from materforge import (
     create_material,
     evaluate_material_properties,
     get_material_property_names,

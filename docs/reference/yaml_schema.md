@@ -226,7 +226,7 @@ Plots are generated automatically when `dependency` is a SymPy symbol:
 
 ```python
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 T = sp.Symbol('T')   # any symbol - not limited to temperature
 mat = create_material('myAlloy.yaml', dependency=T, enable_plotting=True)

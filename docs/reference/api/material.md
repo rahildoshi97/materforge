@@ -51,7 +51,7 @@ def evaluate(self, symbol: sp.Symbol, value: Union[float, int]) -> Material:
 **Example:**
 ```python
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 T = sp.Symbol('T')
 mat = create_material('myAlloy.yaml', dependency=T)
@@ -91,7 +91,7 @@ repr(mat)  # Material(name='myAlloy', properties=['density', 'heat_capacity', ..
 Creates a `Material` instance from a YAML configuration file.
 
 ```python
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 def create_material(
     yaml_path: Union[str, Path],
@@ -119,7 +119,7 @@ def create_material(
 **Example:**
 ```python
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 T = sp.Symbol('T')
 mat = create_material('myAlloy.yaml', dependency=T)
@@ -133,7 +133,7 @@ mat_no_plots = create_material('myAlloy.yaml', dependency=T, enable_plotting=Fal
 Validates a YAML file structure without creating the material.
 
 ```python
-from materforge.parsing.api import validate_yaml_file
+from materforge import validate_yaml_file
 
 def validate_yaml_file(yaml_path: Union[str, Path]) -> bool:
 ```
@@ -151,7 +151,7 @@ def validate_yaml_file(yaml_path: Union[str, Path]) -> bool:
 
 **Example:**
 ```python
-from materforge.parsing.api import validate_yaml_file
+from materforge import validate_yaml_file
 from materforge.parsing.validation.errors import MaterialConfigError, PropertyConfigError
 
 try:
@@ -170,7 +170,7 @@ except MaterialConfigError as e:
 Returns metadata about a YAML file without fully processing the material.
 
 ```python
-from materforge.parsing.api import get_material_info
+from materforge import get_material_info
 
 info = get_material_info('myAlloy.yaml')
 print(info['name'])              # 'myAlloy'
@@ -187,7 +187,7 @@ Returns all property names on an already-created material. Equivalent to
 `mat.property_names()` - prefer calling `mat.property_names()` directly.
 
 ```python
-from materforge.parsing.api import get_material_property_names
+from materforge import get_material_property_names
 
 names = get_material_property_names(mat)   # returns a set
 ```
@@ -203,7 +203,7 @@ Functional wrapper around `Material.evaluate()`. Equivalent to
 `mat.evaluate(symbol, value)` - prefer calling `mat.evaluate()` directly.
 
 ```python
-from materforge.parsing.api import evaluate_material_properties
+from materforge import evaluate_material_properties
 
 mat_at_500 = evaluate_material_properties(mat, T, 500.0)
 ```

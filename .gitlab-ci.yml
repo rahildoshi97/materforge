@@ -188,7 +188,7 @@ test_material_files:
       python3 -c "
       import sys
       sys.path.append('../src')
-      from materforge.parsing.api import create_material, validate_yaml_file
+      from materforge import create_material, validate_yaml_file
       import sympy as sp
 
       try:
@@ -269,7 +269,7 @@ deploy_package_test:
       import materforge
       print(f'✅ Package installation successful: {materforge.__version__}')
 
-      from materforge.parsing.api import (
+      from materforge import (
           create_material,
           validate_yaml_file,
           get_material_info,
