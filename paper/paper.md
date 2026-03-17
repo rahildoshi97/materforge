@@ -105,9 +105,11 @@ The example `myAlloy` configuration below combines several input methods and is 
 
 ```yaml
 name: myAlloy
-
+```
+```yaml
 properties:
-
+```
+```yaml
     density: 6950  # Fig. 2a
 ```
 ```yaml
