@@ -79,6 +79,7 @@ class DependencyResolver:
         Args:
             dep_ref: Numeric value, a property name, or an arithmetic expression.
             material: Material instance for property-name lookups.
+
         Returns:
             Resolved float value.
         """
@@ -90,14 +91,19 @@ class DependencyResolver:
                 return float(dep_ref)
             except ValueError:
                 pass
-            # Arithmetic expression: "some_ref + 50" or "some_ref - 10"
-            if '+' in dep_ref or '-' in dep_ref:
-                match = re.match(ProcessingConstants.PROPERTY_ARITHMETIC_REGEX, dep_ref.strip())
-                if match:
-                    base_name, operator, offset = match.groups()
-                    base = DependencyResolver.get_dependency_value(base_name, material)
-                    offset_val = float(offset)
-                    return base + offset_val if operator == '+' else base - offset_val
+            # Arithmetic expression: "some_ref + 5", "some_ref - 10", "some_ref * 2", "some_ref / 50"
+            match = re.match(ProcessingConstants.PROPERTY_ARITHMETIC_REGEX, dep_ref.strip())
+            if match:
+                base_name, op, operand = match.groups()
+                base = DependencyResolver.get_dependency_value(base_name, material)
+                operand_val = float(operand)
+                ops = {'+': base + operand_val,
+                    '-': base - operand_val,
+                    '*': base * operand_val,
+                    '/': base / operand_val}
+                if op == '/' and operand_val == 0.0:
+                    raise ValueError(f"Division by zero in dependency expression: '{dep_ref}'")
+                return ops[op]
             # Plain property-name reference
             return DependencyResolver.get_dependency_value(dep_ref, material)
         raise ValueError(f"Unsupported dependency reference type: {type(dep_ref)} for value '{dep_ref}'")

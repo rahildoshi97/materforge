@@ -5,7 +5,7 @@ import pytest
 import sympy as sp
 from ruamel.yaml import YAML
 
-from materforge.parsing.api import create_material
+from materforge import create_material
 from materforge.parsing.config.yaml_keys import CONSTANT_KEY, LINEAR_KEY
 
 class TestMaterialCreation:

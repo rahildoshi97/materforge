@@ -13,7 +13,7 @@ from pycallgraph2 import PyCallGraph, Config
 from pycallgraph2.output import GraphvizOutput
 from pycallgraph2.globbing_filter import GlobbingFilter
 
-from materforge.parsing.api import create_material
+from materforge import create_material
 from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 sys.path.append(str(Path(__file__).parent.parent))

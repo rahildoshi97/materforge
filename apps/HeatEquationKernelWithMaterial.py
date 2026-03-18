@@ -10,7 +10,7 @@ from pathlib import Path
 from pystencilssfg import SourceFileGenerator
 from sweepgen import Sweep
 
-from materforge.parsing.api import create_material
+from materforge import create_material
 from materforge.algorithms.piecewise_inverter import PiecewiseInverter
 
 logging.basicConfig(

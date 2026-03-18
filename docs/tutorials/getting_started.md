@@ -76,7 +76,7 @@ properties:
 
 ```python
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 # Any SymPy symbol works as the dependency variable
 T = sp.Symbol('T')
@@ -126,7 +126,7 @@ print(mat2.density)  # Piecewise expression in P, not T
 Check a file for structural correctness without creating the material:
 
 ```python
-from materforge.parsing.api import validate_yaml_file
+from materforge import validate_yaml_file
 
 is_valid = validate_yaml_file("simple_steel.yaml")
 print(f"Valid: {is_valid}")
@@ -137,7 +137,7 @@ print(f"Valid: {is_valid}")
 ## Inspecting a Material Without Creating It
 
 ```python
-from materforge.parsing.api import get_material_info
+from materforge import get_material_info
 
 info = get_material_info("simple_steel.yaml")
 print(info['name'])              # SimpleSteel

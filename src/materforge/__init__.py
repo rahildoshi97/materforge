@@ -33,7 +33,7 @@ except ImportError:
     try:
         __version__ = version("materforge")
     except PackageNotFoundError:
-        __version__ = "0.6.4+unknown"
+        __version__ = "0.6.6+unknown"
 
 # Core material definitions
 from .core.materials import Material
@@ -44,6 +44,8 @@ from .parsing.api import (
     create_material,
     validate_yaml_file,
     get_material_info,
+    get_material_property_names,
+    evaluate_material_properties,
 )
 
 # Property processing
@@ -68,6 +70,8 @@ __all__ = [
     "create_material",
     "validate_yaml_file",
     "get_material_info",
+    "get_material_property_names",
+    "evaluate_material_properties",
     # Processing
     "PropertyProcessor",
     "PropertyType",

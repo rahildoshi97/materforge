@@ -17,7 +17,6 @@ properties:
   # ====================================================================================================
   # PROPERTY TYPE 1: CONSTANT_VALUE
   # Format: property_name: numeric_value
-  # Note: Must be float, not integer (use 1.0 instead of 1)
   # ====================================================================================================
 
   latent_heat_of_vaporization: 1.71401E5  # J/kg - Scientific notation supported

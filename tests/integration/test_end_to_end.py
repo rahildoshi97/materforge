@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from ruamel.yaml import YAML
 
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 class TestEndToEnd:
     """End-to-end integration tests."""

@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 project = "materforge"
-copyright = "2025, Rahil Miten Doshi"
+copyright = "2025 - 2026, Rahil Miten Doshi"
 author = "Rahil Miten Doshi"
 
 try:
@@ -14,8 +14,8 @@ try:
     version = __version__
     release = __version__
 except ImportError:
-    version = "0.6.4"
-    release = "0.6.4"
+    version = "0.6.6"
+    release = "0.6.6"
 
 extensions = [
     "sphinx.ext.autodoc",

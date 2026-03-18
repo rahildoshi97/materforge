@@ -252,7 +252,7 @@ Load it in Python:
 
 ```python
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 T = sp.Symbol('T')   # any symbol works: sp.Symbol('P'), sp.Symbol('x'), etc.
 mat = create_material('myAlloy.yaml', dependency=T, enable_plotting=True)

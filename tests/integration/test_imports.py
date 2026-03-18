@@ -65,7 +65,7 @@ def test_circular_dependencies():
     try:
         # Import in different orders to catch circular dependencies
         import materforge.core.materials
-        import materforge.parsing.api
+        import materforge
         import materforge.algorithms.interpolation
         import materforge.visualization.plotters
         # Import main package last

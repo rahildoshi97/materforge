@@ -17,7 +17,6 @@ properties:
   # ====================================================================================================
   # PROPERTY TYPE 1: CONSTANT_VALUE
   # Format: property_name: numeric_value
-  # Note: Must be float, not integer (use 1.0 instead of 1)
   # ====================================================================================================
 
   density1: 6950  # kg/m^3

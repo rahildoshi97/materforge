@@ -31,8 +31,6 @@ properties:
     density: 7000.0
 ```
 
-Note: Use float notation (e.g. `7000.0` not `7000`).
-
 ### 2. Step Functions
 
 For properties that change abruptly at a transition point:
@@ -272,7 +270,7 @@ Load it in Python:
 
 ```python
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 # Any symbol works - T, P, x, or anything else
 T = sp.Symbol('T')

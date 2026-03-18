@@ -2,7 +2,7 @@
 import math
 import pytest
 import sympy as sp
-from materforge.parsing.api import create_material
+from materforge import create_material
 
 class TestYAMLMaterialCreation:
     """Integration tests for creating materials from YAML files."""
