@@ -293,8 +293,8 @@ void run(int argc, char **argv)
     }*/
     loop.addFuncBeforeTimeStep([&]() { WALBERLA_MPI_BARRIER(); }, "Barrier before Communication");
     loop.addFuncBeforeTimeStep(communication.getCommunicateFunctor(), "LBM Communication");
-    //loop.add() << Sweep(deviceSyncWrapper(streamCollide), "StreamCollide");
-    loop.add() << Sweep(deviceSyncWrapper([](IBlock*){sleep(5);}), "StreamCollide");
+    loop.add() << Sweep(deviceSyncWrapper(streamCollide), "StreamCollide");
+    //loop.add() << Sweep(deviceSyncWrapper([](IBlock*){sleep(5);}), "StreamCollide");
     loop.add() << Sweep(deviceSyncWrapper(noSlip), "NoSlip");
     loop.add() << Sweep(deviceSyncWrapper(ubb), "UBB");
     
