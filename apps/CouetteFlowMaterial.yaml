@@ -78,7 +78,7 @@ properties:
   dynamic_viscosity:
     dependency: (300, 3000, 31)  # Temperature range 300-600K, 31 points
     equation: 0.16667 * exp(-0.0005 * (T - 300.0))  # LBM-scaled viscosity
-    bounds: [constant, constant]
+    bounds: [linear, linear]
     regression:
       simplify: post
       degree: 2

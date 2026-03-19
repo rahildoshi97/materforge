@@ -16,6 +16,8 @@
 
 #include <string>
 #include <cmath>
+#include <sstream>
+#include <iomanip>
 #include "core/all.h"
 #include "blockforest/all.h"
 #include "stencil/all.h"
@@ -317,7 +319,7 @@ void run(int argc, char **argv)
     //======================================================================
     
     if (vtkWriteFrequency > 0) {
-        std::string vtkName = "couette_scaling";
+        std::string vtkName = "couette_flow";
     #ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
         vtkName += "_gpu";
     #else
@@ -327,7 +329,16 @@ void run(int argc, char **argv)
         vtkName += "_tempdep";
     #else
         vtkName += "_const";
+        // Append nu formatted to 4 decimal places
+        std::ostringstream nuStr;
+        nuStr << std::fixed << std::setprecision(4) << latticeViscosity;
+        vtkName += "_" + nuStr.str();
     #endif
+
+        // Append cellsPerBlock as NxMxK
+        vtkName += "_" + std::to_string(cellsPerBlock[0])
+                + "x" + std::to_string(cellsPerBlock[1])
+                + "x" + std::to_string(cellsPerBlock[2]);
         
         std::string vtkOutputDir = "testvtk";
         auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, vtkName, vtkWriteFrequency, 0, 
