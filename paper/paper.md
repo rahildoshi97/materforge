@@ -24,7 +24,7 @@ affiliations:
     index: 2
   - name: Erlangen National High Performance Computing Center (NHR@FAU), Erlangen, Germany
     index: 3
-date: 17 March 2026
+date: 24 March 2026
 bibliography: paper.bib
 ---
 
@@ -230,9 +230,8 @@ The package can be installed via [PyPI](https://pypi.org/project/materforge/) us
 # AI Usage Disclosure
 
 
-GitHub Copilot was used during source code development for boilerplate completions, class scaffolding, and exception handling patterns.
-Claude Sonnet 4.6 was used during the review and release cycle for targeted code refactoring, documentation correction, and manuscript editing.
-All AI-assisted outputs were reviewed, edited, and validated by the human authors, who designed the overall code architecture and take full responsibility for the accuracy and correctness of all submitted materials.
+GitHub Copilot and Claude Sonnet assisted with boilerplate code, refactoring, and text editing in the manuscript and documentation. 
+All AI-assisted outputs were reviewed, edited, and validated by the human authors, who designed the overall code architecture and take full responsibility for the accuracy and originality of the software and all submitted materials.
 
 
 # Acknowledgements
