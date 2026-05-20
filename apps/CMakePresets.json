@@ -17,8 +17,7 @@
                 "TARGET_PLATFORM": "CPU",
                 "CMAKE_C_COMPILER": "/usr/bin/gcc",
                 "CMAKE_CXX_COMPILER": "/usr/bin/g++",
-                "Python_ROOT_DIR": "${sourceDir}/../venvs/materforge",
-                "Python_EXECUTABLE": "${sourceDir}/../venvs/materforge/bin/python"
+                "Python_EXECUTABLE": "$env{VIRTUAL_ENV}/bin/python3"
             }
         },
         {
@@ -32,8 +31,7 @@
                 "TARGET_PLATFORM": "CPU",
                 "CMAKE_C_COMPILER": "/usr/bin/gcc",
                 "CMAKE_CXX_COMPILER": "/usr/bin/g++",
-                "Python_ROOT_DIR": "${sourceDir}/../venvs/materforge",
-                "Python_EXECUTABLE": "${sourceDir}/../venvs/materforge/bin/python"
+                "Python_EXECUTABLE": "$env{VIRTUAL_ENV}/bin/python3"
             }
         },
         {
@@ -47,8 +45,7 @@
                 "TARGET_PLATFORM": "GPU-CUDA",
                 "CMAKE_C_COMPILER": "/usr/bin/gcc",
                 "CMAKE_CXX_COMPILER": "/usr/bin/g++",
-                "Python_ROOT_DIR": "${sourceDir}/../venvs/materforge",
-                "Python_EXECUTABLE": "${sourceDir}/../venvs/materforge/bin/python"
+                "Python_EXECUTABLE": "$env{VIRTUAL_ENV}/bin/python3"
             }
         },
         {
@@ -63,8 +60,7 @@
                 "WALBERLA_BUILD_WITH_GPU_SUPPORT": "ON",
                 "CMAKE_C_COMPILER": "/usr/bin/gcc",
                 "CMAKE_CXX_COMPILER": "/usr/bin/g++",
-                "Python_ROOT_DIR": "${sourceDir}/../venvs/materforge",
-                "Python_EXECUTABLE": "${sourceDir}/../venvs/materforge/bin/python"
+                "Python_EXECUTABLE": "$env{VIRTUAL_ENV}/bin/python3"
             }
         }
     ],

@@ -35,6 +35,19 @@ elseif(TARGET_PLATFORM STREQUAL "GPU-CUDA")
 endif()
 
 # ============================================================================
+# MATERFORGE VISCOSITY OPTION
+# Single source of truth: controls both codegen (--no-materforge flag) and
+# the USE_MATERFORGE compile definition consumed by CouetteFlowScaling.cpp.
+# ============================================================================
+
+option(USE_MATERFORGE "Use MaterForge temperature-dependent viscosity" ON)
+if(USE_MATERFORGE)
+    message(STATUS "USE_MATERFORGE=ON  (temperature-dependent viscosity)")
+else()
+    message(STATUS "USE_MATERFORGE=OFF (constant viscosity)")
+endif()
+
+# ============================================================================
 # WALBERLA CONFIGURATION (before add_subdirectory)
 # ============================================================================
 
@@ -48,6 +61,8 @@ set(WALBERLA_BUILD_DOC OFF CACHE BOOL "")
 set(WALBERLA_BUILD_EXAMPLES OFF CACHE BOOL "")
 set(WALBERLA_BUILD_WITH_PYTHON ON CACHE BOOL "")
 set(WALBERLA_ENABLE_SWEEPGEN ON CACHE BOOL "")
+# OFF: use the active venv directly. ON: sweepgen creates its own venv from
+# walberla/sweepgen-requirements.txt (may conflict with existing packages).
 set(WALBERLA_SWEEPGEN_MANAGED_VENV ON CACHE BOOL "")
 
 # Configure GPU/CPU based on TARGET_PLATFORM
@@ -107,41 +122,51 @@ sweepgen_venv_populate()
 function(add_unified_executable TARGET_NAME SOURCE_FILE SWEEP_SCRIPT)
     add_executable(${TARGET_NAME})
     target_sources(${TARGET_NAME} PRIVATE ${SOURCE_FILE})
-    
+
     # Common libraries for all targets
     target_link_libraries(${TARGET_NAME} PRIVATE
-        walberla::blockforest walberla::boundary walberla::core 
-        walberla::experimental walberla::gpu walberla::field 
+        walberla::blockforest walberla::boundary walberla::core
+        walberla::experimental walberla::gpu walberla::field
         walberla::lbm walberla::lbm_mesapd_coupling walberla::mesa_pd
         walberla::stencil walberla::timeloop walberla::vtk
         walberla::pde
         MPI::MPI_CXX)
-    
+
+    # Propagate USE_MATERFORGE to C++ as a compile definition so the C++ code
+    # never needs to be edited when switching modes - only the CMake option changes.
+    if(USE_MATERFORGE)
+        target_compile_definitions(${TARGET_NAME} PRIVATE USE_MATERFORGE=1)
+        set(MATERFORGE_SCRIPT_ARG "")
+    else()
+        target_compile_definitions(${TARGET_NAME} PRIVATE USE_MATERFORGE=0)
+        set(MATERFORGE_SCRIPT_ARG "--no-materforge")
+    endif()
+
     # Determine target platform for code generation
     if(TARGET_PLATFORM STREQUAL "CPU")
         set(CODEGEN_TARGET "cpu")
     else()
         set(CODEGEN_TARGET "gpu")
     endif()
-    
-    # Generate sources with target specification
+
+    # Generate sources with target and materforge specification
     if(TARGET_PLATFORM STREQUAL "GPU-HIP")
         target_link_libraries(${TARGET_NAME} PRIVATE hip::device)
-        
+
         walberla_generate_sources(${TARGET_NAME}
             SCRIPTS ${SWEEP_SCRIPT}
-            SCRIPT_ARGS --target=${CODEGEN_TARGET}
+            SCRIPT_ARGS --target=${CODEGEN_TARGET} ${MATERFORGE_SCRIPT_ARG}
             FILE_EXTENSIONS .cpp .hpp)
-        
+
         # Set HIP language for generated files
         set_source_files_properties(
             ${CMAKE_CURRENT_BINARY_DIR}/_gen/${TARGET_NAME}/gen/*.cpp
             PROPERTIES LANGUAGE HIP)
-        
-        target_compile_options(${TARGET_NAME} PRIVATE 
+
+        target_compile_options(${TARGET_NAME} PRIVATE
             $<$<COMPILE_LANGUAGE:HIP>:--offload-arch=gfx90a>)
         set_property(TARGET ${TARGET_NAME} PROPERTY HIP_ARCHITECTURES "gfx90a")
-        
+
         # Link GTL library for LUMI
         if(DEFINED ENV{PE_MPICH_GTL_DIR_amd_gfx90a})
             string(REPLACE "-L" "" GTL_DIR "$ENV{PE_MPICH_GTL_DIR_amd_gfx90a}")
@@ -150,25 +175,25 @@ function(add_unified_executable TARGET_NAME SOURCE_FILE SWEEP_SCRIPT)
             target_link_libraries(${TARGET_NAME} PRIVATE ${GTL_LIB})
             message(STATUS "Linked GTL library for ${TARGET_NAME}")
         endif()
-        
+
     elseif(TARGET_PLATFORM STREQUAL "GPU-CUDA")
         target_link_libraries(${TARGET_NAME} PRIVATE walberla::gpu)
-        
+
         walberla_generate_sources(${TARGET_NAME}
             SCRIPTS ${SWEEP_SCRIPT}
-            SCRIPT_ARGS --target=${CODEGEN_TARGET}
+            SCRIPT_ARGS --target=${CODEGEN_TARGET} ${MATERFORGE_SCRIPT_ARG}
             FILE_EXTENSIONS .cu .hpp)
-        
+
         set_source_files_properties(
             ${CMAKE_CURRENT_BINARY_DIR}/_gen/${TARGET_NAME}/gen/*.cu
             PROPERTIES LANGUAGE CUDA)
-        
+
         set_property(TARGET ${TARGET_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-        
+
     else()  # CPU
         walberla_generate_sources(${TARGET_NAME}
             SCRIPTS ${SWEEP_SCRIPT}
-            SCRIPT_ARGS --target=${CODEGEN_TARGET}
+            SCRIPT_ARGS --target=${CODEGEN_TARGET} ${MATERFORGE_SCRIPT_ARG}
             FILE_EXTENSIONS .cpp .hpp)
     endif()
 endfunction()
