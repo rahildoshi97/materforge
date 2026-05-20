@@ -39,8 +39,6 @@ logging.basicConfig(level=logging.WARNING,
 
 print(f"Starting code generation at {Path(__file__).resolve()}")
 
-use_materforge = True
-
 T_BOTTOM_SIM = 300.0
 T_TOP_SIM    = 3000.0
 
@@ -49,7 +47,12 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
 
     parser = ArgumentParser()
     parser.add_argument("-t", "--target", choices=["cpu", "gpu"], default="cpu")
+    # Single source of truth for use_materforge: driven by CMake via --no-materforge
+    parser.add_argument("--no-materforge", action="store_true",
+                        help="Use constant viscosity instead of MaterForge")
     args = parser.parse_args(sfg.context.argv)
+
+    use_materforge = not args.no_materforge
 
     build_cfg = get_build_config(sfg)
     build_cfg.target = ps.Target[args.target.upper()]
@@ -97,18 +100,16 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
                         nu_func  = sp.lambdify(T_eval, nu_expr_eval, modules='numpy')
                         # High-resolution integration grid
                         z_analytical = np.linspace(0, 1, 2000)
-                        # Use actual simulation temperature range 300–3000 K
+                        # Use actual simulation temperature range
                         T_analytical = T_BOTTOM_SIM + (T_TOP_SIM - T_BOTTOM_SIM) * z_analytical
                         nu_analytical = nu_func(T_analytical)
-                        # Guard against any negative values from polynomial overshoot
+                        # Guard against negative values from polynomial overshoot
                         nu_analytical = np.maximum(nu_analytical, 1e-12)
                         # Exact analytical solution: u(z) = U_wall * I(z) / I(1)
                         integrand    = 1.0 / nu_analytical
                         integral_z   = cumulative_trapezoid(integrand, z_analytical, initial=0)
                         integral_total = integral_z[-1]
                         u_normalized = integral_z / integral_total
-                        # Raise polynomial degree from 5 -> 12
-                        # to keep fit error well below LBM discretisation error (~1e-4)
                         from numpy.polynomial import polynomial as P
                         FIT_DEGREE = 12
                         coeffs = P.polyfit(z_analytical, u_normalized, FIT_DEGREE)
@@ -145,8 +146,9 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
             nu_expr = const_nu
             analytical_velocity_expr = u_max * cell.z() / domain.z_max()
     else:
-        print("Code generation: Using constant viscosity (nu = 1/6)")
+        print(f"Code generation: Using constant viscosity (nu = {const_nu})")
         nu_expr = const_nu
+        # Linear analytical solution for constant-viscosity Couette flow
         analytical_velocity_expr = u_max * cell.z() / domain.z_max()
 
     # LBM configuration
@@ -221,6 +223,16 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
             )
         ]
         sfg.generate(Sweep("InitializeTemperature", temperature_init))
+
+        # Generate the analytical velocity sweep for post-simulation error checking
+        assert analytical_velocity_expr is not None, \
+            "analytical_velocity_expr must be set in all code paths"
+        analytical_assignments = [
+            ps.Assignment(f_velocity(0), analytical_velocity_expr),
+            ps.Assignment(f_velocity(1), 0.0),
+            ps.Assignment(f_velocity(2), 0.0),
+        ]
+        sfg.generate(Sweep("AnalyticalVelocity", analytical_assignments))
 
     # Boundary conditions
     noSlip = GenericBoundary(NoSlip(name="NoSlip"), lb_method, f_pdfs)
