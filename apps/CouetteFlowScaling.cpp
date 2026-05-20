@@ -44,7 +44,12 @@
 namespace CouetteFlow
 {
 
-#define use_materForge 1
+// USE_MATERFORGE is set by CMake (-DUSE_MATERFORGE=1/0) and mirrors the
+// --no-materforge flag passed to CouetteFlowSweeps.py during code generation.
+// Never edit this manually - change the CMake option instead.
+#ifndef USE_MATERFORGE
+#define USE_MATERFORGE 1
+#endif
 
 using namespace walberla;
 
@@ -62,10 +67,6 @@ using GPUField = gpu::GPUField<real_t>;
 using CommScheme = blockforest::communication::UniformBufferedScheme<LbStencil>;
 #endif
 using PdfsPackInfo = field::communication::StencilRestrictedPackInfo<PdfField_T, LbStencil>;
-
-void mysleep(IBlock*){
-    sleep(5);
-}
 
 //======================================================================
 // MAIN FUNCTION
@@ -212,7 +213,7 @@ void run(int argc, char **argv)
     
 #ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
     std::shared_ptr<gen::Couette::StreamCollide> streamCollidePtr;
-    #if use_materForge
+    #if USE_MATERFORGE
         WALBERLA_LOG_INFO_ON_ROOT("Using temperature-dependent viscosity (MaterForge) - GPU");
         streamCollidePtr = std::make_shared<gen::Couette::StreamCollide>(
             gpuRhoId, gpuPdfsId, gpuTempId, gpuUId, gpuViscId
@@ -226,7 +227,7 @@ void run(int argc, char **argv)
     auto streamCollide = makeSharedSweep(streamCollidePtr);
 #else
     std::shared_ptr<gen::Couette::StreamCollide> streamCollidePtr;
-    #if use_materForge
+    #if USE_MATERFORGE
         WALBERLA_LOG_INFO_ON_ROOT("Using temperature-dependent viscosity (MaterForge) - CPU");
         streamCollidePtr = std::make_shared<gen::Couette::StreamCollide>(
             rhoId, pdfsId, tempId, uId, viscId
@@ -293,10 +294,9 @@ void run(int argc, char **argv)
     /*if (numProcesses > 1) {
         loop.addFuncBeforeTimeStep(communication.getCommunicateFunctor(), "LBM Communication");
     }*/
-    loop.addFuncBeforeTimeStep([&]() { WALBERLA_MPI_BARRIER(); }, "Barrier before Communication");
+    //loop.addFuncBeforeTimeStep([&]() { WALBERLA_MPI_BARRIER(); }, "Barrier before Communication");
     loop.addFuncBeforeTimeStep(communication.getCommunicateFunctor(), "LBM Communication");
     loop.add() << Sweep(deviceSyncWrapper(streamCollide), "StreamCollide");
-    //loop.add() << Sweep(deviceSyncWrapper([](IBlock*){sleep(5);}), "StreamCollide");
     loop.add() << Sweep(deviceSyncWrapper(noSlip), "NoSlip");
     loop.add() << Sweep(deviceSyncWrapper(ubb), "UBB");
     
@@ -325,7 +325,7 @@ void run(int argc, char **argv)
     #else
         vtkName += "_cpu";
     #endif
-    #if use_materForge
+    #if USE_MATERFORGE
         vtkName += "_tempdep";
     #else
         vtkName += "_const";
@@ -341,6 +341,7 @@ void run(int argc, char **argv)
                 + "x" + std::to_string(cellsPerBlock[2]);
         
         std::string vtkOutputDir = "testvtk";
+        WALBERLA_LOG_INFO_ON_ROOT("VTK output enabled: writing every " << vtkWriteFrequency << " steps to directory '" << vtkOutputDir << "' with base name '" << vtkName << "'");
         auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, vtkName, vtkWriteFrequency, 0, 
                                                         false, vtkOutputDir, "simulation_step", 
                                                         false, true, true, false, 0);
@@ -412,7 +413,52 @@ void run(int argc, char **argv)
     simTimer.end();
     
     WALBERLA_LOG_INFO_ON_ROOT("Simulation finished")
-    
+
+    //======================================================================
+    // ANALYTICAL ERROR CHECK
+    // Compare the converged LBM velocity profile against the analytical
+    // solution that was baked into the generated AnalyticalVelocity sweep.
+    // Both fields must be on CPU for the comparison.
+    //======================================================================
+
+#ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
+    // Sync velocity field from GPU before comparison
+    gpu::fieldCpy<VectorField_T, GPUField>(blocks, uId, gpuUId);
+#endif
+
+    // Overwrite the velocity field with the analytical solution
+    BlockDataID uAnalyticalId = field::addToStorage<VectorField_T>(
+        blocks, "u_analytical", real_c(0.0), field::fzyx, 0);
+
+    auto analyticalSweep = gen::Couette::AnalyticalVelocity{blocks, uAnalyticalId, channelVelocity};
+    for (auto& b : *blocks)
+        analyticalSweep(&b);
+
+    // Compute max |u_lbm - u_analytical| over all interior cells
+    real_t maxError = real_c(0.0);
+    for (auto& b : *blocks) {
+        auto uLBM  = b.getData<VectorField_T>(uId);
+        auto uAnal = b.getData<VectorField_T>(uAnalyticalId);
+        WALBERLA_FOR_ALL_CELLS_XYZ(uLBM,
+            real_t err = std::abs(uLBM->get(x, y, z, 0) - uAnal->get(x, y, z, 0));
+            maxError = std::max(maxError, err);
+        )
+    }
+    WALBERLA_MPI_SECTION() {
+        walberla::mpi::reduceInplace(maxError, walberla::mpi::MAX);
+    }
+
+    WALBERLA_LOG_RESULT_ON_ROOT("=== Analytical Error Check ===")
+    WALBERLA_LOG_RESULT_ON_ROOT("Max |u_LBM - u_analytical|: " << maxError)
+    WALBERLA_LOG_RESULT_ON_ROOT("Error threshold:             " << errorThreshold)
+    if (maxError <= errorThreshold) {
+        WALBERLA_LOG_RESULT_ON_ROOT("PASSED")
+    } else {
+        WALBERLA_LOG_WARNING_ON_ROOT("FAILED - error " << maxError
+            << " exceeds threshold " << errorThreshold
+            << " (simulation may not have converged yet)")
+    }
+
     //======================================================================
     // PERFORMANCE METRICS
     //======================================================================
