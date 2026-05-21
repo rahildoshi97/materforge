@@ -113,9 +113,6 @@ void run(int argc, char **argv)
     Config::BlockHandle outputParams = cfgFile->getBlock("Output");
     const uint_t vtkWriteFrequency = outputParams.getParameter<uint_t>("vtkWriteFrequency", 0);
     
-    Config::BlockHandle perfParams = cfgFile->getBlock("Performance");
-    const uint_t performanceLogFrequency = perfParams.getParameter<uint_t>("performanceLogFrequency", 0);
-    
     //======================================================================
     // VALIDATE CONFIGURATION
     //======================================================================
@@ -383,23 +380,11 @@ void run(int argc, char **argv)
         loop.singleStep();
     
     //======================================================================
-    // ADD PERFORMANCE LOGGER
+    // ADD REMAINING TIME LOGGER
     //======================================================================
-    
+
     WcTimingPool timeloopTiming;
-    
-    if (performanceLogFrequency > 0) {
-        loop.addFuncAfterTimeStep([&timeloopTiming, performanceLogFrequency, numTimesteps, totalCells]() {
-            static uint_t step = 0;
-            step++;
-            if (step % performanceLogFrequency == 0) {
-                const auto reducedTiming = timeloopTiming.getReduced();
-                WALBERLA_LOG_RESULT_ON_ROOT("Step " << step << "/" << numTimesteps);
-            }
-        }, "Performance Logger");
-    }
-    
-    // Add remaining time logger
+
     RemainingTimeLogger logger{numTimesteps};
     loop.addFuncAfterTimeStep(logger, "Remaining Time Logger");
     

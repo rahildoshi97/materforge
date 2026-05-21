@@ -7,9 +7,14 @@ DomainSetup {
 }
 
 Parameters {
-    nu              0.16667; // 1/6 for BGK (ignored when USE_MATERFORGE=ON)
+    // nu is the constant kinematic viscosity used only to initialise the
+    // viscosity field and label the VTK output filename. The viscosity
+    // actually used in the simulation is baked into the generated code:
+    //   USE_MATERFORGE=ON  -> MaterForge expression (this value is ignored)
+    //   USE_MATERFORGE=OFF -> CMake -DCONST_NU=<value> (match it here)
+    nu              0.1;
     u_max           0.025;
-    timesteps       20000;          // Override via -Parameters.timesteps
+    timesteps       48000;          // Override via -Parameters.timesteps
     // LBM truncation error for converged Couette flow ~ O(u_max^2/nu * dx^2).
     // For this domain (H=64, nu~0.1, u_max=0.025): ~5e-5.
     // With 10000 timesteps (~25% of diffusion time), convergence error ~ 1e-3.
@@ -22,9 +27,5 @@ Parameters {
 }
 
 Output {
-    vtkWriteFrequency   100;  // Set to non-zero to enable VTK output
-}
-
-Performance {
-    performanceLogFrequency  0;  // Log performance every N timesteps
+    vtkWriteFrequency   200;  // Set to non-zero to enable VTK output
 }

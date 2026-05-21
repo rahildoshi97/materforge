@@ -50,6 +50,9 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
     # Single source of truth for use_materforge: driven by CMake via --no-materforge
     parser.add_argument("--no-materforge", action="store_true",
                         help="Use constant viscosity instead of MaterForge")
+    parser.add_argument("--const-nu", type=float, default=1.0/6.0,
+                        help="Constant kinematic viscosity baked into the generated "
+                             "code when --no-materforge is set (default: 1/6)")
     args = parser.parse_args(sfg.context.argv)
 
     use_materforge = not args.no_materforge
@@ -62,7 +65,6 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
     D, Q = stencil.D, stencil.Q
 
     # Symbolic parameters
-    nu     = sp.Symbol("nu")
     u_max  = sp.Symbol("u_max")
     T_top, T_bottom = sp.symbols("T_top, T_bottom")
 
@@ -73,78 +75,70 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         layout='fzyx'
     )
 
-    const_nu = 1.0 / 6.0
+    const_nu = args.const_nu
 
     analytical_velocity_expr = None
 
     if use_materforge:
         print("Code generation: Using temperature-dependent viscosity from MaterForge")
-        try:
-            from materforge.parsing.api import create_material
-            yaml_path = Path(__file__).parent / 'CouetteFlowMaterial.yaml'
-            if yaml_path.exists():
-                mat = create_material(yaml_path=yaml_path,
-                                      dependency=f_temperature.center(),
-                                      enable_plotting=False)
-                if hasattr(mat, 'dynamic_viscosity'):
-                    nu_expr = mat.dynamic_viscosity
-                    print(f"MaterForge viscosity expression loaded: {nu_expr}")
-                    print("Computing analytical solution for error calculation...")
-                    temp_symbols = [s for s in nu_expr.free_symbols
-                                    if 'temperature' in str(s)]
-                    if temp_symbols:
-                        temp_var = temp_symbols[0]
-                        print(f"Found temperature symbol: {temp_var}")
-                        T_eval   = sp.Symbol('T_eval')
-                        nu_expr_eval = nu_expr.subs(temp_var, T_eval)
-                        nu_func  = sp.lambdify(T_eval, nu_expr_eval, modules='numpy')
-                        # High-resolution integration grid
-                        z_analytical = np.linspace(0, 1, 2000)
-                        # Use actual simulation temperature range
-                        T_analytical = T_BOTTOM_SIM + (T_TOP_SIM - T_BOTTOM_SIM) * z_analytical
-                        nu_analytical = nu_func(T_analytical)
-                        # Guard against negative values from polynomial overshoot
-                        nu_analytical = np.maximum(nu_analytical, 1e-12)
-                        # Exact analytical solution: u(z) = U_wall * I(z) / I(1)
-                        integrand    = 1.0 / nu_analytical
-                        integral_z   = cumulative_trapezoid(integrand, z_analytical, initial=0)
-                        integral_total = integral_z[-1]
-                        u_normalized = integral_z / integral_total
-                        from numpy.polynomial import polynomial as P
-                        FIT_DEGREE = 12
-                        coeffs = P.polyfit(z_analytical, u_normalized, FIT_DEGREE)
-                        z_norm = cell.z() / domain.z_max()
-                        analytical_velocity_expr = u_max * sum(
-                            float(coeffs[i]) * z_norm**i for i in range(len(coeffs))
-                        )  # type: ignore
-                        fit_error = np.max(np.abs(
-                            u_normalized - P.polyval(z_analytical, coeffs)
-                        ))
-                        print(f"Analytical solution: degree-{FIT_DEGREE} polynomial fit "
-                              f"max error = {fit_error:.6e}")
-                        if fit_error > 1e-5:
-                            raise RuntimeError(
-                                f"Polynomial fit error {fit_error:.2e} > 1e-5. "
-                                f"Increase FIT_DEGREE."
-                            )
-                    else:
-                        print("Warning: Could not extract temperature symbol, using linear")
-                        nu_expr = const_nu
-                        analytical_velocity_expr = u_max * cell.z() / domain.z_max()
-                else:
-                    print("Warning: No dynamic_viscosity attribute, using constant")
-                    nu_expr = const_nu
-                    analytical_velocity_expr = u_max * cell.z() / domain.z_max()
-            else:
-                print("Warning: Material file not found")
-                nu_expr = const_nu
-                analytical_velocity_expr = u_max * cell.z() / domain.z_max()
-        except Exception as e:
-            print(f"MaterForge error: {e}")
-            import traceback
-            traceback.print_exc()
-            nu_expr = const_nu
-            analytical_velocity_expr = u_max * cell.z() / domain.z_max()
+        from materforge.parsing.api import create_material
+        yaml_path = Path(__file__).parent / 'CouetteFlowMaterial.yaml'
+        if not yaml_path.exists():
+            raise FileNotFoundError(
+                f"MaterForge material file not found: {yaml_path}. "
+                "Re-run CMake with -DUSE_MATERFORGE=OFF to use constant viscosity."
+            )
+        mat = create_material(yaml_path=yaml_path,
+                              dependency=f_temperature.center(),
+                              enable_plotting=False)
+        if not hasattr(mat, 'dynamic_viscosity'):
+            raise AttributeError(
+                f"MaterForge material '{mat.name}' has no 'dynamic_viscosity' property."
+            )
+        nu_expr = mat.dynamic_viscosity
+        print(f"MaterForge viscosity expression loaded: {nu_expr}")
+        print("Computing analytical solution for error calculation...")
+        temp_symbols = [s for s in nu_expr.free_symbols
+                        if 'temperature' in str(s)]
+        if not temp_symbols:
+            raise RuntimeError(
+                "Could not extract temperature symbol from dynamic_viscosity expression "
+                f"(free symbols: {nu_expr.free_symbols})."
+            )
+        temp_var = temp_symbols[0]
+        print(f"Found temperature symbol: {temp_var}")
+        T_eval   = sp.Symbol('T_eval')
+        nu_expr_eval = nu_expr.subs(temp_var, T_eval)
+        nu_func  = sp.lambdify(T_eval, nu_expr_eval, modules='numpy')
+        # High-resolution integration grid
+        z_analytical = np.linspace(0, 1, 2000)
+        # Use actual simulation temperature range
+        T_analytical = T_BOTTOM_SIM + (T_TOP_SIM - T_BOTTOM_SIM) * z_analytical
+        nu_analytical = nu_func(T_analytical)
+        # Guard against negative values from polynomial overshoot
+        nu_analytical = np.maximum(nu_analytical, 1e-12)
+        # Exact analytical solution: u(z) = U_wall * I(z) / I(1)
+        integrand    = 1.0 / nu_analytical
+        integral_z   = cumulative_trapezoid(integrand, z_analytical, initial=0)
+        integral_total = integral_z[-1]
+        u_normalized = integral_z / integral_total
+        from numpy.polynomial import polynomial as P
+        FIT_DEGREE = 12
+        coeffs = P.polyfit(z_analytical, u_normalized, FIT_DEGREE)
+        z_norm = cell.z() / domain.z_max()
+        analytical_velocity_expr = u_max * sum(
+            float(coeffs[i]) * z_norm**i for i in range(len(coeffs))
+        )  # type: ignore
+        fit_error = np.max(np.abs(
+            u_normalized - P.polyval(z_analytical, coeffs)
+        ))
+        print(f"Analytical solution: degree-{FIT_DEGREE} polynomial fit "
+              f"max error = {fit_error:.6e}")
+        if fit_error > 1e-5:
+            raise RuntimeError(
+                f"Polynomial fit error {fit_error:.2e} > 1e-5. "
+                f"Increase FIT_DEGREE."
+            )
     else:
         print(f"Code generation: Using constant viscosity (nu = {const_nu})")
         nu_expr = const_nu

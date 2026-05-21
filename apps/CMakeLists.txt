@@ -41,10 +41,12 @@ endif()
 # ============================================================================
 
 option(USE_MATERFORGE "Use MaterForge temperature-dependent viscosity" ON)
+set(CONST_NU "0.16667" CACHE STRING
+    "Constant kinematic viscosity baked into the generated code when USE_MATERFORGE=OFF (default 1/6)")
 if(USE_MATERFORGE)
     message(STATUS "USE_MATERFORGE=ON  (temperature-dependent viscosity)")
 else()
-    message(STATUS "USE_MATERFORGE=OFF (constant viscosity)")
+    message(STATUS "USE_MATERFORGE=OFF (constant viscosity nu=${CONST_NU})")
 endif()
 
 # ============================================================================
@@ -139,7 +141,7 @@ function(add_unified_executable TARGET_NAME SOURCE_FILE SWEEP_SCRIPT)
         set(MATERFORGE_SCRIPT_ARG "")
     else()
         target_compile_definitions(${TARGET_NAME} PRIVATE USE_MATERFORGE=0)
-        set(MATERFORGE_SCRIPT_ARG "--no-materforge")
+        set(MATERFORGE_SCRIPT_ARG "--no-materforge" "--const-nu=${CONST_NU}")
     endif()
 
     # Determine target platform for code generation
