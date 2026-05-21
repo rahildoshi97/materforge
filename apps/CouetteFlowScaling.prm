@@ -22,7 +22,7 @@ Parameters {
 }
 
 Output {
-    vtkWriteFrequency   0;  // Set to non-zero to enable VTK output
+    vtkWriteFrequency   100;  // Set to non-zero to enable VTK output
 }
 
 Performance {

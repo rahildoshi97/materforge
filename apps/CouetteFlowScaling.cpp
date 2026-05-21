@@ -344,7 +344,7 @@ void run(int argc, char **argv)
                 + "x" + std::to_string(cellsPerBlock[1])
                 + "x" + std::to_string(cellsPerBlock[2]);
         
-        std::string vtkOutputDir = "testvtk";
+        std::string vtkOutputDir = "cfvtk";
         WALBERLA_LOG_INFO_ON_ROOT("VTK output enabled: writing every " << vtkWriteFrequency << " steps to directory '" << vtkOutputDir << "' with base name '" << vtkName << "'");
         auto vtkOutput = vtk::createVTKOutput_BlockData(*blocks, vtkName, vtkWriteFrequency, 0, 
                                                         false, vtkOutputDir, "simulation_step", 
