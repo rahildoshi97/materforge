@@ -142,7 +142,11 @@ void run(int argc, char **argv)
     WALBERLA_LOG_INFO_ON_ROOT("Cells per process: " << cellsPerProcess);
     WALBERLA_LOG_INFO_ON_ROOT("Total domain: " << totalCellsX << " x " << totalCellsY << " x " << totalCellsZ << " = " << totalCells);
     WALBERLA_LOG_INFO_ON_ROOT("Timesteps: " << numTimesteps);
+#if USE_MATERFORGE
+    WALBERLA_LOG_INFO_ON_ROOT("Viscosity: temperature-dependent (MaterForge)");
+#else
     WALBERLA_LOG_INFO_ON_ROOT("Lattice viscosity: " << latticeViscosity);
+#endif
     WALBERLA_LOG_INFO_ON_ROOT("Channel velocity: " << channelVelocity);
     
     //======================================================================
