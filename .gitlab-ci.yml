@@ -156,7 +156,7 @@ test_examples:
   dependencies:
     - python_3.10
 
-# Test apps (if they contain Python scripts)
+# Test apps (syntax check Python scripts)
 test_apps:
   stage: test
   image: python:${PYTHON_VERSION}
@@ -166,9 +166,9 @@ test_apps:
   script:
     - echo "Testing application scripts..."
     - cd apps/
-    # NOTE: these scripts use the legacy Material API and are pending update
-    - python material_demo_callgraph.py || echo "⚠️ Demo script may require additional dependencies"
-    - python quick_visualize.py || echo "⚠️ Visualization script may require additional dependencies"
+    - python -m py_compile CouetteFlowSweeps.py && echo "✅ CouetteFlowSweeps.py"
+    - python -m py_compile extract_vtk_profiles.py && echo "✅ extract_vtk_profiles.py"
+    - python -m py_compile generate_plots.py && echo "✅ generate_plots.py"
     - echo "✅ Application scripts tested"
   dependencies:
     - python_3.10
@@ -181,6 +181,7 @@ test_material_files:
   before_script:
     - pip install --upgrade pip
     - pip install -e .
+    - pip install numpy sympy scipy
   script:
     - echo "Testing material file loading..."
     - cd apps/
@@ -192,7 +193,7 @@ test_material_files:
       import sympy as sp
 
       try:
-          validate_yaml_file('1.4301_HeatEquationKernelWithMaterial.yaml')
+          validate_yaml_file('CouetteFlowMaterial.yaml')
           print('✅ YAML validation passed')
       except Exception as e:
           print(f'❌ YAML validation failed: {e}')
@@ -200,7 +201,7 @@ test_material_files:
 
       try:
           T = sp.Symbol('T')
-          material = create_material('1.4301_HeatEquationKernelWithMaterial.yaml', T, enable_plotting=False)
+          material = create_material('CouetteFlowMaterial.yaml', T, enable_plotting=False)
           print(f'✅ Material created: {material.name}')
       except Exception as e:
           print(f'❌ Material creation failed: {e}')
