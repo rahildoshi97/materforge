@@ -85,7 +85,19 @@ def _apply_log_yticks(ax):
 class CouetteFlowPlotter:
     """Accumulates per-case data and generates publication-quality plots."""
 
-    _COLORS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"]
+    @staticmethod
+    def _get_colors(n: int) -> list:
+        """Return n visually distinct colors.
+
+        Samples tab20: even indices are the dark tab10-equivalent colors,
+        odd indices are lighter variants.  Dark colors come first so the first
+        10 cases match tab10 exactly; cases 11-20 use the lighter variants.
+        """
+        cmap20 = matplotlib.colormaps["tab20"]
+        dark  = list(range(0, 20, 2))   # 10 saturated colors (= tab10)
+        light = list(range(1, 20, 2))   # 10 lighter variants
+        ordered = dark + light
+        return [cmap20.colors[ordered[i % 20]] for i in range(n)]
 
     def __init__(self, dpi: int = 300):
         self.dpi = dpi
@@ -176,9 +188,10 @@ class CouetteFlowPlotter:
             return
         fig, (ax_v, ax_e) = plt.subplots(1, 2, figsize=(13, 5))
 
+        colors = self._get_colors(len(self.cases))
         seen_analytical: list[np.ndarray] = []
         for i, (name, d) in enumerate(self.cases.items()):
-            c = self._COLORS[i % len(self._COLORS)]
+            c = colors[i]
             y = d["y_norm"]
 
             # Check if this analytical curve is a duplicate of one already plotted.
@@ -345,6 +358,7 @@ class CouetteFlowPlotter:
 
         fig, ax = plt.subplots(figsize=(8, 5))
 
+        colors = self._get_colors(len(all_time_series))
         for i, (name, ts) in enumerate(all_time_series.items()):
             if not ts:
                 continue
@@ -354,7 +368,7 @@ class CouetteFlowPlotter:
             l2_errors   = [float(np.sqrt(np.mean(
                                (ts[k]["u_sim"] - ana_func(ts[k]["y_norm"])) ** 2)))
                            for k in sorted_keys]
-            c = self._COLORS[i % len(self._COLORS)]
+            c = colors[i]
             ax.semilogy(sim_times, l2_errors, "o-", color=c,
                         markersize=4, lw=1.5, label=name)
 
