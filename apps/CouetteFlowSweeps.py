@@ -169,10 +169,19 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
             output=output_fields
         )
 
-        combined_assignments = ps.AssignmentCollection(
-            main_assignments=collision_rule.main_assignments + [
+        # The viscosity field write is only emitted for the temperature-dependent case.
+        # For constant viscosity, omega is a compile-time literal already folded into
+        # the collision rule — writing the same constant back to every cell every step
+        # wastes memory bandwidth without providing any physics value.
+        if use_materforge:
+            main_assignments = collision_rule.main_assignments + [
                 ps.Assignment(f_viscosity.center(), nu_expr)
-            ],
+            ]
+        else:
+            main_assignments = collision_rule.main_assignments
+
+        combined_assignments = ps.AssignmentCollection(
+            main_assignments=main_assignments,
             subexpressions=collision_rule.subexpressions
         )
 
@@ -186,8 +195,14 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
               f"{'temperature-dependent' if use_materforge else 'constant'} viscosity ===")
         print("Collision main only:", ops_collision_main)
         print("Subexpressions only:", ops_sub)
-        print("Main (incl. collision main + viscosity):", ops_main)
+        visc_suffix = " + viscosity" if use_materforge else ""
+        print(f"Main (incl. collision main{visc_suffix}):", ops_main)
         print("Total (incl. subexpressions):", ops_total)
+        # Memory-traffic breakdown (algorithmic lower bound, excludes ghost-layer comms)
+        base_bw_bytes = 19 * 2 * 8 + 8 + 3 * 8  # 19 PDFs r+w + density w + velocity w
+        extra_bw_bytes = (8 + 8) if use_materforge else 0  # temp read + visc write
+        print(f"Algorithmic bandwidth (approx): {base_bw_bytes + extra_bw_bytes} B/cell "
+              f"(base {base_bw_bytes} + extra {extra_bw_bytes})")
 
         stream_collide.swap_fields(f_pdfs, f_pdfs_tmp)
         sfg.generate(stream_collide)

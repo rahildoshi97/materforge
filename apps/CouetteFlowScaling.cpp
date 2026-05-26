@@ -212,6 +212,11 @@ void run(int argc, char **argv)
     // CREATE STREAM-COLLIDE SWEEP
     //======================================================================
     
+    // For USE_MATERFORGE=ON the generated StreamCollide takes
+    //   (density, pdfs, temperature, velocity, viscosity)   — viscosity is written each step.
+    // For USE_MATERFORGE=OFF the viscosity write is omitted from the kernel (it would just
+    // store a compile-time constant into every cell every step, wasting memory bandwidth).
+    // The constructor therefore only takes (density, pdfs, velocity).
 #ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
     std::shared_ptr<gen::Couette::StreamCollide> streamCollidePtr;
     #if USE_MATERFORGE
@@ -222,7 +227,7 @@ void run(int argc, char **argv)
     #else
         WALBERLA_LOG_INFO_ON_ROOT("Using constant viscosity - GPU");
         streamCollidePtr = std::make_shared<gen::Couette::StreamCollide>(
-            gpuRhoId, gpuPdfsId, gpuUId, gpuViscId
+            gpuRhoId, gpuPdfsId, gpuUId
         );
     #endif
     auto streamCollide = makeSharedSweep(streamCollidePtr);
@@ -236,7 +241,7 @@ void run(int argc, char **argv)
     #else
         WALBERLA_LOG_INFO_ON_ROOT("Using constant viscosity - CPU");
         streamCollidePtr = std::make_shared<gen::Couette::StreamCollide>(
-            rhoId, pdfsId, uId, viscId
+            rhoId, pdfsId, uId
         );
     #endif
     auto streamCollide = makeSharedSweep(streamCollidePtr);
@@ -374,7 +379,9 @@ void run(int argc, char **argv)
     // WARMUP
     //======================================================================
     
-    const uint_t warmupSteps = uint_c(5);
+    // 100 warmup steps: enough to warm L3, TLB, and OS page tables for a
+    // 524 288-cell domain (~160 MB working set) before the timed region starts.
+    const uint_t warmupSteps = uint_c(100);
     WALBERLA_LOG_INFO_ON_ROOT("Running " << warmupSteps << " warmup iterations...");
     for (uint_t i = 0; i < warmupSteps; ++i)
         loop.singleStep();
@@ -423,27 +430,38 @@ void run(int argc, char **argv)
     for (auto& b : *blocks)
         analyticalSweep(&b);
 
-    // Compute max |u_lbm - u_analytical| over all interior cells
-    real_t maxError = real_c(0.0);
+    // Compute max |u_lbm - u_analytical| over all interior cells.
+    // u_x (component 0): primary flow direction — compared against the analytical profile.
+    // u_y (component 1): should be identically zero (y is periodic, no driving force).
+    // u_z (component 2): should be identically zero (z has walls, mass conservation).
+    // Checking u_y and u_z catches spurious transverse flows from discretisation errors.
+    real_t maxError  = real_c(0.0);   // L∞ error in u_x vs analytical
+    real_t maxSpurY  = real_c(0.0);   // max |u_y| (should be ~machine epsilon)
+    real_t maxSpurZ  = real_c(0.0);   // max |u_z| (should be ~machine epsilon)
     for (auto& b : *blocks) {
         auto uLBM  = b.getData<VectorField_T>(uId);
         auto uAnal = b.getData<VectorField_T>(uAnalyticalId);
         WALBERLA_FOR_ALL_CELLS_XYZ(uLBM,
-            real_t err = std::abs(uLBM->get(x, y, z, 0) - uAnal->get(x, y, z, 0));
-            maxError = std::max(maxError, err);
+            maxError = std::max(maxError, std::abs(uLBM->get(x, y, z, 0) - uAnal->get(x, y, z, 0)));
+            maxSpurY = std::max(maxSpurY, std::abs(uLBM->get(x, y, z, 1)));
+            maxSpurZ = std::max(maxSpurZ, std::abs(uLBM->get(x, y, z, 2)));
         )
     }
     WALBERLA_MPI_SECTION() {
-        walberla::mpi::reduceInplace(maxError, walberla::mpi::MAX);
+        walberla::mpi::reduceInplace(maxError,  walberla::mpi::MAX);
+        walberla::mpi::reduceInplace(maxSpurY,  walberla::mpi::MAX);
+        walberla::mpi::reduceInplace(maxSpurZ,  walberla::mpi::MAX);
     }
 
     WALBERLA_LOG_RESULT_ON_ROOT("=== Analytical Error Check ===")
-    WALBERLA_LOG_RESULT_ON_ROOT("Max |u_LBM - u_analytical|: " << maxError)
-    WALBERLA_LOG_RESULT_ON_ROOT("Error threshold:             " << errorThreshold)
+    WALBERLA_LOG_RESULT_ON_ROOT("Max |u_x_LBM - u_x_analytical|: " << maxError
+        << "  (threshold: " << errorThreshold << ")")
+    WALBERLA_LOG_RESULT_ON_ROOT("Max |u_y| (spurious transverse): " << maxSpurY)
+    WALBERLA_LOG_RESULT_ON_ROOT("Max |u_z| (spurious wall-normal): " << maxSpurZ)
     if (maxError <= errorThreshold) {
         WALBERLA_LOG_RESULT_ON_ROOT("PASSED")
     } else {
-        WALBERLA_LOG_WARNING_ON_ROOT("FAILED - error " << maxError
+        WALBERLA_LOG_WARNING_ON_ROOT("FAILED - u_x error " << maxError
             << " exceeds threshold " << errorThreshold
             << " (simulation may not have converged yet)")
     }
@@ -452,17 +470,26 @@ void run(int argc, char **argv)
     // PERFORMANCE METRICS
     //======================================================================
     
-    double simTime = simTimer.max();
-    WALBERLA_MPI_SECTION() { 
-        walberla::mpi::reduceInplace(simTime, walberla::mpi::MAX); 
+    // total() gives the single elapsed interval from start() to end().
+    // The MPI MAX then picks the slowest rank, which is the true wall-clock time
+    // (all ranks must wait at the next barrier for the slowest one).
+    double simTime = simTimer.total();
+    WALBERLA_MPI_SECTION() {
+        walberla::mpi::reduceInplace(simTime, walberla::mpi::MAX);
     }
     
-    const auto reducedTimeloopTiming = timeloopTiming.getReduced();
-    
+    // Collect timing with three reduction modes:
+    //   REDUCE_TOTAL : sum across all ranks (exposes load imbalance when divided by nProc)
+    //   REDUCE_AVG   : per-rank average (normalised reference)
+    //   REDUCE_MAX   : slowest rank (sets the actual wall-clock pace for MPI-synchronous kernels)
+    const auto reducedTimingTotal = timeloopTiming.getReduced(walberla::timing::REDUCE_TOTAL);
+    const auto reducedTimingAvg   = timeloopTiming.getReduced(walberla::timing::REDUCE_AVG);
+    const auto reducedTimingMax   = timeloopTiming.getReduced(walberla::timing::REDUCE_MAX);
+
     const uint_t totalLatticeUpdates = numTimesteps * totalCells;
     const double mlupsPerProcess = (numTimesteps * cellsPerProcess) / (simTime * 1e6);
     const double totalMLUPS = totalLatticeUpdates / (simTime * 1e6);
-    
+
     WALBERLA_LOG_RESULT_ON_ROOT("=== Performance Results ===")
 #ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
     WALBERLA_LOG_RESULT_ON_ROOT("Backend: GPU")
@@ -480,8 +507,12 @@ void run(int argc, char **argv)
     WALBERLA_LOG_RESULT_ON_ROOT("Total MLUPS: " << totalMLUPS)
     WALBERLA_LOG_RESULT_ON_ROOT("Time per timestep: " << (simTime / numTimesteps * 1000.0) << " ms")
     WALBERLA_LOG_RESULT_ON_ROOT("")
-    WALBERLA_LOG_RESULT_ON_ROOT("=== Detailed Timing ===")
-    WALBERLA_LOG_RESULT_ON_ROOT(*reducedTimeloopTiming)
+    WALBERLA_LOG_RESULT_ON_ROOT("=== Detailed Timing (sum across " << numProcesses << " ranks) ===")
+    WALBERLA_LOG_RESULT_ON_ROOT(*reducedTimingTotal)
+    WALBERLA_LOG_RESULT_ON_ROOT("=== Detailed Timing (per-rank average) ===")
+    WALBERLA_LOG_RESULT_ON_ROOT(*reducedTimingAvg)
+    WALBERLA_LOG_RESULT_ON_ROOT("=== Detailed Timing (max rank / wall-clock pace) ===")
+    WALBERLA_LOG_RESULT_ON_ROOT(*reducedTimingMax)
     
     WALBERLA_LOG_INFO_ON_ROOT("Simulation completed successfully!");
 }
