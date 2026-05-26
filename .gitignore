@@ -359,3 +359,13 @@ benchmarking-scripts/**/materforge_src/
 benchmarking-scripts/**/*.log
 benchmarking-scripts/**/*.out
 benchmarking-scripts/**/*.slurm
+
+#   Local CLAUDE.md
+CLAUDE.md
+
+# VTune profiling scripts and results (not used for this benchmark)
+apps/run_vtune_cache.sh
+apps/vtune_*/
+
+# Raw profiling data (txt already excluded above, but explicit for clarity)
+apps/perf_results/
