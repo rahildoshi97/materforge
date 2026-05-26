@@ -1,7 +1,7 @@
 DomainSetup {
     // For strong scaling: keep total domain fixed, increase blocks
     // For weak scaling: keep cells per block fixed, increase blocks
-    blocks < 1, 2, 2 >;           // Number of MPI processes (override via -DomainSetup.blocks)
+    blocks < 1, 2, 2 >;            // 4 MPI processes — optimal for 128×64×64 domain (override via -DomainSetup.blocks)
     cellsPerBlock < 128, 32, 32 >; // Cells per block (override via -DomainSetup.cellsPerBlock)
     periodic < 1, 1, 0 >;         // X and Y periodic, Z has walls
 }
@@ -12,9 +12,9 @@ Parameters {
     // actually used in the simulation is baked into the generated code:
     //   USE_MATERFORGE=ON  -> MaterForge expression (this value is ignored)
     //   USE_MATERFORGE=OFF -> CMake -DCONST_NU=<value> (match it here)
-    nu              0.1;
+    nu              0.08;
     u_max           0.025;
-    timesteps       48000;          // Override via -Parameters.timesteps
+    timesteps       60000;          // Override via -Parameters.timesteps
     // LBM truncation error for converged Couette flow ~ O(u_max^2/nu * dx^2).
     // For this domain (H=64, nu~0.1, u_max=0.025): ~5e-5.
     // With 10000 timesteps (~25% of diffusion time), convergence error ~ 1e-3.
@@ -27,5 +27,5 @@ Parameters {
 }
 
 Output {
-    vtkWriteFrequency   200;  // Set to non-zero to enable VTK output
+    vtkWriteFrequency   0;  // Set to non-zero to enable VTK output
 }
