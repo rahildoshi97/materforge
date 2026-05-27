@@ -379,3 +379,8 @@ apps/perf_*.png
 apps/perf_data.csv
 apps/couette_validation_summary.csv
 apps/cf_cpu_mf*.csv
+
+# Generated scaling and material-demo outputs (reproduced by parse_scaling.py / plot_scaling.py / plot_material_demo.py)
+apps/scaling_data.csv
+apps/material_aisi304_properties.png
+apps/material_1.4301_properties.png
