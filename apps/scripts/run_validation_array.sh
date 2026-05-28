@@ -23,11 +23,11 @@
 # ── Configuration lookup tables (index 0-9) ──────────────────────────────────
 # Task:        0      1      2      3      4      5     6     7      8       9
 NUS=(       0.04   0.06   0.08    0.1    0.2    0.4   0.6   0.8    1.0  tempdep)
-TIMESTEPS=(120000  80000  60000  48000  24000  12000  8000  6000   4800   60000)
+TIMESTEPS=(120000  80000  60000  48000  24000  12000  8000  6000   4800   80000)
 # VTK frequency = round(timesteps/100) -> ~100 snapshots per case.
 # Gives ~5 convergence time-points at the default TIME_EVERY_N=20 in
 # generate_validation_plots.py.
-VTK_FREQ=(  1200    800    600    480    240    120    80    60     48     600)
+VTK_FREQ=(  1200    800    600    480    240    120    80    60     48     800)
 
 # ── Pick this task's parameters ───────────────────────────────────────────────
 i=${SLURM_ARRAY_TASK_ID}

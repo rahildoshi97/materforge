@@ -61,11 +61,12 @@ set(WALBERLA_BUILD_TUTORIALS OFF CACHE BOOL "")
 set(WALBERLA_BUILD_SHOWCASES OFF CACHE BOOL "")
 set(WALBERLA_BUILD_DOC OFF CACHE BOOL "")
 set(WALBERLA_BUILD_EXAMPLES OFF CACHE BOOL "")
-set(WALBERLA_BUILD_WITH_PYTHON ON CACHE BOOL "")
+# Python bindings are not needed — only SweepGen for code generation is required.
+set(WALBERLA_BUILD_WITH_PYTHON OFF CACHE BOOL "" FORCE)
 set(WALBERLA_ENABLE_SWEEPGEN ON CACHE BOOL "")
 # OFF: use the active venv directly. ON: sweepgen creates its own venv from
 # walberla/sweepgen-requirements.txt (may conflict with existing packages).
-set(WALBERLA_SWEEPGEN_MANAGED_VENV ON CACHE BOOL "")
+set(WALBERLA_SWEEPGEN_MANAGED_VENV OFF CACHE BOOL "" FORCE)
 
 # Configure GPU/CPU based on TARGET_PLATFORM
 if(TARGET_PLATFORM STREQUAL "CPU")
