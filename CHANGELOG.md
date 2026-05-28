@@ -8,14 +8,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- `apps/run_strong_scaling.sh` - SLURM array job sweeping 1, 2, 4, 8, 16 MPI
-  ranks on a single Xeon Gold 6326 node for strong-scaling measurement
-- `apps/parse_scaling.py` and `apps/plot_scaling.py` - parser and plotter
-  for the strong-scaling logs (MLUPS / speedup / efficiency)
-- `apps/plot_material_demo.py` - standalone figure showing the eight
-  temperature-dependent properties of AISI 304 (DIN 1.4301) derived from
-  the shipped `data/materials/1.4301.yaml`
-- `apps/README.md` - reproduction recipe for the Couette benchmark figures
+- `apps/scripts/run_strong_scaling.sh` - SLURM array job sweeping 1, 2,
+  4, 8, 16 MPI ranks on a single Xeon Gold 6326 node for strong-scaling
+  measurement
+- `apps/scripts/parse_scaling.py` and `apps/scripts/plot_scaling.py` -
+  parser and plotter for the strong-scaling logs (MLUPS / speedup /
+  efficiency)
+- `apps/scripts/plot_material_demo.py` - standalone figure showing the
+  eight temperature-dependent properties of AISI 304 (DIN 1.4301)
+  derived from the shipped `data/materials/1.4301.yaml`
+- `apps/README.md` - full reproduction recipe covering configure /
+  build / run / post-processing / performance / scaling / profiling
+- `Output.vtkOutputDir` parameter in `CouetteFlowScaling.prm` (default
+  `output/vtk`, relative to CWD) - makes the VTK output directory
+  configurable without rebuilding
+
+### Changed
+- **apps/ directory reorganised** into a systematic
+  `scripts/ + output/ + logs/` hierarchy:
+  - all SLURM and post-process scripts moved to `apps/scripts/`
+  - all generated artifacts now under `apps/output/`
+    (`vtk/`, `profiles/`, `data/`, `plots/{validation,performance,scaling,material}/`,
+    `profiling/{perf,likwid,vtune}/`)
+  - all SLURM and cmake logs categorised under
+    `apps/logs/{build,validation,performance,scaling,profiling}/`
+- Renamed for symmetry:
+  - `apps/generate_plots.py` -> `apps/scripts/generate_validation_plots.py`
+  - `apps/run_const_0.08.sh` -> `apps/scripts/run_perf_const.sh`
+  - `apps/run_tempdep.sh` -> `apps/scripts/run_perf_tempdep.sh`
+  - validation plots `Constant_<nu>_*.png` -> `validation_const_nu<nu>_*.png`
+    (ASCII filenames, no Unicode `ν`)
+  - `apps/cfvtk/` -> `apps/output/vtk/` (configurable via the new
+    `Output.vtkOutputDir` parameter)
+- `.gitignore` consolidated: the dozen-plus scattered `apps/*` rules
+  collapsed into three directory rules (`apps/build/`, `apps/output/`,
+  `apps/logs/`) plus the existing opt-in carve-out for
+  `apps/scripts/run_vtune_cache.sh`
 
 ## [0.6.6] - 2026-03-16
 

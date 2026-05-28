@@ -311,8 +311,8 @@ cp build/woody-release-cpu/CouetteFlowScaling \
 
 ```bash
 # Submit const job; tempdep starts only after const completes (no overlap)
-CONST_JID=$(sbatch --parsable run_const_0.08.sh)
-sbatch --dependency=afterok:${CONST_JID} run_tempdep.sh
+CONST_JID=$(sbatch --parsable apps/scripts/run_perf_const.sh)
+sbatch --dependency=afterok:${CONST_JID} apps/scripts/run_perf_tempdep.sh
 ```
 
 Key SLURM options in both scripts:
@@ -326,10 +326,12 @@ Each script runs 5 trials in a loop. SLURM job IDs for this dataset:
 * 11733409 — constant ν=0.08 (node w2304)
 * 11733410 — temperature-dependent (node w2304, sequential after 11733409)
 
-Raw logs are preserved in `apps/logs/`:
-* `configure_const_0.08.log`, `build_const_0.08.log`, `run_const_0.08.log`
-* `configure_tempdep.log`, `build_tempdep.log`, `run_tempdep.log`
-* CPU binding reports in `run_const_0.08.err`, `run_tempdep.err`
+Raw logs are preserved under `apps/logs/`:
+* `apps/logs/build/configure_const_0.08.log`, `apps/logs/build/build_const_0.08.log`
+* `apps/logs/performance/run_perf_const.log`
+* `apps/logs/build/configure_tempdep.log`, `apps/logs/build/build_tempdep.log`
+* `apps/logs/performance/run_perf_tempdep.log`
+* CPU binding reports in `apps/logs/performance/run_perf_const.err`, `apps/logs/performance/run_perf_tempdep.err`
 
 ## 8. Cache counter analysis (Linux `perf stat`)
 
@@ -343,7 +345,7 @@ Direct hardware-counter profiling on woody required three attempts:
 | LIKWID 5.4.1 (`CACHE`, `MEM` groups) | `Access to performance monitoring registers locked` | MSR-device access restricted cluster-wide (kernel config), bypassing the setuid `likwid-accessD` daemon |
 | Linux `perf stat` (user-space counting mode) | **Success** | `PERF_EVENT_OPEN` in counting mode is allowed at `paranoid = 2` for user-space per-process events |
 
-`perf stat` was run with per-rank isolation: each MPI rank launched its binary under its own `perf stat` instance with `--output rank_N.txt`. This gives four symmetric per-rank measurement sets. The collection script is `apps/run_perf_cache.sh` (SLURM job 11733616, node w2304).
+`perf stat` was run with per-rank isolation: each MPI rank launched its binary under its own `perf stat` instance with `--output rank_N.txt`. This gives four symmetric per-rank measurement sets. The collection script is `apps/scripts/run_perf_cache.sh` (SLURM job 11733616, node w2304); raw outputs land in `apps/output/profiling/perf/{const_0.08,tempdep}/rank_{0..3}.txt`.
 
 **Collection scope:** 100 warmup iterations + 1 timed timestep per rank. Although shorter than the full 60 000-timestep benchmark, the working set reaches steady state during warmup, making the cache-level ratios between const and temp-dep representative of the sustained workload.
 
@@ -440,5 +442,5 @@ The dominant cost is the combination of increased DRAM traffic and L1 load press
 | Cycles (short run, 101 steps) | **1.143** | Inflated by startup; full-run ratio is 1.085 |
 | **Wall-clock ratio (60 000 steps)** | **1.085** | Authoritative benchmark figure |
 
-> **perf stat raw data:** `apps/perf_results/{const_0.08,tempdep}/rank_{0-3}.txt`
-> **Collection script:** `apps/run_perf_cache.sh` (SLURM job 11733616, node w2304, `perf` v4.18)
+> **perf stat raw data:** `apps/output/profiling/perf/{const_0.08,tempdep}/rank_{0-3}.txt`
+> **Collection script:** `apps/scripts/run_perf_cache.sh` (SLURM job 11733616, node w2304, `perf` v4.18)
