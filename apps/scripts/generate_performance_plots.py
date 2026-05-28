@@ -52,11 +52,13 @@ matplotlib.use("Agg")
 # ══════════════════════════════════════════════════════════════════════════════
 
 # ── I/O paths ─────────────────────────────────────────────────────────────────
-_HERE = Path(__file__).parent
-LOG_DIR           = _HERE / "logs"
-LOG_CONST_FILE    = LOG_DIR / "run_const_0.08.log"
-LOG_TEMPDEP_FILE  = LOG_DIR / "run_tempdep.log"
-OUTPUT_DIR        = _HERE  # plots are written next to this script
+_HERE             = Path(__file__).parent              # apps/scripts/
+APPS_DIR          = _HERE.parent                       # apps/
+LOG_DIR           = APPS_DIR / "logs" / "performance"
+LOG_CONST_FILE    = LOG_DIR / "run_perf_const.log"
+LOG_TEMPDEP_FILE  = LOG_DIR / "run_perf_tempdep.log"
+OUTPUT_DIR        = APPS_DIR / "output" / "plots" / "performance"
+DATA_DIR          = APPS_DIR / "output" / "data"
 FIGURE_DPI        = 300    # 300 for submission, 150 for draft review
 
 # ── Benchmark labels and colours ──────────────────────────────────────────────
@@ -688,9 +690,10 @@ def export_csv(data: dict) -> None:
                 row[f"Timer_{timer.replace(' ','_')}"] = vals[i] if i < len(vals) else float("nan")
             rows.append(row)
     df = pd.DataFrame(rows)
-    path = OUTPUT_DIR / "perf_data.csv"
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    path = DATA_DIR / "perf_data.csv"
     df.to_csv(path, index=False, float_format="%.6f")
-    print(f"  Saved: perf_data.csv  ({len(df)} rows)")
+    print(f"  Saved: {path}  ({len(df)} rows)")
 
     # Print summary statistics
     print("\n  Summary statistics:")
@@ -718,6 +721,8 @@ def export_csv(data: dict) -> None:
 def main() -> None:
     _apply_style()
     np.random.seed(42)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     print("=" * 70)
     print("COUETTE FLOW — PERFORMANCE PLOTS")

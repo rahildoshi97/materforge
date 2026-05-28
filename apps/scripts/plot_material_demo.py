@@ -26,10 +26,12 @@ from materforge import create_material
 # Silence the noisy pwlf RuntimeWarnings - they don't affect the fitted output.
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
-_HERE       = Path(__file__).parent
-REPO_ROOT   = _HERE.parent
+_HERE       = Path(__file__).parent              # apps/scripts/
+APPS_DIR    = _HERE.parent                       # apps/
+REPO_ROOT   = APPS_DIR.parent                    # repo root
 MATERIAL    = REPO_ROOT / "src/materforge/data/materials/1.4301.yaml"
-OUT_PATH    = _HERE / "material_1.4301_properties.png"
+OUT_DIR     = APPS_DIR / "output" / "plots" / "material"
+OUT_PATH    = OUT_DIR / "material_aisi304_properties.png"
 T_MIN, T_MAX, NT = 300.0, 3000.0, 271   # 10 K resolution
 
 PANELS = [
@@ -101,6 +103,7 @@ def main() -> None:
              ha="center", va="bottom", fontsize=9, color="dimgray", style="italic")
 
     fig.tight_layout(rect=[0, 0.04, 1, 0.96])
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
     fig.savefig(OUT_PATH, dpi=300, bbox_inches="tight")
     plt.close(fig)
     print(f"\nSaved: {OUT_PATH}")

@@ -6,19 +6,19 @@ Automates the manual ParaView workflow:
   Plot Over Line → z-axis at domain centre, resolution 64 → Save Data
   (write timesteps, precision 10, add metadata, add time step, add time)
 
-For every .pvd found in cfvtk/, all timesteps are read, a z-axis profile is
-extracted at the x/y midpoint of the domain, and the result is written to a
-CSV in the same directory as this script.
+For every .pvd found in apps/output/vtk/, all timesteps are read, a z-axis
+profile is extracted at the x/y midpoint of the domain, and the result is
+written as a CSV under apps/output/profiles/.
 
-Output filename convention (matching the existing CSV files):
+Output filename convention (matching the legacy CSV files):
   cf_{cpu|gpu}_mfconst_{nu}_dat_{last_idx}_{last_time}.csv
   cf_{cpu|gpu}_mftempdep_dat_{last_idx}_{last_time}.csv
 
 Usage:
-    python apps/extract_vtk_profiles.py                          # all simulations
-    python apps/extract_vtk_profiles.py tempdep                  # one sim by name fragment
-    python apps/extract_vtk_profiles.py "const_0.1"              # one sim by fragment
-    python apps/extract_vtk_profiles.py --vtk-dir path/to/cfvtk --out-dir path/
+    python apps/scripts/extract_vtk_profiles.py                          # all simulations
+    python apps/scripts/extract_vtk_profiles.py tempdep                  # one sim by name fragment
+    python apps/scripts/extract_vtk_profiles.py "const_0.1"              # one sim by fragment
+    python apps/scripts/extract_vtk_profiles.py --vtk-dir path/to/vtk --out-dir path/
 """
 
 import re
@@ -253,12 +253,13 @@ def main() -> None:
                     help="name or glob pattern of a single simulation to process "
                          "(e.g. 'couette_flow_cpu_const_0.1*' or 'tempdep'); "
                          "omit to process all simulations")
+    _apps_dir = Path(__file__).resolve().parent.parent
     ap.add_argument("--vtk-dir", type=Path,
-                    default=Path(__file__).parent / "cfvtk",
-                    help="directory containing .pvd files  (default: cfvtk/)")
+                    default=_apps_dir / "output" / "vtk",
+                    help="directory containing .pvd files  (default: apps/output/vtk/)")
     ap.add_argument("--out-dir", type=Path,
-                    default=Path(__file__).parent,
-                    help="output directory for CSV files  (default: next to this script)")
+                    default=_apps_dir / "output" / "profiles",
+                    help="output directory for CSV files  (default: apps/output/profiles/)")
     args = ap.parse_args()
 
     if args.sim:
@@ -274,6 +275,7 @@ def main() -> None:
             return
 
     print(f"Found {len(pvd_files)} simulation(s) in {args.vtk_dir}")
+    args.out_dir.mkdir(parents=True, exist_ok=True)
     for pvd in pvd_files:
         _process_pvd(pvd, args.out_dir)
     print("\nDone.")

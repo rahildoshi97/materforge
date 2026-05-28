@@ -6,27 +6,27 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --time=00:35:00
 #SBATCH --array=0-9
-#SBATCH --output=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/run_validation_%a.log
-#SBATCH --error=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/run_validation_%a.err
+#SBATCH --output=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/validation/run_validation_%a.log
+#SBATCH --error=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/validation/run_validation_%a.err
 
 # SLURM job array: 10 tasks run in parallel, one per viscosity configuration.
 # Each task picks its nu / timesteps / vtkWriteFrequency from the lookup tables.
 #
 # Submit with:
-#   sbatch apps/run_validation_array.sh
+#   sbatch apps/scripts/run_validation_array.sh
 #
 # After all tasks complete, post-process with:
 #   source ~/.venvs/materforge/bin/activate
-#   cd apps/
-#   python3 extract_vtk_profiles.py
-#   python3 generate_plots.py
+#   python3 apps/scripts/extract_vtk_profiles.py
+#   python3 apps/scripts/generate_validation_plots.py
 
 # ── Configuration lookup tables (index 0-9) ──────────────────────────────────
 # Task:        0      1      2      3      4      5     6     7      8       9
 NUS=(       0.04   0.06   0.08    0.1    0.2    0.4   0.6   0.8    1.0  tempdep)
 TIMESTEPS=(120000  80000  60000  48000  24000  12000  8000  6000   4800   60000)
 # VTK frequency = round(timesteps/100) -> ~100 snapshots per case.
-# Gives ~5 convergence time-points at the default TIME_EVERY_N=20 in generate_plots.py.
+# Gives ~5 convergence time-points at the default TIME_EVERY_N=20 in
+# generate_validation_plots.py.
 VTK_FREQ=(  1200    800    600    480    240    120    80    60     48     600)
 
 # ── Pick this task's parameters ───────────────────────────────────────────────
@@ -48,7 +48,8 @@ echo "Date: $(date)"
 grep "model name" /proc/cpuinfo | head -1
 echo ""
 
-# cd to apps/ so VTK output goes to apps/cfvtk/
+# cd to apps/ so the binary's relative VTK output path (output/vtk) lands
+# in apps/output/vtk/.
 cd "${APPS_DIR}"
 
 # Select binary and runtime nu override

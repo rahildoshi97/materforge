@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Parse strong-scaling SLURM logs into a tidy CSV.
 
-Reads apps/logs/scaling_*.log produced by run_strong_scaling.sh and emits
-apps/scaling_data.csv with one row per (ranks, case, trial) measurement.
+Reads apps/logs/scaling/scaling_*.log produced by run_strong_scaling.sh and
+emits apps/output/data/scaling_data.csv with one row per (ranks, case,
+trial) measurement.
 """
 from __future__ import annotations
 
@@ -12,9 +13,10 @@ from pathlib import Path
 
 import pandas as pd
 
-_HERE = Path(__file__).parent
-LOG_DIR = _HERE / "logs"
-OUT_CSV = _HERE / "scaling_data.csv"
+_HERE     = Path(__file__).parent              # apps/scripts/
+APPS_DIR  = _HERE.parent                       # apps/
+LOG_DIR   = APPS_DIR / "logs" / "scaling"
+OUT_CSV   = APPS_DIR / "output" / "data" / "scaling_data.csv"
 
 _RE_HEADER     = re.compile(r"── (\S+)\s+trial (\d+)/\d+\s+ranks=(\d+) ──")
 _RE_MLUPS_TOT  = re.compile(r"\[\s*0\s*\]\[RESULT\s*\].*?Total MLUPS:\s*([\d.]+)")
@@ -61,6 +63,7 @@ def main() -> int:
         print("No measurements parsed (likely jobs still queued or failed).", file=sys.stderr)
         return 1
     df = pd.DataFrame(all_rows).sort_values(["case", "ranks", "trial"]).reset_index(drop=True)
+    OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUT_CSV, index=False, float_format="%.4f")
     print(f"\nWrote {OUT_CSV}  ({len(df)} rows)")
     print(df.to_string(index=False))

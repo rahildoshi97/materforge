@@ -363,24 +363,13 @@ benchmarking-scripts/**/*.slurm
 #   Local CLAUDE.md
 CLAUDE.md
 
-# VTune profiling scripts and results (not used for this benchmark)
-apps/run_vtune_cache.sh
-apps/vtune_*/
+# ────────────────────────────────────────────────────────────────────
+# apps/ benchmark - all transient artifacts under output/, logs/, build/
+# (reproduced by scripts under apps/scripts/)
+# ────────────────────────────────────────────────────────────────────
+apps/build/
+apps/output/
+apps/logs/
 
-# Raw profiling data (txt already excluded above, but explicit for clarity)
-apps/perf_results/
-
-# VTK simulation output (can be reproduced by running the validation job)
-apps/cfvtk/
-
-# Generated validation and performance plots (reproduced by generate_plots.py / generate_performance_plots.py)
-apps/couette_*.png
-apps/perf_*.png
-apps/perf_data.csv
-apps/couette_validation_summary.csv
-apps/cf_cpu_mf*.csv
-
-# Generated scaling and material-demo outputs (reproduced by parse_scaling.py / plot_scaling.py / plot_material_demo.py)
-apps/scaling_data.csv
-apps/material_aisi304_properties.png
-apps/material_1.4301_properties.png
+# VTune is opt-in only (the launcher script reads setuid /apps paths)
+apps/scripts/run_vtune_cache.sh

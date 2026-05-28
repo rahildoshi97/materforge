@@ -21,26 +21,56 @@ The `walberla/` subdirectory is a Git submodule containing waLBerla (GPLv3),
 maintained separately at:
 <https://i10git.cs.fau.de/walberla/walberla>
 
-## Layout
+## Directory layout
 
-| File                            | Purpose                                          |
-|---------------------------------|--------------------------------------------------|
-| `CouetteFlowScaling.cpp`        | Main C++ application (LBM driver)                |
-| `CouetteFlowSweeps.py`          | pystencils code-generation script (configure-time) |
-| `CouetteFlowScaling.prm`        | Runtime parameters                               |
-| `CouetteFlowMaterial.yaml`      | Material file consumed by MaterForge             |
-| `build_validation_binaries.sh`  | Builds 10 binaries (9 const-nu + tempdep)        |
-| `run_validation_array.sh`       | SLURM array job: 10-case validation sweep        |
-| `run_validation.sh`             | Small 2-case validation job                      |
-| `run_strong_scaling.sh`         | SLURM array job: strong-scaling sweep (1-16 ranks) |
-| `run_const_0.08.sh`             | 5-trial performance run, constant nu             |
-| `run_tempdep.sh`                | 5-trial performance run, temperature-dependent nu |
-| `extract_vtk_profiles.py`       | Post-processing: VTK -> CSV                      |
-| `generate_plots.py`             | Validation plots (per-case + summary)            |
-| `generate_performance_plots.py` | Performance plots: MLUPS, timer breakdown, etc.  |
-| `parse_scaling.py`              | Parses scaling-sweep logs -> CSV                 |
-| `plot_scaling.py`               | Strong-scaling plots (MLUPS / speedup / efficiency) |
-| `plot_material_demo.py`         | Demonstration figure for AISI 304 properties     |
+```
+apps/
+├── CMakeLists.txt, CMakePresets.json, CMakeUserPresets.json
+├── CouetteFlowScaling.cpp        # LBM driver
+├── CouetteFlowScaling.prm        # runtime parameters
+├── CouetteFlowSweeps.py          # pystencils code generator
+├── CouetteFlowMaterial.yaml      # MaterForge material spec
+├── README.md, LICENSE, woody-sweepgen-requirements.txt
+│
+├── walberla/                     # git submodule
+├── build/                        # CMake build output (gitignored)
+│
+├── scripts/                      # all SLURM + post-process helpers
+│   ├── build_validation_binaries.sh
+│   ├── run_validation.sh, run_validation_array.sh
+│   ├── run_strong_scaling.sh
+│   ├── run_perf_const.sh, run_perf_tempdep.sh
+│   ├── run_perf_cache.sh, run_likwid_cache.sh, run_vtune_cache.sh
+│   ├── extract_vtk_profiles.py
+│   ├── generate_validation_plots.py, generate_performance_plots.py
+│   ├── parse_scaling.py, plot_scaling.py
+│   └── plot_material_demo.py
+│
+├── output/                       # all generated artifacts (gitignored)
+│   ├── vtk/                      # waLBerla VTK output
+│   ├── profiles/                 # cf_cpu_mf*_dat_*.csv  (z-axis profiles)
+│   ├── data/                     # perf_data.csv, scaling_data.csv,
+│   │                             # couette_validation_summary.csv
+│   ├── plots/
+│   │   ├── validation/           # couette_*.png, validation_const_nu*.png,
+│   │   │                         # validation_tempdep_*.png
+│   │   ├── performance/          # perf_{mlups,wall_time,timer*,bandwidth,
+│   │   │                         #       overhead_decomposition,op_counts,summary}.png
+│   │   ├── scaling/              # perf_scaling_{mlups,speedup,efficiency}.png
+│   │   └── material/             # material_aisi304_properties.png
+│   └── profiling/                # perf/, likwid/, vtune/ raw outputs
+│
+└── logs/                         # SLURM + cmake logs (gitignored)
+    ├── build/                    # cmake configure + make logs
+    ├── validation/               # run_validation_*.{log,err}
+    ├── performance/              # run_perf_*.{log,err}, perf_cache.{log,err}
+    ├── scaling/                  # scaling_*.{log,err}
+    └── profiling/                # vtune_cache.*, likwid_cache.*
+```
+
+All generated artifacts live under `output/`, all logs live under `logs/`.
+Both directories (plus `build/`) are gitignored as a whole - the contents
+are reproduced by re-running the scripts.
 
 ## Reproducing the benchmark figures
 
@@ -51,30 +81,29 @@ submodule initialised (`git submodule update --init --recursive`).
 ```bash
 # ── 1. Build all validation binaries (one-shot, on login node) ──────────────
 source ~/.venvs/materforge/bin/activate
-bash apps/build_validation_binaries.sh
+bash apps/scripts/build_validation_binaries.sh
 
 # ── 2. Validation sweep (10 cases in parallel) ──────────────────────────────
-sbatch apps/run_validation_array.sh
+sbatch apps/scripts/run_validation_array.sh
 
 # When all tasks finish, post-process:
-cd apps/
-python3 extract_vtk_profiles.py
-python3 generate_plots.py
-# Outputs: couette_*.png, couette_validation_summary.csv
+python3 apps/scripts/extract_vtk_profiles.py
+python3 apps/scripts/generate_validation_plots.py
+# Outputs land under apps/output/plots/validation/ and apps/output/data/.
 
 # ── 3. Performance comparison (5 trials each, const vs tempdep) ────────────
-sbatch apps/run_const_0.08.sh
-sbatch apps/run_tempdep.sh
-python3 generate_performance_plots.py
-# Outputs: perf_*.png, perf_data.csv
+sbatch apps/scripts/run_perf_const.sh
+sbatch apps/scripts/run_perf_tempdep.sh
+python3 apps/scripts/generate_performance_plots.py
+# Outputs land under apps/output/plots/performance/ and apps/output/data/.
 
 # ── 4. Strong-scaling sweep (1, 2, 4, 8, 16 MPI ranks on one icx node) ─────
-sbatch apps/run_strong_scaling.sh
-python3 parse_scaling.py     # -> scaling_data.csv
-python3 plot_scaling.py      # -> perf_scaling_*.png
+sbatch apps/scripts/run_strong_scaling.sh
+python3 apps/scripts/parse_scaling.py       # -> apps/output/data/scaling_data.csv
+python3 apps/scripts/plot_scaling.py        # -> apps/output/plots/scaling/
 
 # ── 5. Materials demonstration figure (no SLURM job needed) ─────────────────
-python3 plot_material_demo.py  # -> material_aisi304_properties.png
+python3 apps/scripts/plot_material_demo.py  # -> apps/output/plots/material/
 ```
 
 For build/run details on a local workstation (CPU debug/release, GPU CUDA),

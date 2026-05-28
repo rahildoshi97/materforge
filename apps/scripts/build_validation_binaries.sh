@@ -3,7 +3,7 @@
 #
 # Run on the login node AFTER activating the materforge venv:
 #   source ~/.venvs/materforge/bin/activate
-#   bash apps/build_validation_binaries.sh
+#   bash apps/scripts/build_validation_binaries.sh
 #
 # Each const binary is compiled with the matching CONST_NU value so that the
 # baked-in omega = 2/(6*nu+1) is physically correct.  The tempdep binary is
@@ -15,8 +15,11 @@
 
 set -euo pipefail
 
-APPS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"      # apps/scripts/
+APPS_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"                       # apps/
 BUILD_DIR="${APPS_DIR}/build/woody-release-cpu"
+LOG_DIR="${APPS_DIR}/logs/build"
+mkdir -p "${LOG_DIR}"
 
 eval "$(MODULESHOME=/apps/modules /usr/bin/modulecmd bash load cmake/3.30.5)"
 
@@ -32,10 +35,10 @@ for nu in "${NUS[@]}"; do
     cmake --preset woody-release-cpu \
           -DUSE_MATERFORGE=OFF -DCONST_NU="${nu}" \
           -S "${APPS_DIR}" -B "${BUILD_DIR}" \
-          > "${APPS_DIR}/logs/configure_const_${nu}.log" 2>&1
+          > "${LOG_DIR}/configure_const_${nu}.log" 2>&1
 
     make -C "${BUILD_DIR}" -j8 CouetteFlowScaling \
-          > "${APPS_DIR}/logs/build_const_${nu}.log" 2>&1
+          > "${LOG_DIR}/build_const_${nu}.log" 2>&1
 
     cp "${BUILD_DIR}/CouetteFlowScaling" \
        "${BUILD_DIR}/CouetteFlowScaling_const_${nu}"
@@ -52,10 +55,10 @@ echo "════════════════════════�
 cmake --preset woody-release-cpu \
       -DUSE_MATERFORGE=ON \
       -S "${APPS_DIR}" -B "${BUILD_DIR}" \
-      > "${APPS_DIR}/logs/configure_tempdep.log" 2>&1
+      > "${LOG_DIR}/configure_tempdep.log" 2>&1
 
 make -C "${BUILD_DIR}" -j8 CouetteFlowScaling \
-      > "${APPS_DIR}/logs/build_tempdep.log" 2>&1
+      > "${LOG_DIR}/build_tempdep.log" 2>&1
 
 cp "${BUILD_DIR}/CouetteFlowScaling" \
    "${BUILD_DIR}/CouetteFlowScaling_tempdep"
@@ -69,4 +72,4 @@ echo " All binaries built:"
 ls -lh "${BUILD_DIR}"/CouetteFlowScaling_* | awk '{print "  "$NF, $5}'
 echo "══════════════════════════════════════════════"
 echo " Next step:"
-echo "   sbatch apps/run_validation_array.sh"
+echo "   sbatch apps/scripts/run_validation_array.sh"

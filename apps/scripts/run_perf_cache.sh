@@ -7,8 +7,8 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --exclusive
 #SBATCH --time=00:45:00
-#SBATCH --output=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/perf_cache.log
-#SBATCH --error=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/perf_cache.err
+#SBATCH --output=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/profiling/perf_cache.log
+#SBATCH --error=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/profiling/perf_cache.err
 
 # =============================================================================
 #  perf stat cache counter analysis — Couette Flow
@@ -24,8 +24,8 @@
 
 APPS_DIR=/home/hpc/iwia/iwia133h/.local/materforge/apps
 BUILD_DIR=$APPS_DIR/build/woody-release-cpu
-LOGS_DIR=$APPS_DIR/logs
-RESULTS_DIR=$APPS_DIR/perf_results
+LOGS_DIR=$APPS_DIR/logs/profiling
+RESULTS_DIR=$APPS_DIR/output/profiling/perf
 PRM=$APPS_DIR/CouetteFlowScaling.prm
 
 BIN_CONST=$BUILD_DIR/CouetteFlowScaling_const_0.08

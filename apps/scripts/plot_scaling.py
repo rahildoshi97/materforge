@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Strong-scaling plots for the Couette benchmark.
 
-Reads apps/scaling_data.csv produced by parse_scaling.py and produces:
+Reads apps/output/data/scaling_data.csv produced by parse_scaling.py and
+writes three PNGs to apps/output/plots/scaling/:
   perf_scaling_mlups.png       Total MLUPS vs MPI ranks (log-log)
   perf_scaling_speedup.png     Speedup vs ideal
   perf_scaling_efficiency.png  Parallel efficiency
@@ -17,8 +18,10 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-_HERE = Path(__file__).parent
-CSV   = _HERE / "scaling_data.csv"
+_HERE     = Path(__file__).parent              # apps/scripts/
+APPS_DIR  = _HERE.parent                       # apps/
+CSV       = APPS_DIR / "output" / "data" / "scaling_data.csv"
+OUT_DIR   = APPS_DIR / "output" / "plots" / "scaling"
 
 LABEL_CONST   = "const_0.08"
 LABEL_TEMPDEP = "tempdep"
@@ -109,7 +112,7 @@ def plot_mlups(df: pd.DataFrame) -> None:
                  r"Fixed 128$\times$64$\times$64 domain, 10 000 timesteps")
     ax.legend(loc="upper left")
     fig.tight_layout()
-    fig.savefig(_HERE / "perf_scaling_mlups.png")
+    fig.savefig(OUT_DIR / "perf_scaling_mlups.png")
     plt.close(fig)
     print("  Saved: perf_scaling_mlups.png")
 
@@ -146,7 +149,7 @@ def plot_speedup(df: pd.DataFrame) -> None:
     ax.set_title("Strong Scaling - Speedup")
     ax.legend(loc="upper left")
     fig.tight_layout()
-    fig.savefig(_HERE / "perf_scaling_speedup.png")
+    fig.savefig(OUT_DIR / "perf_scaling_speedup.png")
     plt.close(fig)
     print("  Saved: perf_scaling_speedup.png")
 
@@ -184,7 +187,7 @@ def plot_efficiency(df: pd.DataFrame) -> None:
     ax.set_ylim(0, 115)
     ax.legend(loc="lower left")
     fig.tight_layout()
-    fig.savefig(_HERE / "perf_scaling_efficiency.png")
+    fig.savefig(OUT_DIR / "perf_scaling_efficiency.png")
     plt.close(fig)
     print("  Saved: perf_scaling_efficiency.png")
 
@@ -193,6 +196,7 @@ def main() -> None:
     if not CSV.exists():
         raise SystemExit(f"Missing {CSV}; run parse_scaling.py first.")
     _apply_style()
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
     df = pd.read_csv(CSV)
     print(f"Loaded {len(df)} rows from {CSV}")
     plot_mlups(df)

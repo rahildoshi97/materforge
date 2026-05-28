@@ -7,8 +7,8 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --exclusive            # sole occupant — no shared-cache/DRAM-bandwidth interference
 #SBATCH --time=01:00:00        # 4 groups × 2 cases × ~45 s + finalization
-#SBATCH --output=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/likwid_cache.log
-#SBATCH --error=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/likwid_cache.err
+#SBATCH --output=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/profiling/likwid_cache.log
+#SBATCH --error=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/profiling/likwid_cache.err
 
 # =============================================================================
 #  LIKWID Cache Counter Analysis — Couette Flow (const ν=0.08 vs temp-dep)
@@ -29,8 +29,8 @@
 # ── Paths ─────────────────────────────────────────────────────────────────────
 APPS_DIR=/home/hpc/iwia/iwia133h/.local/materforge/apps
 BUILD_DIR=$APPS_DIR/build/woody-release-cpu
-LOGS_DIR=$APPS_DIR/logs
-RESULTS_DIR=$APPS_DIR/likwid_results
+LOGS_DIR=$APPS_DIR/logs/profiling
+RESULTS_DIR=$APPS_DIR/output/profiling/likwid
 PRM=$APPS_DIR/CouetteFlowScaling.prm
 
 BIN_CONST=$BUILD_DIR/CouetteFlowScaling_const_0.08

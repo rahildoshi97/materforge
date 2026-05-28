@@ -8,8 +8,8 @@
 #SBATCH --exclusive
 #SBATCH --time=01:30:00
 #SBATCH --array=0-4
-#SBATCH --output=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/scaling_%a.log
-#SBATCH --error=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/scaling_%a.err
+#SBATCH --output=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/scaling/scaling_%a.log
+#SBATCH --error=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/scaling/scaling_%a.err
 
 # Strong-scaling sweep on a single Xeon Gold 6326 (Ice Lake, 32 cores) node.
 # Each array task pins the rank count from the RANKS table and runs 3 trials
@@ -17,11 +17,11 @@
 # (MaterForge) binary using the same fixed 128x64x64 domain.
 #
 # Submit:
-#   sbatch apps/run_strong_scaling.sh
+#   sbatch apps/scripts/run_strong_scaling.sh
 #
 # After all tasks complete, post-process with:
-#   python3 apps/parse_scaling.py
-#   python3 apps/plot_scaling.py
+#   python3 apps/scripts/parse_scaling.py
+#   python3 apps/scripts/plot_scaling.py
 
 # ── Configuration ────────────────────────────────────────────────────────────
 # Vector3<uint_t> CLI overrides must use waLBerla's "<x,y,z>" syntax

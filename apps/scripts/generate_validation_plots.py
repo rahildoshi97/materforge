@@ -591,6 +591,12 @@ def main():
           f"(change TIME_EVERY_N at the top of this file)")
 
     script_dir = Path(__file__).parent
+    apps_dir   = script_dir.parent
+    csv_dir    = apps_dir / "output" / "profiles"
+    plots_dir  = apps_dir / "output" / "plots" / "validation"
+    data_dir   = apps_dir / "output" / "data"
+    plots_dir.mkdir(parents=True, exist_ok=True)
+    data_dir.mkdir(parents=True, exist_ok=True)
 
     # Wall temperatures and u_max come from CouetteFlowScaling.prm:
     #   T_bottom = 300 K,  T_top = 3000 K,  u_max = 0.025
@@ -624,7 +630,7 @@ def main():
 
     # Resolve each base name to the actual CSV path
     for cfg in cases_config:
-        cfg["csv_file"] = _resolve_csv(cfg["csv_base"], script_dir)
+        cfg["csv_file"] = _resolve_csv(cfg["csv_base"], csv_dir)
 
     plotter = CouetteFlowPlotter(dpi=300)
     all_cases       = {}
@@ -669,32 +675,41 @@ def main():
         except Exception:
             import traceback; traceback.print_exc()
 
+    def _slug(case_name: str) -> str:
+        """ASCII filename slug for a case name (drops the unicode nu)."""
+        if case_name == "Temperature-Dependent":
+            return "validation_tempdep"
+        # "Constant ν=0.04" -> "validation_const_nu0.04"
+        tail = case_name.replace("Constant", "").replace(" ", "").replace("=", "")
+        tail = tail.replace("ν", "nu")   # Greek small letter nu
+        return f"validation_const_{tail}"
+
     # ── steady-state plots ────────────────────────────────────────────────────
     print("\n--- Generating per-case steady-state plots ---")
     for name in all_cases:
-        prefix = name.replace(" ", "_").replace("=", "")
+        prefix = str(plots_dir / _slug(name))
         plotter.plot_single_case_detailed(name, prefix)
         plotter.plot_single_case_errors(name, prefix)
 
     print("\n--- Generating comparison plots ---")
-    plotter.plot_all_cases_comparison("couette_all_cases_comparison.png")
-    plotter.plot_all_cases_direct_comparison("couette_all_cases_direct_comparison.png")
-    plotter.plot_error_metrics_summary("couette_error_summary.png")
+    plotter.plot_all_cases_comparison(str(plots_dir / "couette_all_cases_comparison.png"))
+    plotter.plot_all_cases_direct_comparison(str(plots_dir / "couette_all_cases_direct_comparison.png"))
+    plotter.plot_error_metrics_summary(str(plots_dir / "couette_error_summary.png"))
 
     # ── time-evolution plots ──────────────────────────────────────────────────
     print("\n--- Generating time-evolution plots ---")
     for name, ts in all_time_series.items():
-        prefix = name.replace(" ", "_").replace("=", "")
+        prefix = str(plots_dir / _slug(name))
         plotter.plot_time_evolution(name, ts, all_ana_funcs[name], prefix)
 
     if len(all_time_series) > 1:
         plotter.plot_convergence_comparison(
             all_time_series, all_ana_funcs,
-            "couette_convergence_comparison.png")
+            str(plots_dir / "couette_convergence_comparison.png"))
 
     # ── summary table ─────────────────────────────────────────────────────────
     print("\n--- Summary table ---")
-    df = plotter.export_summary_table("couette_validation_summary.csv")
+    df = plotter.export_summary_table(str(data_dir / "couette_validation_summary.csv"))
     print(df.to_string(index=False))
     print("\nDone.")
 
