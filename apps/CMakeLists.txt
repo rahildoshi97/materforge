@@ -43,11 +43,19 @@ endif()
 option(USE_MATERFORGE "Use MaterForge temperature-dependent viscosity" ON)
 set(CONST_NU "0.16667" CACHE STRING
     "Constant kinematic viscosity baked into the generated code when USE_MATERFORGE=OFF (default 1/6)")
+set(COLLISION_OP "SRT" CACHE STRING
+    "LBM collision operator: SRT (default), TRT, or MRT")
+set_property(CACHE COLLISION_OP PROPERTY STRINGS "SRT" "TRT" "MRT")
+# Include the viscosity field write in StreamCollide only when VTK output is expected
+# (validation runs). For performance benchmarks set this OFF to save 8 B/cell/step
+# and ~10 ops/cell.
+option(WRITE_VISCOSITY "Include viscosity field write in StreamCollide (validation/VTK only)" OFF)
 if(USE_MATERFORGE)
     message(STATUS "USE_MATERFORGE=ON  (temperature-dependent viscosity)")
 else()
     message(STATUS "USE_MATERFORGE=OFF (constant viscosity nu=${CONST_NU})")
 endif()
+message(STATUS "COLLISION_OP=${COLLISION_OP}  WRITE_VISCOSITY=${WRITE_VISCOSITY}")
 
 # ============================================================================
 # WALBERLA CONFIGURATION (before add_subdirectory)
@@ -145,6 +153,14 @@ function(add_unified_executable TARGET_NAME SOURCE_FILE SWEEP_SCRIPT)
         set(MATERFORGE_SCRIPT_ARG "--no-materforge" "--const-nu=${CONST_NU}")
     endif()
 
+    # Collision operator and viscosity-write flags forwarded to the sweep script.
+    set(COLLISION_SCRIPT_ARG "--collision-operator=${COLLISION_OP}")
+    if(WRITE_VISCOSITY AND USE_MATERFORGE)
+        set(VISC_SCRIPT_ARG "--write-viscosity")
+    else()
+        set(VISC_SCRIPT_ARG "")
+    endif()
+
     # Determine target platform for code generation
     if(TARGET_PLATFORM STREQUAL "CPU")
         set(CODEGEN_TARGET "cpu")
@@ -152,13 +168,13 @@ function(add_unified_executable TARGET_NAME SOURCE_FILE SWEEP_SCRIPT)
         set(CODEGEN_TARGET "gpu")
     endif()
 
-    # Generate sources with target and materforge specification
+    # Generate sources with target, materforge, collision operator, and viscosity flags
     if(TARGET_PLATFORM STREQUAL "GPU-HIP")
         target_link_libraries(${TARGET_NAME} PRIVATE hip::device)
 
         walberla_generate_sources(${TARGET_NAME}
             SCRIPTS ${SWEEP_SCRIPT}
-            SCRIPT_ARGS --target=${CODEGEN_TARGET} ${MATERFORGE_SCRIPT_ARG}
+            SCRIPT_ARGS --target=${CODEGEN_TARGET} ${MATERFORGE_SCRIPT_ARG} ${COLLISION_SCRIPT_ARG} ${VISC_SCRIPT_ARG}
             FILE_EXTENSIONS .cpp .hpp)
 
         # Set HIP language for generated files
@@ -184,7 +200,7 @@ function(add_unified_executable TARGET_NAME SOURCE_FILE SWEEP_SCRIPT)
 
         walberla_generate_sources(${TARGET_NAME}
             SCRIPTS ${SWEEP_SCRIPT}
-            SCRIPT_ARGS --target=${CODEGEN_TARGET} ${MATERFORGE_SCRIPT_ARG}
+            SCRIPT_ARGS --target=${CODEGEN_TARGET} ${MATERFORGE_SCRIPT_ARG} ${COLLISION_SCRIPT_ARG} ${VISC_SCRIPT_ARG}
             FILE_EXTENSIONS .cu .hpp)
 
         set_source_files_properties(
@@ -196,7 +212,7 @@ function(add_unified_executable TARGET_NAME SOURCE_FILE SWEEP_SCRIPT)
     else()  # CPU
         walberla_generate_sources(${TARGET_NAME}
             SCRIPTS ${SWEEP_SCRIPT}
-            SCRIPT_ARGS --target=${CODEGEN_TARGET} ${MATERFORGE_SCRIPT_ARG}
+            SCRIPT_ARGS --target=${CODEGEN_TARGET} ${MATERFORGE_SCRIPT_ARG} ${COLLISION_SCRIPT_ARG} ${VISC_SCRIPT_ARG}
             FILE_EXTENSIONS .cpp .hpp)
     endif()
 endfunction()

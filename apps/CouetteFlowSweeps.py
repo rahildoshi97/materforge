@@ -18,6 +18,11 @@ from lbmpy import (
     create_lb_method,
     create_lb_update_rule
 )
+_COLLISION_METHODS = {
+    "SRT": Method.SRT,
+    "TRT": Method.TRT,
+    "MRT": Method.MRT,
+}
 from lbmpy.boundaries import NoSlip, UBB
 from lbmpy.macroscopic_value_kernels import macroscopic_values_setter
 
@@ -53,9 +58,19 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
     parser.add_argument("--const-nu", type=float, default=1.0/6.0,
                         help="Constant kinematic viscosity baked into the generated "
                              "code when --no-materforge is set (default: 1/6)")
+    parser.add_argument("--collision-operator", choices=["SRT", "TRT", "MRT"], default="SRT",
+                        help="LBM collision operator (default: SRT)")
+    # The viscosity field is only needed for VTK visualisation, NOT for physics.
+    # Omit it from the StreamCollide sweep during performance benchmarks to avoid
+    # the extra 8 B/cell/step write and ~10 symbolic ops per cell.
+    parser.add_argument("--write-viscosity", action="store_true",
+                        help="Include viscosity field write in StreamCollide (enable "
+                             "only for validation/VTK runs, not performance benchmarks)")
     args = parser.parse_args(sfg.context.argv)
 
     use_materforge = not args.no_materforge
+    collision_method = _COLLISION_METHODS[args.collision_operator]
+    write_viscosity = args.write_viscosity and use_materforge
 
     build_cfg = get_build_config(sfg)
     build_cfg.target = ps.Target[args.target.upper()]
@@ -148,10 +163,11 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
     # LBM configuration
     lbm_config = LBMConfig(
         stencil=stencil,
-        method=Method.TRT,
+        method=collision_method,
         compressible=True,
         relaxation_rate=relaxation_rate_from_lattice_viscosity(nu_expr),
     )
+    print(f"Collision operator: {args.collision_operator}")
     print(f"Relaxation rate: {lbm_config.relaxation_rate}")
 
     # ── Generate sweeps ──────────────────────────────────────────────
@@ -169,11 +185,12 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
             output=output_fields
         )
 
-        # The viscosity field write is only emitted for the temperature-dependent case.
-        # For constant viscosity, omega is a compile-time literal already folded into
-        # the collision rule — writing the same constant back to every cell every step
-        # wastes memory bandwidth without providing any physics value.
-        if use_materforge:
+        # The viscosity field write is optional and only needed for VTK visualisation.
+        # It is NOT required for physics correctness.  Enabled via --write-viscosity,
+        # which should be set only for validation/VTK runs.  For performance benchmarks
+        # (vtkWriteFrequency=0) omit it to avoid the extra 8 B/cell/step write and
+        # ~10 symbolic ops per cell.
+        if write_viscosity:
             main_assignments = collision_rule.main_assignments + [
                 ps.Assignment(f_viscosity.center(), nu_expr)
             ]
@@ -191,16 +208,35 @@ with SourceFileGenerator(keep_unknown_argv=True) as sfg:
         ops_main           = count_operations(combined_assignments.main_assignments,  only_type=None)
         ops_collision_main = count_operations(collision_rule.main_assignments,        only_type=None)
         ops_sub            = count_operations(combined_assignments.subexpressions,    only_type=None)
-        print(f"\n=== StreamCollide operation count with "
-              f"{'temperature-dependent' if use_materforge else 'constant'} viscosity ===")
-        print("Collision main only:", ops_collision_main)
-        print("Subexpressions only:", ops_sub)
-        visc_suffix = " + viscosity" if use_materforge else ""
-        print(f"Main (incl. collision main{visc_suffix}):", ops_main)
-        print("Total (incl. subexpressions):", ops_total)
+        nu_label = 'temperature-dependent' if use_materforge else 'constant'
+        print(f"\n=== StreamCollide operation count ({args.collision_operator}, {nu_label} viscosity) ===")
+        # Interpretation notes (TRT, D3Q19):
+        # - omega(T) is computed ONCE per cell in the subexpressions block (cell-
+        #   dependent but direction-independent). It does NOT appear 19 times.
+        # - The collision-main overhead (tempdep - const TRT) is a lost compile-time
+        #   algebraic distribution: for constant nu, lbmpy folds omega into literal
+        #   coefficients at codegen time; for symbolic nu it cannot, so each PDF retains
+        #   explicit rr_0/rr_1 * (...) factors.  Per-group breakdown (measured):
+        #     rest (1 PDF):   +1 op  (total: +1)
+        #     face (6 PDFs):  +7 ops each  (total: +42)
+        #     edge (12 PDFs): +6 ops each  (total: +72)
+        #     collision main total:         +115
+        # - count_operations is a symbolic-AST upper bound: counts both branches of
+        #   every Piecewise, ignores FMA fusion and compile-time folding.
+        print("Subexpressions only (per-cell, computed once):", ops_sub)
+        print("Collision main only  (19 PDF updates):        ", ops_collision_main)
+        visc_suffix = " + viscosity write" if write_viscosity else ""
+        print(f"Main (collision main{visc_suffix}):               ", ops_main)
+        print("Total (subexpressions + main):                ", ops_total)
         # Memory-traffic breakdown (algorithmic lower bound, excludes ghost-layer comms)
         base_bw_bytes = 19 * 2 * 8 + 8 + 3 * 8  # 19 PDFs r+w + density w + velocity w
-        extra_bw_bytes = (8 + 8) if use_materforge else 0  # temp read + visc write
+        # Temperature-dependent case: always reads temperature (+8 B).
+        # Viscosity write (+8 B) only when --write-viscosity is set.
+        extra_bw_bytes = 0
+        if use_materforge:
+            extra_bw_bytes += 8  # temperature field read
+        if write_viscosity:
+            extra_bw_bytes += 8  # viscosity field write (visualisation only)
         print(f"Algorithmic bandwidth (approx): {base_bw_bytes + extra_bw_bytes} B/cell "
               f"(base {base_bw_bytes} + extra {extra_bw_bytes})")
 
