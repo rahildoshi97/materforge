@@ -75,55 +75,62 @@ HW_CORES_USED     = 4      # MPI ranks used in the benchmark
 
 # ── Algorithmic bandwidth model ───────────────────────────────────────────────
 BW_CONST_BYTES_CELL   = 336   # 19 PDFs r+w (304) + density w (8) + velocity w (24)
-BW_TEMPDEP_BYTES_CELL = 352   # + temperature r (8) + viscosity w (8)
+BW_TEMPDEP_BYTES_CELL = 344   # + temperature r (8); viscosity write excluded (OFF for perf benchmarks)
 
-# ── Symbolic operation counts (from cmake configure log) ──────────────────────
+# ── Symbolic operation counts (from CouetteFlowSweeps.py at cmake configure time) ────────────────
+# SRT (BGK), D3Q19, WRITE_VISCOSITY=OFF (performance benchmark config).
+# count_operations is an AST-level upper bound: counts both branches of every Piecewise,
+# ignores compiler constant folding, FMA fusion, and SIMD vectorisation.
+# Key finding: omega(T) is computed ONCE per cell in the subexpressions block (not per direction).
+# The collision-main delta (tempdep - const) is only +1 op (rest PDF), because SRT has a single
+# relaxation rate that lbmpy can CSE across all non-rest PDFs. The +14 subexpression delta
+# comes from the nu(T) piecewise polynomial + omega formula.
 OPS = {
     # { label: {adds, muls, divs, total} }
     LABEL_CONST: {
-        "adds": 167, "muls": 212, "divs": 1,
-        "total": 380,
+        "adds": 149, "muls": 182, "divs": 1,
+        "total": 332,
         "description": "omega baked as compile-time literal",
     },
     LABEL_TEMPDEP: {
-        "adds": 238, "muls": 295, "divs": 4,
-        "total": 537,
-        "description": "runtime piecewise-polynomial nu(T)",
+        "adds": 173, "muls": 172, "divs": 2,
+        "total": 347,
+        "description": "runtime piecewise-polynomial nu(T); omega CSE'd once per cell",
     },
 }
 
 # ── Overhead decomposition estimates ──────────────────────────────────────────
-# Sources: bandwidth model, perf-stat hardware-counter analysis,
-#          waLBerla timer reductions (see couette_performance_analysis.md)
+# SRT is more bandwidth-bound than TRT (fewer arithmetic ops -> more time waiting on memory).
+# Adding the temperature field read (+2.4% bytes/cell) to an already bandwidth-saturated
+# kernel has outsized impact. The remaining ~8% overhead is attributed to memory system
+# effects (cache pressure, prefetch disruption from the extra field read).
 OVERHEAD_COMPONENTS = {
-    "Algorithmic\nbandwidth\n(+4.8 % bytes/cell)": 5.0,   # % wall-time contribution
-    "Extra L1 traffic\n(+20.9 % loads)":            3.5,
-    "Extra instructions\n(+21.3 % retired,\npartly hidden by IPC)": 2.0,
-    "Communication\nscheduling\n(net negative)":    -2.0,
+    "Algorithmic\nbandwidth\n(+2.4 % bytes/cell)": 2.4,   # % wall-time contribution
+    "Memory system\neffects\n(cache pressure,\nprefetch disruption)": 7.98,
 }
-OVERHEAD_MEASURED_PCT = 8.52   # measured total wall-clock overhead (%)
+OVERHEAD_MEASURED_PCT = 10.38   # measured total wall-clock overhead (%) with SRT
 
 # ── Fallback data (used when log files are missing or unparseable) ─────────────
-# Update this block after a new benchmark campaign.
+# SRT, D3Q19, 128x64x64, 4 MPI ranks, 60 000 timesteps, Xeon Gold 6326 (icx, woody NHR@FAU).
 FALLBACK_DATA = {
     LABEL_CONST: {
-        "mlups_total":   [67.1908, 66.5277, 66.7587, 66.7707, 66.5366],
-        "wall_time_s":   [468.178, 472.845, 471.209, 471.124, 472.726],
+        "mlups_total":   [72.7564, 72.4997, 72.3456, 72.5547, 72.3413],
+        "wall_time_s":   [432.365, 433.896, 434.819, 433.566, 434.845],
         "timer_total_s": {            # sum across 4 ranks (REDUCE_TOTAL)
-            "StreamCollide":    [1648.18, 1665.32, 1660.05, 1659.73, 1665.12],
-            "LBM Communication":[181.63,  183.06,  181.99,  181.88,  183.31],
-            "UBB":              [31.62,   31.57,   31.61,   31.58,   31.59],
-            "NoSlip":           [10.30,   10.41,   10.24,   10.22,   10.38],
+            "StreamCollide":    [1505.070, 1513.220, 1515.290, 1511.250],
+            "LBM Communication":[181.420,  179.380,  180.950,  180.270],
+            "UBB":              [31.590,   31.630,   31.570,   31.550],
+            "NoSlip":           [10.400,   10.360,   10.400,   10.230],
         },
     },
     LABEL_TEMPDEP: {
-        "mlups_total":   [62.1174, 61.3147, 61.5239, 61.3884, 61.2328],
-        "wall_time_s":   [506.417, 513.047, 511.302, 512.431, 513.733],
+        "mlups_total":   [65.9027, 65.5857, 65.6801, 65.6800, 65.5565],
+        "wall_time_s":   [477.329, 479.636, 478.947, 478.947, 479.850],
         "timer_total_s": {
-            "StreamCollide":    [1829.14, 1841.26, 1834.71, 1838.52, 1840.85],
-            "LBM Communication":[182.71,  183.42,  183.51,  183.79,  183.08],
-            "UBB":              [31.64,   31.58,   31.60,   31.61,   31.62],
-            "NoSlip":           [10.35,   10.42,   10.38,   10.40,   10.37],
+            "StreamCollide":    [1681.580, 1693.330, 1690.850, 1692.880],
+            "LBM Communication":[184.750,  182.270,  182.150,  179.930],
+            "UBB":              [31.580,   31.630,   31.630,   31.660],
+            "NoSlip":           [10.430,   10.380,   10.210,   10.330],
         },
     },
 }
@@ -413,12 +420,10 @@ def plot_overhead_decomposition() -> None:
     components = list(OVERHEAD_COMPONENTS.keys())
     values     = list(OVERHEAD_COMPONENTS.values())
 
-    # Short x-tick labels (details already shown in bar annotations and CONFIGURATION)
+    # Short x-tick labels derived from OVERHEAD_COMPONENTS keys
     short_labels = [
         "Algorithmic\nbandwidth",
-        "Extra L1\ntraffic",
-        "Extra\ninstructions",
-        "Comm.\nscheduling",
+        "Memory system\neffects",
     ]
 
     # Separate positive and negative
@@ -505,9 +510,9 @@ def plot_op_counts() -> None:
     # Legend above the axes so it never overlaps bars or delta labels
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=2)
     # Short note as fig.text outside the axes at the figure bottom
-    note = ("count_operations: AST-level diagnostic. "
-            "Measured instruction overhead: +21.3 % "
-            "(compiler fuses ops via AVX-512 FMA).")
+    note = ("count_operations: AST-level diagnostic (pre-compilation upper bound). "
+            "SRT symbolic overhead: +15 ops (+4.5 %); collision-main delta: +1 op (rest PDF only). "
+            "Measured wall overhead: +10.4 % (bandwidth-bound; SRT CSEs omega once per cell).")
     fig.text(0.50, 0.01, note, ha="center", va="bottom",
              fontsize=7.5, color="gray", style="italic")
     # rect reserves 7 % at bottom for note, 10 % at top for legend
@@ -563,7 +568,7 @@ def plot_summary(data: dict) -> None:
     fig = plt.figure(figsize=(15, 9))
     fig.suptitle(
         "Couette Flow Benchmark — MaterForge Overhead on Xeon Gold 6326 (Ice Lake, woody NHR@FAU)\n"
-        "D3Q19 TRT LBM, 128×64×64 cells, 4 MPI ranks, 60 000 timesteps",
+        "D3Q19 SRT (BGK) LBM, 128×64×64 cells, 4 MPI ranks, 60 000 timesteps",
         fontsize=12, y=0.99,
     )
 
