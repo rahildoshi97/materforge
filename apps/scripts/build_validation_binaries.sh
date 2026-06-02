@@ -34,6 +34,7 @@ for nu in "${NUS[@]}"; do
 
     cmake --preset woody-release-cpu \
           -DUSE_MATERFORGE=OFF -DCONST_NU="${nu}" \
+          -DCOLLISION_OP=SRT -DWRITE_VISCOSITY=OFF \
           -S "${APPS_DIR}" -B "${BUILD_DIR}" \
           > "${LOG_DIR}/configure_const_${nu}.log" 2>&1
 
@@ -54,6 +55,7 @@ echo "════════════════════════�
 
 cmake --preset woody-release-cpu \
       -DUSE_MATERFORGE=ON \
+      -DCOLLISION_OP=SRT -DWRITE_VISCOSITY=ON \
       -S "${APPS_DIR}" -B "${BUILD_DIR}" \
       > "${LOG_DIR}/configure_tempdep.log" 2>&1
 

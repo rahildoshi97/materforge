@@ -4,7 +4,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=4
 #SBATCH --cpus-per-task=1
-#SBATCH --time=00:35:00
+#SBATCH --time=00:45:00
 #SBATCH --array=0-9
 #SBATCH --output=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/validation/run_validation_%a.log
 #SBATCH --error=/home/hpc/iwia/iwia133h/.local/materforge/apps/logs/validation/run_validation_%a.err
