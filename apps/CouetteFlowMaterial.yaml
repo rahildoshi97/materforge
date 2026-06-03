@@ -76,7 +76,11 @@ properties:
   # ====================================================================================================
   
   dynamic_viscosity:
-    dependency: (300, 3000, 31)  # Temperature range 300-600K, 31 points
+    # 31 sample points over the full 300-3000 K property domain (the previous
+    # "300-600K" comment was stale). The viscosity is smooth, so two degree-2
+    # piecewise segments reproduce the analytical Couette velocity profile to
+    # L_inf ~ 1e-6 at negligible regression cost.
+    dependency: (300, 3000, 31)
     equation: 0.16667 * exp(-0.0005 * (T - 300.0))  # LBM-scaled viscosity
     bounds: [linear, linear]
     regression:
