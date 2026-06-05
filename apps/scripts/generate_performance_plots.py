@@ -102,35 +102,35 @@ OPS = {
 # ── Overhead decomposition estimates ──────────────────────────────────────────
 # SRT is more bandwidth-bound than TRT (fewer arithmetic ops -> more time waiting on memory).
 # Adding the temperature field read (+2.4% bytes/cell) to an already bandwidth-saturated
-# kernel has outsized impact. The remaining ~8% overhead is attributed to memory system
+# kernel has outsized impact. The remaining ~6% overhead is attributed to memory system
 # effects (cache pressure, prefetch disruption from the extra field read).
 OVERHEAD_COMPONENTS = {
     "Algorithmic\nbandwidth\n(+2.4 % bytes/cell)": 2.4,   # % wall-time contribution
-    "Memory system\neffects\n(cache pressure,\nprefetch disruption)": 7.98,
+    "Memory system\neffects\n(cache pressure,\nprefetch disruption)": 6.26,
 }
-OVERHEAD_MEASURED_PCT = 10.38   # measured total wall-clock overhead (%) with SRT
+OVERHEAD_MEASURED_PCT = 8.66   # measured total wall-clock overhead (%) with SRT
 
 # ── Fallback data (used when log files are missing or unparseable) ─────────────
 # SRT, D3Q19, 128x64x64, 4 MPI ranks, 60 000 timesteps, Xeon Gold 6326 (icx, woody NHR@FAU).
 FALLBACK_DATA = {
     LABEL_CONST: {
-        "mlups_total":   [72.7564, 72.4997, 72.3456, 72.5547, 72.3413],
-        "wall_time_s":   [432.365, 433.896, 434.819, 433.566, 434.845],
+        "mlups_total":   [73.2848, 73.2810, 73.2805, 73.3178, 73.2044],
+        "wall_time_s":   [429.247, 429.269, 429.272, 429.054, 429.718],
         "timer_total_s": {            # sum across 4 ranks (REDUCE_TOTAL)
-            "StreamCollide":    [1505.070, 1513.220, 1515.290, 1511.250],
-            "LBM Communication":[181.420,  179.380,  180.950,  180.270],
-            "UBB":              [31.590,   31.630,   31.570,   31.550],
-            "NoSlip":           [10.400,   10.360,   10.400,   10.230],
+            "StreamCollide":    [1489.740, 1491.800, 1493.170, 1492.470],
+            "LBM Communication":[184.110,  182.010,  180.680,  180.490],
+            "UBB":              [31.810,   31.940,   31.850,   31.940],
+            "NoSlip":           [10.340,   10.360,   10.390,   10.330],
         },
     },
     LABEL_TEMPDEP: {
-        "mlups_total":   [65.9027, 65.5857, 65.6801, 65.6800, 65.5565],
-        "wall_time_s":   [477.329, 479.636, 478.947, 478.947, 479.850],
+        "mlups_total":   [67.6305, 67.2501, 67.5343, 67.2823, 67.4662],
+        "wall_time_s":   [465.134, 467.765, 465.797, 467.542, 466.267],
         "timer_total_s": {
-            "StreamCollide":    [1681.580, 1693.330, 1690.850, 1692.880],
-            "LBM Communication":[184.750,  182.270,  182.150,  179.930],
-            "UBB":              [31.580,   31.630,   31.630,   31.660],
-            "NoSlip":           [10.430,   10.380,   10.210,   10.330],
+            "StreamCollide":    [1636.280, 1643.170, 1640.460, 1643.880],
+            "LBM Communication":[181.370,  184.410,  179.740,  182.970],
+            "UBB":              [31.780,   31.970,   31.840,   31.940],
+            "NoSlip":           [10.140,   10.460,   10.170,   10.370],
         },
     },
 }
@@ -512,7 +512,7 @@ def plot_op_counts() -> None:
     # Short note as fig.text outside the axes at the figure bottom
     note = ("count_operations: AST-level diagnostic (pre-compilation upper bound). "
             "SRT symbolic overhead: +15 ops (+4.5 %); collision-main delta: +1 op (rest PDF only). "
-            "Measured wall overhead: +10.4 % (bandwidth-bound; SRT CSEs omega once per cell).")
+            "Measured wall overhead: +8.7 % (bandwidth-bound; SRT CSEs omega once per cell).")
     fig.text(0.50, 0.01, note, ha="center", va="bottom",
              fontsize=7.5, color="gray", style="italic")
     # rect reserves 7 % at bottom for note, 10 % at top for legend
