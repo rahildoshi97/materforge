@@ -157,8 +157,12 @@ function(add_unified_executable TARGET_NAME SOURCE_FILE SWEEP_SCRIPT)
     set(COLLISION_SCRIPT_ARG "--collision-operator=${COLLISION_OP}")
     if(WRITE_VISCOSITY AND USE_MATERFORGE)
         set(VISC_SCRIPT_ARG "--write-viscosity")
+        # The generated StreamCollide kernel takes the viscosity field as a ctor
+        # argument only in this case; mirror it to C++ so the ctor call matches.
+        target_compile_definitions(${TARGET_NAME} PRIVATE WRITE_VISCOSITY=1)
     else()
         set(VISC_SCRIPT_ARG "")
+        target_compile_definitions(${TARGET_NAME} PRIVATE WRITE_VISCOSITY=0)
     endif()
 
     # Determine target platform for code generation

@@ -51,6 +51,16 @@ namespace CouetteFlow
 #define USE_MATERFORGE 1
 #endif
 
+// WRITE_VISCOSITY is set by CMake and mirrors the --write-viscosity flag passed
+// to CouetteFlowSweeps.py.  It tracks the same (WRITE_VISCOSITY AND USE_MATERFORGE)
+// condition CMake uses for code generation, so the generated StreamCollide kernel
+// takes the viscosity field as a constructor argument iff this is 1.  The C++
+// constructor call below must match the generated kernel's arity exactly, so it is
+// gated on this macro.  Never edit manually - change the CMake option instead.
+#ifndef WRITE_VISCOSITY
+#define WRITE_VISCOSITY 0
+#endif
+
 using namespace walberla;
 
 // Type definitions
@@ -212,18 +222,32 @@ void run(int argc, char **argv)
     // CREATE STREAM-COLLIDE SWEEP
     //======================================================================
     
-    // For USE_MATERFORGE=ON the generated StreamCollide takes
-    //   (density, pdfs, temperature, velocity, viscosity)   — viscosity is written each step.
-    // For USE_MATERFORGE=OFF the viscosity write is omitted from the kernel (it would just
-    // store a compile-time constant into every cell every step, wasting memory bandwidth).
-    // The constructor therefore only takes (density, pdfs, velocity).
+    // The generated StreamCollide constructor's argument list mirrors exactly which
+    // fields the generated kernel touches, so the call below is gated on the same CMake
+    // options that drive code generation:
+    //   USE_MATERFORGE=ON  -> the kernel reads the temperature field (tempId).
+    //   WRITE_VISCOSITY=1  -> the kernel also writes the viscosity field (viscId); this is
+    //                         set only for validation/VTK runs.  For performance benchmarks
+    //                         it is omitted to save 8 B/cell/step.  CMake forces this to 0
+    //                         whenever USE_MATERFORGE=OFF (there is no viscosity field then).
+    // Resulting constructor arities:
+    //   USE_MATERFORGE=ON,  WRITE_VISCOSITY=1 -> (density, pdfs, temperature, velocity, viscosity)
+    //   USE_MATERFORGE=ON,  WRITE_VISCOSITY=0 -> (density, pdfs, temperature, velocity)
+    //   USE_MATERFORGE=OFF                    -> (density, pdfs, velocity)
 #ifdef WALBERLA_BUILD_WITH_GPU_SUPPORT
     std::shared_ptr<gen::Couette::StreamCollide> streamCollidePtr;
     #if USE_MATERFORGE
-        WALBERLA_LOG_INFO_ON_ROOT("Using temperature-dependent viscosity (MaterForge) - GPU");
-        streamCollidePtr = std::make_shared<gen::Couette::StreamCollide>(
-            gpuRhoId, gpuPdfsId, gpuTempId, gpuUId, gpuViscId
-        );
+        #if WRITE_VISCOSITY
+            WALBERLA_LOG_INFO_ON_ROOT("Using temperature-dependent viscosity (MaterForge), viscosity write ON - GPU");
+            streamCollidePtr = std::make_shared<gen::Couette::StreamCollide>(
+                gpuRhoId, gpuPdfsId, gpuTempId, gpuUId, gpuViscId
+            );
+        #else
+            WALBERLA_LOG_INFO_ON_ROOT("Using temperature-dependent viscosity (MaterForge), viscosity write OFF - GPU");
+            streamCollidePtr = std::make_shared<gen::Couette::StreamCollide>(
+                gpuRhoId, gpuPdfsId, gpuTempId, gpuUId
+            );
+        #endif
     #else
         WALBERLA_LOG_INFO_ON_ROOT("Using constant viscosity - GPU");
         streamCollidePtr = std::make_shared<gen::Couette::StreamCollide>(
@@ -234,10 +258,17 @@ void run(int argc, char **argv)
 #else
     std::shared_ptr<gen::Couette::StreamCollide> streamCollidePtr;
     #if USE_MATERFORGE
-        WALBERLA_LOG_INFO_ON_ROOT("Using temperature-dependent viscosity (MaterForge) - CPU");
-        streamCollidePtr = std::make_shared<gen::Couette::StreamCollide>(
-            rhoId, pdfsId, tempId, uId, viscId
-        );
+        #if WRITE_VISCOSITY
+            WALBERLA_LOG_INFO_ON_ROOT("Using temperature-dependent viscosity (MaterForge), viscosity write ON - CPU");
+            streamCollidePtr = std::make_shared<gen::Couette::StreamCollide>(
+                rhoId, pdfsId, tempId, uId, viscId
+            );
+        #else
+            WALBERLA_LOG_INFO_ON_ROOT("Using temperature-dependent viscosity (MaterForge), viscosity write OFF - CPU");
+            streamCollidePtr = std::make_shared<gen::Couette::StreamCollide>(
+                rhoId, pdfsId, tempId, uId
+            );
+        #endif
     #else
         WALBERLA_LOG_INFO_ON_ROOT("Using constant viscosity - CPU");
         streamCollidePtr = std::make_shared<gen::Couette::StreamCollide>(
