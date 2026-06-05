@@ -104,6 +104,8 @@ override individual options.
 | `TARGET_PLATFORM`  | `GPU-HIP`   | `CPU`, `GPU-CUDA`, or `GPU-HIP`                               |
 | `USE_MATERFORGE`   | `ON`        | `ON` -> MaterForge `nu(T)` baked in; `OFF` -> literal `CONST_NU` |
 | `CONST_NU`         | `0.16667`   | Constant kinematic viscosity baked into the sweep when `USE_MATERFORGE=OFF` |
+| `COLLISION_OP`     | `SRT`       | LBM collision operator: `SRT`, `TRT`, or `MRT`               |
+| `WRITE_VISCOSITY`  | `OFF`       | `ON` -> write `nu` field each step for VTK (validation only); `OFF` -> omit it (performance). Sets the generated `StreamCollide` constructor arity, which `CouetteFlowScaling.cpp` matches automatically. |
 
 ### Available presets
 
@@ -161,8 +163,9 @@ bash apps/scripts/build_validation_binaries.sh
 ```
 
 Produces, under `apps/build/woody-release-cpu/`:
-- `CouetteFlowScaling_const_0.04` ... `CouetteFlowScaling_const_1.0`
-- `CouetteFlowScaling_tempdep`
+- `CouetteFlowScaling_const_0.04` ... `CouetteFlowScaling_const_1.0` (all `WRITE_VISCOSITY=OFF`)
+- `CouetteFlowScaling_tempdep` — `WRITE_VISCOSITY=ON`, for validation/VTK runs
+- `CouetteFlowScaling_tempdep_perf` — `WRITE_VISCOSITY=OFF`, the performance-benchmark binary used by `run_perf_tempdep.sh`
 
 cmake/make logs land in `apps/logs/build/{configure,build}_<case>.log`.
 

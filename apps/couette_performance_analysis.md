@@ -1,10 +1,22 @@
 # Performance Analysis: Constant vs Temperature-Dependent Viscosity in a 3D LBM Couette Flow
 
-**Benchmark setup** — 3D thermal Couette flow, D3Q19 lattice, TRT collision, generated with
-lbmpy / pystencils / sweepgen; integrated with the waLBerla LBM framework. The
+**Benchmark setup** — 3D thermal Couette flow, D3Q19 lattice, generated with
+lbmpy / pystencils / sweepgen and integrated with the waLBerla LBM framework. The
 temperature-dependent viscosity is provided by **MaterForge** from a YAML material
 specification and inlined into the generated stream-collide kernel as a SymPy
 `Piecewise` expression.
+
+This study reports **both collision operators** that the build supports without source
+changes: **SRT** (single relaxation time, the default in `build_validation_binaries.sh`
+and `run_perf_*.sh`) and **TRT** (two relaxation times). The two differ enormously in how
+much extra *symbolic* arithmetic the temperature-dependent law introduces, which makes the
+pair a clean test of whether `count_operations` predicts measured performance.
+
+All performance binaries are built with **`WRITE_VISCOSITY=OFF`**: the viscosity field is a
+visualisation-only output and has no analogue in the constant-ν kernel, so omitting it keeps
+the const-vs-tempdep comparison operator- and traffic-matched (tempdep 344 B/cell, const
+336 B/cell). The validation binary (`CouetteFlowScaling_tempdep`) uses `WRITE_VISCOSITY=ON`
+and is *not* used for timing.
 
 ## 1. Experimental configuration
 
@@ -12,435 +24,343 @@ specification and inlined into the generated stream-collide kernel as a SymPy
 |--------------------------|----------------------------------------------------------------------|
 | Hardware                 | Intel Xeon Gold 6326 (Ice Lake, 16 cores/socket, 2 sockets @ 2.90 GHz) |
 | Memory                   | DDR4-3200, 8 channels/socket (≈ 204.8 GB/s theoretical peak per socket) |
-| Cluster                  | woody (NHR@FAU), node w2304, AlmaLinux 8                            |
-| Compiler                 | GCC 13.3.0, OpenMPI 4.1.3                                           |
+| Cluster                  | woody (NHR@FAU), Ice Lake nodes (`--constraint=icx`), AlmaLinux 8   |
+| Compiler                 | GCC 13.3.0 (spack), OpenMPI 4.1.3                                  |
 | Parallelism              | 4 MPI processes, each pinned to one core on socket 0 (cores 0–3)   |
-| CPU pinning              | `--bind-to core --map-by core` (OpenMPI); binding verified via `--report-bindings` |
-| Node allocation          | `--exclusive` — sole occupant of node during all runs               |
-| Warmup                   | 100 timesteps before timed region (cache, TLB, and page-table warmup) |
+| CPU pinning              | `--bind-to core --map-by core` (OpenMPI); verified via `--report-bindings` |
+| Node allocation          | `--exclusive` — sole occupant of the node during all runs           |
+| Warmup                   | 100 timesteps before timed region (cache, TLB, page-table warmup)  |
 | Domain                   | 128 × 64 × 64 cells (524 288 total)                                 |
 | Decomposition            | 1 × 2 × 2 blocks of 128 × 32 × 32 cells                            |
-| Lattice / method         | D3Q19, TRT, FP64                                                    |
+| Lattice / precision      | D3Q19, FP64                                                        |
+| Collision operators      | **SRT** (default) and **TRT**, each const-vs-tempdep on one node   |
+| Viscosity write          | **OFF** for all timed binaries (344 B/cell tempdep, 336 B/cell const) |
 | Wall velocity `u_max`    | 0.025 (lattice units)                                               |
 | Wall temperatures        | T_bottom = 300 K, T_top = 3000 K                                    |
 | Timesteps                | 60 000                                                              |
-| VTK output               | disabled (`vtkWriteFrequency = 0`)                                  |
 | Trials per case          | **5** (serial, no overlap between cases)                            |
 | Statistics               | mean ± sample std; 95 % CI from t-distribution (df = 4)             |
-| Total lattice updates    | 3.146 × 10¹⁰ per trial                                              |
 
-Two cases are compared on identical hardware, domain, and timestep count:
+Two cases are compared on identical hardware, domain, and timestep count, for each operator:
 
 1. **Constant viscosity** — ν = 0.08, baked into the generated kernel at compile time
-   via `cmake -DUSE_MATERFORGE=OFF -DCONST_NU=0.08`. The viscosity field is **not
-   written** by the kernel in this case (it would store a compile-time constant to
-   every cell every step, wasting memory bandwidth for no physics gain).
-2. **Temperature-dependent viscosity (MaterForge)** — `CouetteFlowMaterial.yaml`
-   defines `dynamic_viscosity(T) = 0.16667·exp(−0.0005·(T − 300))` over
-   T ∈ [300, 3000] K. MaterForge fits this with a two-segment degree-2 piecewise
-   polynomial (break at T ≈ 1536.24 K), inlined as the SymPy `Piecewise` expression
-   shown below. The viscosity is computed from the temperature field and written to
-   the viscosity field each step.
+   via `cmake -DUSE_MATERFORGE=OFF -DCONST_NU=0.08`. The viscosity field is not written.
+2. **Temperature-dependent viscosity (MaterForge)** — `CouetteFlowMaterial.yaml` defines
+   `dynamic_viscosity(T) = 0.16667·exp(−0.0005·(T − 300))` (a dimensionless lattice
+   viscosity) over T ∈ [300, 3000] K. MaterForge fits it with a two-segment degree-2
+   piecewise polynomial (break at T ≈ 1536 K), inlined as the `Piecewise` shown below. The
+   temperature field is read each step; the viscosity field is **not** written (perf config).
 
 ```
-ν(T) =
+ν(T) ≈
     1.502e-8·T² − 8.954e-5·T + 0.19194   if T < 1536.24 K
     8.116e-9·T² − 6.852e-5·T + 0.17593   otherwise
 ```
 
 ## 2. Code-generation metric — `count_operations`
 
-`pystencils.sympyextensions.count_operations` reports the symbolic arithmetic
-operation count of the AssignmentCollection that defines the stream-collide
-sweep, *before compilation*. Numbers below are taken directly from the build log.
+`pystencils.sympyextensions.count_operations` reports the symbolic arithmetic operation
+count of the stream-collide `AssignmentCollection` *before compilation*. Numbers below are
+taken directly from the code-generation logs (`apps/logs/build/*.log`).
 
-### 2.1 Constant viscosity (ν = 0.08)
+### 2.1 Operation counts per operator (`WRITE_VISCOSITY=OFF`)
 
-| Block             | adds | muls | divs | total |
-|-------------------|-----:|-----:|-----:|------:|
-| Collision main    |  103 |  200 |    0 |   303 |
-| Subexpressions    |   64 |   12 |    1 |    77 |
-| **Total**         |  **167** | **212** | **1** | **380** |
+| Operator | Case      | adds | muls | divs | **Total** | Algorithmic BW |
+|----------|-----------|-----:|-----:|-----:|----------:|---------------:|
+| **SRT**  | const     |  149 |  182 |    1 | **332**   | 336 B/cell     |
+| **SRT**  | temp-dep  |  173 |  172 |    2 | **347**   | 344 B/cell     |
+| **TRT**  | const     |  167 |  212 |    1 | **380**   | 336 B/cell     |
+| **TRT**  | temp-dep  |  234 |  289 |    4 | **527**   | 344 B/cell     |
 
-The constant `omega = 2 / (6·ν + 1) = 1.3513…` is folded into the generated
-code as a literal. The viscosity field is **not** written back each step.
+Bandwidth (both operators): base 336 B/cell = 19 PDFs read × 8 B + 19 PDFs write × 8 B +
+density write 8 B + velocity write 24 B; temp-dep adds the 8 B/cell temperature read → 344.
+(With `WRITE_VISCOSITY=ON` the tempdep kernel would add a further 8 B viscosity write → 352
+B/cell and ≈ +10 ops; that build is for VTK only and is not benchmarked here.)
 
-**Algorithmic bandwidth: 336 B/cell**
-(19 PDFs read × 8 B + 19 PDFs write × 8 B + density write 8 B + velocity write 24 B)
+### 2.2 Symbolic deltas — the key contrast
 
-### 2.2 Temperature-dependent viscosity (MaterForge)
+| Operator | const → temp-dep ops | Δ ops | **Δ %**   | BW Δ        |
+|----------|---------------------:|------:|----------:|------------:|
+| **SRT**  | 332 → 347            | **+15**  | **+4.5 %**  | +8 B (+2.4 %) |
+| **TRT**  | 380 → 527            | **+147** | **+38.7 %** | +8 B (+2.4 %) |
 
-| Block             | adds | muls | divs | total |
-|-------------------|-----:|-----:|-----:|------:|
-| Collision main    |  158 |  260 |    0 |   418 |
-| Subexpressions    |   76 |   29 |    4 |   109 |
-| **Total**         |  **238** | **295** | **4** | **537** |
-
-The polynomial fit produced by MaterForge introduces a runtime per-cell
-viscosity evaluation and three additional divisions inside the relaxation-rate
-computation. The temperature field is read and the viscosity field is written
-each step.
-
-**Algorithmic bandwidth: 352 B/cell**
-(base 336 B + temperature read 8 B + viscosity write 8 B)
-
-### 2.3 Symbolic-operation and bandwidth deltas
-
-| Metric      | Const | Temp-dep | Δ      | Δ %      |
-|-------------|------:|---------:|-------:|---------:|
-| adds        |   167 |      238 |    +71 | +42.5 %  |
-| muls        |   212 |      295 |    +83 | +39.2 %  |
-| divs        |     1 |        4 |     +3 | +300 %   |
-| **Total ops** | **380** | **537** | **+157** | **+41.3 %** |
-| **BW (alg.)** | **336 B/cell** | **352 B/cell** | **+16 B** | **+4.8 %** |
-
-> **Note:** In the previous (pre-fix) code, the constant kernel also wrote the
-> viscosity field every step (a redundant constant-store), inflating its bandwidth
-> to 344 B/cell and underreporting the true bandwidth gap as +2.3 % instead of +4.8 %.
+The temperature-dependent law inflates the symbolic op count **8.6× more for TRT than for
+SRT**. For SRT, lbmpy common-subexpression-eliminates ω(T) so it is evaluated once per cell
+in the subexpressions block and the collision main barely changes (+1 op on the rest PDF);
+the +14 remaining ops are the ν(T) polynomial. For TRT, the symbolic factors `rr_0·(…)` and
+`rr_1·(…)` cannot be folded into literal coefficients when ω is a per-cell symbol, so every
+PDF update retains explicit relaxation factors → +147 ops. **§3 shows this 8.6× symbolic gap
+all but vanishes in the measured wall-clock overhead.**
 
 ## 3. Runtime performance
 
-Each case ran for 60 000 timesteps on an exclusive node with CPU pinning,
-5 independent trials each, submitted serially (const job completes fully before
-tempdep job starts). Statistics use the two-sided t-distribution with df = 4.
+Each case ran 60 000 timesteps on an exclusive node with CPU pinning, 5 independent trials,
+const and temp-dep submitted on the **same node** for each operator (SRT on w2510, TRT on
+w2502). Statistics use the two-sided t-distribution with df = 4.
 
 ### 3.1 Headline numbers (5-trial statistics)
 
-| Metric                       | Constant ν=0.08       | Temp-dep              | Ratio (T/C)   |
-|------------------------------|-----------------------:|-----------------------:|:-------------:|
-| Total MLUPS (mean ± std)     | **66.76 ± 0.27**      | **61.52 ± 0.35**      | **0.9215 ×**  |
-| 95 % CI                      | [66.42, 67.09]        | [61.08, 61.95]        |               |
-| MLUPS per process (mean ± std) | 16.69 ± 0.07        | 15.38 ± 0.09          |               |
-| Wall time (mean ± std)       | 471.2 ± 1.9 s         | 511.4 ± 2.9 s         | **1.0852 ×**  |
-| 95 % CI                      | [468.9, 473.6] s      | [507.8, 515.0] s      |               |
-| Time per timestep (mean)     | 7.854 ms              | 8.523 ms              |               |
-| L∞ error (vs analytical)     | 1.51 × 10⁻⁷           | 1.76 × 10⁻⁶           | 11.6 ×        |
-| Convergence threshold passed | yes (all 5 trials)    | yes (all 5 trials)    |               |
+| Metric                       | **SRT** const | **SRT** temp-dep | **TRT** const | **TRT** temp-dep |
+|------------------------------|--------------:|-----------------:|--------------:|-----------------:|
+| Total MLUPS (mean ± std)     | 73.27 ± 0.04  | 67.43 ± 0.16     | 67.38 ± 0.13  | 62.27 ± 0.13     |
+| 95 % CI                      | [73.22, 73.33]| [67.23, 67.64]   | [67.22, 67.55]| [62.11, 62.43]   |
+| Wall time (mean)             | 429.3 s       | 466.5 s          | 466.8 s       | 505.2 s          |
+| **MLUPS overhead (T vs C)**  | —             | **7.97 %**       | —             | **7.59 %**       |
+| **Wall-clock overhead**      | —             | **8.66 %**       | —             | **8.21 %**       |
+| L∞ error (vs analytical)     | 1.51 × 10⁻⁷   | 1.76 × 10⁻⁶      | 1.51 × 10⁻⁷   | 1.76 × 10⁻⁶      |
+| Convergence threshold passed | —             | yes (5/5)        | —             | yes (5/5)        |
 
-The temperature-dependent kernel is **7.85 % slower** in MLUPS
-(equivalently **8.52 % more wall-clock time**).  
-`count_operations` predicts a **41.3 % increase** in symbolic FLOPs.  
-The measured overhead is *less than one-fifth* of the symbolic prediction.
+**The central result:** SRT adds **+4.5 %** symbolic ops and TRT adds **+38.7 %** — an 8.6×
+difference — yet the measured temperature-dependent overhead is **7.6–8.0 %** for *both*
+operators (8.2–8.7 % wall-clock). The overhead is essentially independent of the symbolic
+arithmetic increase, because both kernels are bandwidth-bound and the dominant marginal cost
+is the +8 B/cell temperature read (+2.4 % algorithmic bandwidth), not the polynomial FLOPs.
 
-The 95 % confidence intervals do not overlap (const lower bound 66.42 vs temp-dep
-upper bound 61.95), and a two-sample t-test confirms the difference is highly
-significant (p = 4.55 × 10⁻⁹).
+SRT is the faster operator in absolute terms (≈ 73 vs ≈ 67 MLUPS for const), consistent with
+its lower op count; TRT eliminates wall slip exactly for any ν/grid at ~8 % lower throughput.
+Both reach the same L∞ accuracy here.
 
-> **Note on previous woody measurements:** An earlier run (SLURM jobs 11733402/03)
-> used only 1 trial per case, 5 warmup steps, no `--exclusive`, and ran both
-> cases concurrently on the same node. That run reported 62.88 / 58.78 MLUPS
-> (ratio 1.070 ×). The new measurements (exclusive node, CPU pinning, 5 trials)
-> give 66.76 / 61.52 MLUPS (ratio 1.085 ×). The 6 % MLUPS increase for both
-> cases reflects elimination of node-sharing interference; the overhead ratio
-> increased slightly (7.0 % -> 8.5 %) because removing the redundant viscosity
-> write from the const kernel made the const case proportionally faster.
+The 95 % confidence intervals for const and temp-dep do not overlap within either operator,
+so the overhead is statistically significant (the per-operator std is < 0.25 % of the mean).
 
-The L∞ error is identical across all 5 trials within each case — it is
-deterministic for a given binary and domain (fully converged LBM solution).
-The temp-dep L∞ of 1.76 × 10⁻⁶ is bounded by the degree-12 polynomial fit
-used as the reference (polynomial fit error: 8.01 × 10⁻⁶ against the
-high-resolution numerical integration); the LBM itself is fully converged.
+### 3.2 waLBerla timer breakdown (SRT, 60 000 steps, 4-rank sums, mean of trials)
 
-### 3.2 waLBerla timer breakdown (60 000 timesteps, mean across 5 trials)
+| Timer              | const ν=0.08 | temp-dep   | Δ time    | const %  | temp-dep % |
+|--------------------|-------------:|-----------:|----------:|---------:|-----------:|
+| **StreamCollide**  | **1491.8 s** | **1640.9 s** | **+149.1 s** | **88.4 %** | **89.4 %** |
+| LBM Communication  |    181.8 s   |    182.1 s   |   +0.3 s  |  10.8 %  |   9.9 %   |
+| UBB boundary       |     31.9 s   |     31.9 s   |   ±0.0 s  |   1.9 %  |   1.7 %   |
+| NoSlip boundary    |     10.4 s   |     10.3 s   |   ±0.0 s  |   0.6 %  |   0.6 %   |
 
-All times are **summed across 4 ranks** (total CPU-seconds per trial).
-
-| Timer              | Const ν=0.08 (mean) | Temp-dep (mean) | Δ time      | Const %   | Temp-dep % |
-|--------------------|--------------------:|----------------:|------------:|----------:|-----------:|
-| **StreamCollide**  | **1659.6 ± 6.9 s** | **1826.9 ± 7.8 s** | **+167.2 s** | **88.1 %** | **89.3 %** |
-| LBM Communication  |    182.4 ± 0.7 s   |    183.5 ± 0.2 s   |   +1.1 s   |   9.7 %  |   9.0 %   |
-| UBB boundary       |     31.6 ± 0.1 s   |     31.6 ± 0.1 s   |   ±0.0 s   |   1.7 %  |   1.5 %   |
-| NoSlip boundary    |     10.4 ± 0.1 s   |     10.4 ± 0.1 s   |   ±0.0 s   |   0.6 %  |   0.5 %   |
-
-StreamCollide delta per rank: **+41.8 s/rank** (+10.1 %). The StreamCollide
-overhead (10.1 %) slightly exceeds the overall wall-clock overhead (8.52 %)
-because the slight increase in communication fraction cancels part of it.
-Communication, boundary, and timer-logger times are statistically identical
-between cases — all overhead originates in the StreamCollide kernel.
-
-The per-rank average (`REDUCE_AVG`) and max-rank (`REDUCE_MAX`) reductions were
-also collected. `REDUCE_MAX / REDUCE_AVG` ≈ 1.0 for StreamCollide in both cases,
-confirming negligible rank imbalance with 4 well-pinned, equally-loaded processes.
+The entire temp-dep overhead lands in **StreamCollide** (+10.0 % per-rank); communication and
+boundary times are statistically identical between cases. TRT shows the same structure
+(StreamCollide ≈ 89 % of wall time, all overhead in the collision kernel). `REDUCE_MAX /
+REDUCE_AVG ≈ 1.0` for StreamCollide in all cases, confirming negligible rank imbalance with
+4 well-pinned, equally-loaded processes.
 
 ### 3.3 Bandwidth-vs-compute regime
 
-At the observed const-ν throughput of 66.76 MLUPS:
+At the observed SRT const-ν throughput of 73.27 MLUPS:
 
-  66.76 × 10⁶ cells/s × 336 B/cell = **22.43 GB/s of DRAM bandwidth**
+  73.27 × 10⁶ cells/s × 336 B/cell = **24.6 GB/s of DRAM bandwidth**
 
-against a theoretical peak of ≈ 204.8 GB/s per socket (Xeon Gold 6326,
-8 channels DDR4-3200). The 4 pinned processes on socket 0 consume roughly
-**11 % of one socket's peak memory bandwidth** — the kernel is far from
-bandwidth-saturated.
+against ≈ 204.8 GB/s peak per socket. The 4 pinned processes on socket 0 consume roughly
+**12 % of one socket's peak bandwidth**. The temp-dep case (67.43 MLUPS × 344 B = 23.2 GB/s)
+and both TRT cases (22.6 / 21.4 GB/s) sit in the same ≈ 11–12 % band. The kernel is far from
+bandwidth-saturated, which is exactly why extra arithmetic is cheap (§4).
 
-For the temp-dep case: 61.52 × 10⁶ × 352 B = **21.65 GB/s** (10.6 % of peak).
-The slightly lower absolute bandwidth is expected — the kernel does more
-arithmetic per cell, reducing throughput, but still operates well below saturation.
+## 4. Why the overhead is independent of the symbolic FLOP ratio
 
-## 4. Why the overhead is smaller than the FLOP ratio
+| Quantity                          | SRT     | TRT     |
+|-----------------------------------|--------:|--------:|
+| Symbolic op ratio (count_operations) | 1.045 | 1.387   |
+| Measured wall-time ratio          | 1.087   | 1.082   |
+| Direction vs prediction           | measured **above** symbolic | measured **far below** symbolic |
 
-| Symbol ratio (FLOPs)    | 1.413 × |
-|-------------------------|---------|
-| Measured ratio (time)   | 1.085 × |
-| Direction vs prediction | Measured **below** symbolic — extra arithmetic hidden |
+The symbolic ratio is a wildly unreliable predictor in *both* directions: it under-predicts
+the SRT overhead (1.045 symbolic vs 1.087 measured) and massively over-predicts the TRT
+overhead (1.387 symbolic vs 1.082 measured). The reason the two operators land at the same
+~8 % is structural, not coincidental:
 
-Three mechanisms explain why 41 % more symbolic FLOPs produce only 8.5 % more
-wall time on the Xeon Gold 6326:
+1. **Bandwidth headroom hides arithmetic.** At ≈ 12 % of peak bandwidth, each memory access
+   is serviced with short latency relative to compute throughput. The extra polynomial
+   arithmetic executes in functional units that are otherwise idle waiting for the next
+   cache line, so it is **absorbed inside memory-access stalls** by the Ice Lake
+   out-of-order engine (512-entry reorder buffer). For TRT the extra `rr_0/rr_1` factors are
+   far more numerous but still fit inside those stalls.
 
-1. **Abundant bandwidth headroom hides arithmetic.** At ≈ 11 % of peak bandwidth,
-   each memory access is serviced with very short latency relative to the
-   compute-pipeline throughput. The extra polynomial arithmetic — roughly
-   +78 add/mul and +3 div per cell — executes in functional units that are
-   otherwise idle waiting for the next cache-line to arrive. The cost is
-   **absorbed inside memory-access stalls** by the Ice Lake out-of-order
-   engine, which has a 512-entry reorder buffer, allowing it to keep far
-   more arithmetic in flight concurrently with outstanding loads.
+2. **AVX-512 execution width + FMA fusion.** The Xeon Gold 6326 executes 8 × FP64 lanes per
+   instruction. Many symbolic adds/muls fuse into single FMA instructions, so the *retired
+   instruction* increase is much smaller than the symbolic op increase (§8: SRT +14 %, TRT
+   +20 % real instructions vs +4.5 % / +38.7 % symbolic).
 
-2. **AVX-512 execution width.** The Xeon Gold 6326 natively executes AVX-512
-   instructions, providing 512-bit SIMD for double-precision arithmetic. Even
-   the `Piecewise` conditional — emitted by pystencils as a select/blend
-   construct — is executed efficiently across all eight FP64 lanes of an
-   AVX-512 register with no branch-misprediction overhead.
+3. **`Piecewise` becomes a branchless blend.** GCC emits the conditional as a vectorised
+   select (`vblendvpd`/mask): both polynomial branches are evaluated and one is selected, so
+   there is no branch-misprediction cost and the workload is divergence-free.
 
-3. **Division latency improvement.** The +3 extra double-precision divisions per
-   cell still carry non-trivial latency (≈ 14–20 cycles on Ice Lake). However,
-   because the Ice Lake pipeline is so deeply pipelined and the memory access
-   latency is relatively long (many outstanding cache misses), the divider can
-   overlap execution with memory stalls — reducing the net wall-clock cost
-   of the extra divisions.
-
-In aggregate, the server CPU provides enough execution resources that the extra
-arithmetic of the MaterForge material law is nearly **free at this domain
-size** — the 8.5 % overhead is dominated by the +4.8 % algorithmic bandwidth
-increase (temperature read + viscosity write) and communication/synchronisation
-effects, not by the polynomial FLOPs themselves.
+The marginal cost that *does* survive is the +8 B/cell temperature read (+2.4 % algorithmic
+bandwidth) plus second-order memory-system effects, both operator-independent — hence the
+common ~8 %.
 
 A useful framing for a paper:
 
-> *On a bandwidth-rich server CPU (Xeon Gold 6326, ≈ 11 % of peak bandwidth
-> utilised), the MaterForge temperature-dependent viscosity kernel introduces
-> only 7.85 % throughput reduction (8.52 % wall-clock overhead) despite a 41 %
-> symbolic FLOP increase — the extra arithmetic is hidden inside memory-access
-> stalls by the deep out-of-order engine and AVX-512 execution units,
-> underscoring that FLOP counts alone cannot predict LBM kernel performance.*
+> *On a bandwidth-rich server CPU (Xeon Gold 6326, ≈ 12 % of peak bandwidth utilised), the
+> MaterForge temperature-dependent viscosity kernel adds only 7.6–8.0 % MLUPS overhead
+> (8.2–8.7 % wall-clock) for both SRT and TRT collision — despite the temperature-dependent
+> law inflating the symbolic operation count by +4.5 % (SRT) and +38.7 % (TRT). The 8.6×
+> difference in symbolic arithmetic does not appear in the measured overhead: the kernel is
+> bandwidth-bound and the extra arithmetic is hidden inside memory-access stalls by the deep
+> out-of-order engine and AVX-512 execution units. FLOP counts alone cannot predict LBM
+> kernel performance.*
 
 ## 5. Why `count_operations` is not a sufficient performance metric
 
-`count_operations` is a useful **code-generation diagnostic**. It quickly
-exposes how complex a generated kernel is and lets one compare alternative
-material models at sub-second cost, without rebuilding or running. But it
-has structural limitations as a *performance* metric on real hardware:
+`count_operations` is a useful **code-generation diagnostic**: it cheaply exposes how complex
+a generated kernel is and lets one compare material models without rebuilding. But the SRT/TRT
+contrast above shows it fails as a *performance* metric on real hardware:
 
 | Limitation                                   | Consequence on Xeon Gold 6326 (Ice Lake)                       |
 |----------------------------------------------|----------------------------------------------------------------|
-| Treats all FLOPs identically                 | div cost hidden in memory-access stalls -> over-predicts overhead |
-| Ignores compiler-pipeline effects            | Misses AVX-512 FMA fusion and efficiency gain                  |
-| Has no notion of memory traffic or bandwidth | Misses bandwidth headroom absorbing extra compute              |
-| Platform-agnostic by construction            | Cannot predict how overhead scales with bandwidth utilisation  |
+| Treats all symbolic ops identically          | over-predicts TRT overhead 5×; under-predicts SRT overhead     |
+| Counts both `Piecewise` branches             | only one polynomial result is used; both are evaluated cheaply |
+| Ignores compiler-pipeline effects            | misses AVX-512 FMA fusion (symbolic → retired-instruction gap) |
+| Has no notion of memory traffic or bandwidth | misses the bandwidth headroom that absorbs extra compute       |
+| Platform-agnostic by construction            | cannot predict how overhead scales with bandwidth utilisation  |
 
-The right end-to-end metric is **MLUPS**, which the waLBerla driver prints
-after every run. It captures all of the above effects on the real target
-hardware. Intended usage:
-
-1. Use `count_operations` at code-generation time as a quick sanity check
-   that the symbolic AST is not pathologically large.
-2. Report MLUPS (and, where space permits, the StreamCollide-vs-Communication
-   breakdown) as the actual benchmark figure, with ≥ 5 independent trials and
-   95 % confidence intervals from the t-distribution.
-3. Run on the *target* hardware class; results are highly platform-dependent
-   (bandwidth utilisation is the dominant factor, not raw FLOP count).
+The right end-to-end metric is **MLUPS**, printed by the waLBerla driver after every run.
+Intended usage: (1) use `count_operations` at code-gen time as a quick sanity check that the
+AST is not pathologically large; (2) report MLUPS (with the StreamCollide-vs-Communication
+breakdown) as the benchmark figure, ≥ 5 trials with 95 % CIs; (3) run on the *target* hardware
+class — bandwidth utilisation, not raw FLOP count, governs how much extra arithmetic matters.
 
 ## 6. Summary for the publication
 
-* **On woody (Xeon Gold 6326, Ice Lake, NHR@FAU, exclusive node, 5 trials):**
-  MaterForge temperature-dependent viscosity adds 41 % symbolic FLOPs but only
-  **7.85 % throughput reduction** (8.52 % wall-clock overhead) for a 524 288-cell,
-  60 000-timestep 3D Couette benchmark (4 MPI processes, 128 × 64 × 64 domain;
-  p = 4.6 × 10⁻⁹, 95 % CI for const [66.42, 67.09] and temp-dep [61.08, 61.95] MLUPS).
-* The kernel sustains ≈ 11 % of peak memory bandwidth; it is strongly
-  **memory-latency-bound**. The extra polynomial arithmetic (+157 ops/cell) is
-  absorbed by the deep out-of-order pipeline and AVX-512 execution units.
-  The bandwidth delta (+4.8 %) accounts for the majority of the measured overhead.
-* The simulation **converges correctly and reproducibly** in both cases
-  (L∞ identical across all 5 trials: 1.51 × 10⁻⁷ for constant ν;
-  1.76 × 10⁻⁶ for temp-dep, limited by the degree-12 analytical reference polynomial).
-* **Recommendation for the paper:** report `count_operations` as a static
-  complexity figure for the generated kernel and report MLUPS with a
-  StreamCollide breakdown (mean ± std, 95 % CI, ≥ 5 trials) as the wall-clock
-  metric. Run benchmarks on the target hardware class; bandwidth utilisation
-  is the dominant factor governing how much extra arithmetic overhead matters.
+* **On woody (Xeon Gold 6326, Ice Lake, NHR@FAU, exclusive node, 5 trials, 60 000 steps,
+  524 288-cell domain, 4 MPI ranks, `WRITE_VISCOSITY=OFF`):** MaterForge temperature-dependent
+  viscosity adds **7.97 % MLUPS overhead for SRT** (8.66 % wall-clock) and **7.59 % for TRT**
+  (8.21 % wall-clock) — even though the symbolic op count rises +4.5 % (SRT) vs +38.7 % (TRT).
+* The kernel sustains ≈ 11–12 % of peak memory bandwidth; it is strongly **memory-bound**. The
+  extra polynomial arithmetic is absorbed by the deep out-of-order pipeline and AVX-512 units.
+  The +2.4 % bandwidth delta (temperature read) and memory-system effects — both
+  operator-independent — account for essentially all of the measured overhead.
+* The simulation **converges correctly and reproducibly** in all cases (L∞ identical across
+  all 5 trials: 1.51 × 10⁻⁷ for constant ν; 1.76 × 10⁻⁶ for temp-dep, bounded by the degree-12
+  analytical-reference polynomial fit, not by the LBM solution).
+* **Recommendation for the paper:** report `count_operations` as a static complexity figure and
+  report MLUPS with a StreamCollide breakdown (mean ± std, 95 % CI, ≥ 5 trials) as the
+  wall-clock metric, for both collision operators. The SRT/TRT pair is itself the cleanest
+  demonstration that symbolic FLOP counts do not predict bandwidth-bound LBM performance.
 
 ## 7. Reproducibility
 
 ### 7.1 Build environment (woody)
 
 ```bash
-# Modules: cmake/3.30.5, gcc/13.3.0 (via spack), openmpi/4.1.3-gcc12.1.0
-# Python 3.11 virtualenv at $HOME/.venvs/materforge
+# Modules: cmake/3.30.5; toolchain GCC 13.3.0 + OpenMPI 4.1.3 (spack)
+# Python virtualenv at $HOME/.venvs/materforge
 git submodule update --init --recursive
 source $HOME/.venvs/materforge/bin/activate
 ```
 
-### 7.2 Configure and build
+### 7.2 Build all benchmark binaries (SRT)
 
 ```bash
 cd apps
-
-# ── Constant ν = 0.08 ──────────────────────────────────────────────────────
-cmake --preset woody-release-cpu \
-      -DUSE_MATERFORGE=OFF -DCONST_NU=0.08 \
-      -DSWEEPGEN_REQUIREMENTS_FILE=woody-sweepgen-requirements.txt \
-      -DWALBERLA_BUILD_WITH_PYTHON=OFF
-cmake --build build/woody-release-cpu -j 16
-cp build/woody-release-cpu/CouetteFlowScaling \
-   build/woody-release-cpu/CouetteFlowScaling_const_0.08
-
-# ── Temperature-dependent (MaterForge) ─────────────────────────────────────
-cmake build/woody-release-cpu -DUSE_MATERFORGE=ON
-cmake --build build/woody-release-cpu -j 16
-cp build/woody-release-cpu/CouetteFlowScaling \
-   build/woody-release-cpu/CouetteFlowScaling_tempdep
+bash scripts/build_validation_binaries.sh
+# Produces (among others):
+#   CouetteFlowScaling_const_0.08       (SRT, WRITE_VISCOSITY=OFF, 336 B/cell)
+#   CouetteFlowScaling_tempdep_perf     (SRT, WRITE_VISCOSITY=OFF, 344 B/cell)  <- timed
+#   CouetteFlowScaling_tempdep          (SRT, WRITE_VISCOSITY=ON, 352 B/cell)   <- VTK only
 ```
 
-### 7.3 Run (SLURM — serial, chained)
-
-`CouetteFlowScaling.prm` settings used:
-`timesteps = 60000`, `u_max = 0.025`, `T_bottom = 300`, `T_top = 3000`,
-`errorThreshold = 1e-3`, `vtkWriteFrequency = 0`,
-`blocks = <1,2,2>`, `cellsPerBlock = <128,32,32>`.
+### 7.3 Build the TRT binaries
 
 ```bash
-# Submit const job; tempdep starts only after const completes (no overlap)
-CONST_JID=$(sbatch --parsable apps/scripts/run_perf_const.sh)
-sbatch --dependency=afterok:${CONST_JID} apps/scripts/run_perf_tempdep.sh
+cd apps
+export MODULEPATH=/apps/modules/data/tools
+eval "$(MODULESHOME=/apps/modules /usr/bin/modulecmd bash load cmake/3.30.5)"
+# const TRT
+cmake --preset woody-release-cpu -DUSE_MATERFORGE=OFF -DCONST_NU=0.08 \
+      -DCOLLISION_OP=TRT -DWRITE_VISCOSITY=OFF -S "$PWD" -B build/woody-release-cpu
+make -C build/woody-release-cpu -j8 CouetteFlowScaling
+cp build/woody-release-cpu/CouetteFlowScaling build/woody-release-cpu/CouetteFlowScaling_const_0.08_TRT
+# temp-dep TRT (perf)
+cmake --preset woody-release-cpu -DUSE_MATERFORGE=ON \
+      -DCOLLISION_OP=TRT -DWRITE_VISCOSITY=OFF -S "$PWD" -B build/woody-release-cpu
+make -C build/woody-release-cpu -j8 CouetteFlowScaling
+cp build/woody-release-cpu/CouetteFlowScaling build/woody-release-cpu/CouetteFlowScaling_tempdep_perf_TRT
 ```
 
-Key SLURM options in both scripts:
-```
-#SBATCH --exclusive              # sole occupant — no shared-cache interference
-#SBATCH --constraint=icx         # Ice Lake nodes only
-mpirun -n 4 --bind-to core --map-by core --report-bindings ...
+### 7.4 Run the benchmarks (SLURM)
+
+```bash
+# SRT — const job runs fully before temp-dep (no node overlap)
+CONST_JID=$(sbatch --parsable scripts/run_perf_const.sh)
+sbatch --dependency=afterok:${CONST_JID} scripts/run_perf_tempdep.sh
+# TRT — const + temp-dep in one job, same node
+sbatch scripts/run_perf_trt.sh
 ```
 
-Each script runs 5 trials in a loop. SLURM job IDs for this dataset:
-* 11733409 — constant ν=0.08 (node w2304)
-* 11733410 — temperature-dependent (node w2304, sequential after 11733409)
+SLURM job IDs for this dataset (NHR@FAU woody, Ice Lake, exclusive):
+* 11826182 / 11826183 — SRT const / temp-dep MLUPS (node w2510)
+* 11826268 — TRT const + temp-dep MLUPS (node w2502)
+* 11826184 — validation array, 10 cases (per-case PASS, L∞ above)
 
-Raw logs are preserved under `apps/logs/`:
-* `apps/logs/build/configure_const_0.08.log`, `apps/logs/build/build_const_0.08.log`
-* `apps/logs/performance/run_perf_const.log`
-* `apps/logs/build/configure_tempdep.log`, `apps/logs/build/build_tempdep.log`
-* `apps/logs/performance/run_perf_tempdep.log`
-* CPU binding reports in `apps/logs/performance/run_perf_const.err`, `apps/logs/performance/run_perf_tempdep.err`
+Raw logs: `apps/logs/performance/run_perf_{const,tempdep,trt}.log`,
+`apps/logs/build/*.log`, `apps/logs/validation/run_validation_*.log`.
 
 ## 8. Cache counter analysis (Linux `perf stat`)
 
-### 8.1 Methodology and profiling setup
+### 8.1 Methodology
 
-Direct hardware-counter profiling on woody required three attempts:
+Direct hardware-counter profiling on woody required three attempts; only `perf stat` worked:
 
 | Tool | Failure mode | Root cause |
 |------|-------------|-----------|
-| Intel VTune 2022.3 (`memory-access`, `uarch-exploration`) | `Error: requires perf system-wide profiling` | `perf_event_paranoid = 2` blocks VTune's kernel-driver-based PMU sampling |
-| LIKWID 5.4.1 (`CACHE`, `MEM` groups) | `Access to performance monitoring registers locked` | MSR-device access restricted cluster-wide (kernel config), bypassing the setuid `likwid-accessD` daemon |
-| Linux `perf stat` (user-space counting mode) | **Success** | `PERF_EVENT_OPEN` in counting mode is allowed at `paranoid = 2` for user-space per-process events |
+| Intel VTune 2022.3 | `requires perf system-wide profiling` | `perf_event_paranoid = 2` blocks kernel-driver PMU sampling |
+| LIKWID 5.4.1 (`CACHE`, `MEM`) | `Access to performance monitoring registers locked` | MSR-device access restricted cluster-wide |
+| Linux `perf stat` (user-space counting) | **Success** | `PERF_EVENT_OPEN` counting mode allowed at `paranoid = 2` for per-process events |
 
-`perf stat` was run with per-rank isolation: each MPI rank launched its binary under its own `perf stat` instance with `--output rank_N.txt`. This gives four symmetric per-rank measurement sets. The collection script is `apps/scripts/run_perf_cache.sh` (SLURM job 11733616, node w2304); raw outputs land in `apps/output/profiling/perf/{const_0.08,tempdep}/rank_{0..3}.txt`.
+`perf stat` ran with per-rank isolation (each MPI rank under its own `perf stat --output
+rank_N.txt`), via `apps/scripts/run_perf_cache.sh` (set `COLLISION_LABEL=_TRT` to profile the
+TRT binaries). **Collection scope:** 100 warmup + 5000 timed steps per rank — long enough for
+the working set to reach steady state, so the cache-level *ratios* are representative; the
+MLUPS/convergence lines printed by these short runs are timing artefacts and are ignored.
+SLURM jobs: 11826261 (SRT) and 11826269 (TRT), node w2201. Raw outputs:
+`apps/output/profiling/perf/{const_0.08,tempdep,const_0.08_TRT,tempdep_TRT}/rank_{0..3}.txt`.
 
-**Collection scope:** 100 warmup iterations + 1 timed timestep per rank. Although shorter than the full 60 000-timestep benchmark, the working set reaches steady state during warmup, making the cache-level ratios between const and temp-dep representative of the sustained workload.
+### 8.2 Derived cache rates and IPC (4-rank totals)
 
-**Events collected** (all user-space, `:u`):
-`cache-references`, `cache-misses`, `L1-dcache-loads`, `L1-dcache-load-misses`,
-`L1-icache-load-misses`, `LLC-loads`, `LLC-load-misses`, `LLC-stores`,
-`dTLB-loads`, `dTLB-load-misses`, `cycles`, `instructions`.
+| Metric                  | SRT const | SRT temp-dep | T/C (SRT) | TRT const | TRT temp-dep | T/C (TRT) |
+|-------------------------|----------:|-------------:|----------:|----------:|-------------:|----------:|
+| Retired instructions    | 25.28 G   | 28.89 G      | **1.142** | 26.95 G   | 32.24 G      | **1.196** |
+| Cycles                  | 10.56 G   | 12.06 G      | 1.141     | 11.56 G   | 13.11 G      | 1.133     |
+| **IPC**                 | 2.393     | 2.396        | **1.001** | 2.331     | 2.460        | **1.056** |
+| L1-dcache-loads         | 7.98 G    | 9.28 G       | **1.163** | 8.97 G    | 10.60 G      | **1.182** |
+| L1D load miss rate      | 4.06 %    | 3.58 %       | **0.882** | 3.61 %    | 3.12 %       | **0.866** |
+| LLC load miss rate      | 62.4 %    | 62.5 %       | 1.002     | 61.0 %    | 63.4 %       | 1.039     |
+| Generic cache miss rate | 28.3 %    | 27.8 %       | 0.982     | 27.8 %    | 27.6 %       | 0.994     |
 
----
+### 8.3 Findings
 
-### 8.2 Raw event counts (4-rank totals)
+**Finding 1 — Symbolic ops ≠ retired instructions.** The retired-instruction ratio is
+**1.142 (SRT)** and **1.196 (TRT)** — almost identical at the hardware level — even though the
+symbolic op ratios differ 8.6× (1.045 vs 1.387). For SRT the real instruction increase
+*exceeds* the symbolic one (the ν(T) polynomial and its L1-resident intermediates are not
+captured by the collision-main op count); for TRT it is *far below* the symbolic one (AVX-512
+FMA fusion and the branchless `Piecewise` blend collapse the +147 symbolic ops). Either way,
+`count_operations` mispredicts.
 
-| Event | const ν=0.08 | temp-dep (MF) | T/C ratio |
-|-------|-------------:|--------------:|----------:|
-| `cache-references` | 314 418 406 | 331 708 849 | **1.055** |
-| `cache-misses` | 86 811 791 | 91 014 298 | **1.048** |
-| `L1-dcache-loads` | 8 864 456 918 | 10 720 687 096 | **1.209** |
-| `L1-dcache-load-misses` | 325 546 843 | 339 454 278 | **1.043** |
-| `LLC-loads` | 4 830 473 | 4 911 966 | **1.017** |
-| `LLC-load-misses` | 3 037 454 | 2 997 069 | **0.987** |
-| `LLC-stores` | 12 011 041 | 11 419 185 | **0.951** |
-| `cycles` | 11 424 945 478 | 13 053 954 419 | **1.143** |
-| `instructions` | 26 471 794 836 | 32 123 187 323 | **1.214** |
+**Finding 2 — Extra L1 traffic, but L1 miss rate falls.** Both temp-dep kernels issue +16–18 %
+more L1 data loads (polynomial coefficient broadcasts, intermediate products, piecewise
+operands), yet the **L1D miss rate drops** (4.06 → 3.58 % SRT; 3.61 → 3.12 % TRT). The extra
+arithmetic between consecutive PDF accesses gives the Ice Lake prefetcher more time to land
+the next PDF cache line — better temporal locality despite a larger instruction footprint.
 
-> **Note on `cycles` ratio:** the short-run ratio (1.143) is higher than the full-benchmark wall-time ratio (1.085 ×) because startup and cache-warming costs are proportionally larger for a 101-step run. The full-benchmark figure is the authoritative performance number; the cycle ratio here is informative for relative arithmetic overhead only.
+**Finding 3 — DRAM pressure essentially unchanged.** LLC load-miss rate moves by ≤ 2.4 points
+in either direction; the generic cache-miss rate is flat. The +2.4 % algorithmic byte traffic
+(temperature read) is well within L3 streaming throughput at 12 % bandwidth utilisation and
+does not change the L3 hit/miss structure over a 5000-step window — consistent with §3.3. The
+authoritative traffic signal is the full 60 000-step MLUPS measurement, not these short-run
+cache counters.
 
----
+**Finding 4 — IPC differs by operator.** SRT IPC is flat (2.393 → 2.396): the small extra
+arithmetic neither helps nor hurts pipeline utilisation. TRT IPC *rises* (2.331 → 2.460,
++5.6 %): the many independent `rr_0/rr_1` multiply-add chains expose more instruction-level
+parallelism than the const kernel's folded path, so the CPU retires the extra instructions
+more efficiently. In both cases the net wall-clock overhead stays ~8 % because it is set by
+memory traffic, not by the compute pipeline.
 
-### 8.3 Derived cache rates and IPC
+### 8.4 Summary table
 
-| Metric | const ν=0.08 | temp-dep (MF) | T/C |
-|--------|-------------:|--------------:|----:|
-| **L1D load miss rate** | 3.67 % | 3.17 % | **0.862** |
-| LLC load miss rate | 62.9 % | 61.0 % | **0.970** |
-| Generic cache miss rate | 27.6 % | 27.4 % | **0.994** |
-| **IPC (instructions / cycle)** | 2.317 | 2.461 | **1.062** |
+| Metric (T/C ratio)              | SRT    | TRT    | Interpretation                                         |
+|---------------------------------|-------:|-------:|--------------------------------------------------------|
+| Symbolic FLOPs (count_operations) | 1.045 | 1.387  | code-generation complexity — **mispredicts both ways** |
+| Retired instructions            | 1.142  | 1.196  | hardware instruction cost, similar for both operators  |
+| L1-dcache-loads                 | 1.163  | 1.182  | L1-resident polynomial intermediates                   |
+| L1D load miss rate              | 0.862  | 0.866  | miss rate *decreases* — prefetcher gains compute slack |
+| IPC                             | 1.001  | 1.056  | flat (SRT) / improved (TRT) — extra ILP from rr-chains |
+| **Wall-clock ratio (60 000 steps)** | **1.087** | **1.082** | **authoritative — ~8 % for both, bandwidth-bound** |
 
----
-
-### 8.4 Findings
-
-#### Finding 1 — L1 traffic increases 21 %, but L1 miss rate falls
-
-The temp-dep kernel generates **+20.9 % more L1 data loads** (ratio 1.209). These are not new DRAM-backed loads; they are intermediate loads from L1-resident data produced by the polynomial evaluation: coefficient broadcasts, intermediate products, and the piecewise select operands. They cost L1 bandwidth and keep the load-address generation units busy, but they do not add L1 misses.
-
-Crucially, the **L1D miss rate drops** from 3.67 % to 3.17 % (ratio 0.862). The extra arithmetic between consecutive PDF-field accesses gives the Ice Lake hardware prefetcher more time to fetch the next PDF cache line before it is demanded. The result is **better L1-level temporal locality for the memory-bound data despite a larger instruction footprint**.
-
-#### Finding 2 — LLC traffic and DRAM pressure are unchanged
-
-The LLC miss ratio is **0.987 — slightly below 1.0**, meaning temp-dep causes fewer measured L3 misses than const. This contradicts the +4.8 % algorithmic bandwidth increase from the field layout (§3.3). The resolution:
-
-1. **Scale vs. bandwidth headroom.** At ≈ 11 % of peak socket bandwidth, the memory controller services requests so quickly that the extra 2 × 8 B/cell from the temperature and viscosity fields blends into measurement noise for a 101-step run. With 4 ranks × 131 072 cells = 0.524 M cells per step, the extra traffic is 0.524 M × 16 B = 8.4 MB per step. Over 101 steps that is 847 MB total — well within L3's streaming throughput at this bandwidth utilisation.
-
-2. **Working-set overlap.** The temperature field is read-only in the StreamCollide kernel; it shares the same cache-line granularity as the PDF fields. Because the access pattern is strided and regular, the hardware prefetcher handles both cases equally well, and the actual L3 eviction counts remain similar.
-
-3. **Measurement window.** 101 timesteps is insufficient to expose the cumulative +5.3 % DRAM traffic at this bandwidth utilisation level. The MLUPS-based measurement over 60 000 timesteps is more sensitive.
-
-**Key takeaway for §3.3:** the +4.8 % algorithmic bandwidth increase (352 vs 336 B/cell) is the *theoretical* byte-traffic ratio derived from the field layout. The observed LLC miss ratio (≈ 1.0) confirms that this extra traffic is absorbed without changing the L3 hit/miss structure — consistent with the 11 % bandwidth utilisation figure.
-
-#### Finding 3 — Compiler reduces 41 % symbolic FLOPs to 21 % real instructions
-
-The instruction count ratio is **1.214 (+21.3 %)**, roughly half the symbolic FLOP ratio of 1.413 (+41.3 %). This gap has two sources:
-
-* **AVX-512 fusion.** The Xeon Gold 6326 executes 8 × FP64 SIMD lanes per instruction. Many of the +157 symbolic ops (adds, muls) are fused into FMA instructions that count as one instruction in the hardware retire port. The effective per-cell arithmetic cost is compressed by ≈ 8×.
-
-* **Piecewise compiled to a blend, not a branch.** GCC emits the `Piecewise` select as a vectorised blend (`vblendvpd` / compare + mask), with both polynomial branches evaluated and the result selected. No branch misprediction overhead; the branch predictor sees a predictable zero-divergence workload.
-
-The remaining 21 % instruction overhead is what actually reaches the retire port. Combined with a **+6.2 % IPC improvement** (2.317 → 2.461), the CPU executes those extra instructions more efficiently — the polynomial's independent multiply-add chains provide more instruction-level parallelism than the scalar `omega`-folding path of the const kernel.
-
-#### Finding 4 — The 8.5 % wall-time overhead decomposes as follows
-
-| Source | Estimated contribution |
-|--------|----------------------:|
-| Extra L1 memory traffic (+20.9 % loads) | ≈ 3–4 % |
-| Extra DRAM traffic (+5.3 % bytes/cell) | ≈ 5 % |
-| Extra polynomial instructions (+21 %), partially hidden by IPC gain (+6 %) | ≈ 2–3 % |
-| Communication & boundary timing (scheduling artefact) | ≈ −2 % (negative - faster sync) |
-| **Measured total (5-trial mean)** | **8.5 %** |
-
-The dominant cost is the combination of increased DRAM traffic and L1 load pressure. The extra arithmetic — the quantity that `count_operations` measures — contributes only modestly because the out-of-order engine and AVX-512 units absorb it inside memory-access stalls.
-
----
-
-### 8.5 Summary table
-
-| Metric | Ratio (T/C) | Interpretation |
-|--------|------------:|----------------|
-| Symbolic FLOPs (`count_operations`) | **1.413** | Code-generation complexity measure |
-| Real instructions retired | **1.214** | Compiler fuses ≈ 50 % of symbolic ops via AVX-512 FMA |
-| L1-dcache-loads | **1.209** | Extra polynomial evaluation generates L1-resident intermediate loads |
-| L1D load miss rate | **0.862** | Miss rate *decreases* — prefetcher more effective with longer compute gaps |
-| LLC-load-misses (DRAM proxy) | **0.987** | DRAM pressure unchanged — +5.3 % traffic absorbed below measurement resolution |
-| IPC (instructions/cycle) | **1.062** | Higher for temp-dep — polynomial arithmetic provides more ILP |
-| Cycles (short run, 101 steps) | **1.143** | Inflated by startup; full-run ratio is 1.085 |
-| **Wall-clock ratio (60 000 steps)** | **1.085** | Authoritative benchmark figure |
-
-> **perf stat raw data:** `apps/output/profiling/perf/{const_0.08,tempdep}/rank_{0-3}.txt`
-> **Collection script:** `apps/scripts/run_perf_cache.sh` (SLURM job 11733616, node w2304, `perf` v4.18)
+> **perf stat raw data:** `apps/output/profiling/perf/{const_0.08,tempdep,const_0.08_TRT,tempdep_TRT}/rank_{0..3}.txt`
+> **Collection script:** `apps/scripts/run_perf_cache.sh` (`COLLISION_LABEL=_TRT` for TRT); SLURM 11826261 (SRT), 11826269 (TRT), node w2201.

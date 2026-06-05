@@ -8,9 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `paper/` - source for the *Modelling* journal manuscript "Validated
+  Accuracy and Performance Cost of Temperature-Dependent Material Models
+  in Lattice-Boltzmann and Finite-Difference Solvers" (Doshi, Köstler,
+  Markl), validation/performance companion to the MaterForge JOSS paper
+  (doi:10.21105/joss.09909). Includes:
+    - `main.tex`, `references.bib` (16-page manuscript)
+    - `figures/*.pdf` - 14 vector figures in one unified
+      Okabe-Ito colour-blind-safe style
+    - `scripts/paperstyle.py`, `scripts/make_figures.py` - figure
+      regeneration pipeline reading only `paper/data/` CSVs
+    - `data/{couette,thermal}/` - self-contained result CSVs from both
+      case studies (no cluster run needed to rebuild plots)
 - `apps/scripts/run_strong_scaling.sh` - SLURM array job sweeping 1, 2,
   4, 8, 16 MPI ranks on a single Xeon Gold 6326 node for strong-scaling
   measurement
+- `apps/scripts/run_perf_trt.sh` - TRT-collision counterpart of the
+  SRT performance jobs (const + tempdep, 5 trials each, WRITE_VISCOSITY=OFF),
+  so the const-vs-tempdep overhead can be reported for both collision
+  operators
 - `apps/scripts/parse_scaling.py` and `apps/scripts/plot_scaling.py` -
   parser and plotter for the strong-scaling logs (MLUPS / speedup /
   efficiency)
@@ -44,6 +60,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   collapsed into three directory rules (`apps/build/`, `apps/output/`,
   `apps/logs/`) plus the existing opt-in carve-out for
   `apps/scripts/run_vtune_cache.sh`
+- `apps/scripts/build_validation_binaries.sh` now also builds
+  `CouetteFlowScaling_tempdep_perf` (`WRITE_VISCOSITY=OFF`); the
+  temperature-dependent performance benchmark (`run_perf_tempdep.sh`) uses
+  it so the const-vs-tempdep MLUPS comparison omits the visualisation-only
+  viscosity write (344 vs 336 B/cell, isolating the temperature-field read)
+- `apps/scripts/run_perf_cache.sh` accepts `COLLISION_LABEL=_TRT` to profile
+  the TRT binaries (default SRT); results go to per-operator subdirectories
+- `apps/couette_performance_analysis.md` reworked to report **both** SRT and
+  TRT collision operators side by side (op counts, MLUPS, bandwidth, perf-stat
+  cache/IPC), measured with `WRITE_VISCOSITY=OFF`. The headline finding: the
+  temperature-dependent overhead is ~8 % for both operators even though the
+  symbolic op count rises +4.5 % (SRT) vs +38.7 % (TRT) — the kernel is
+  bandwidth-bound and the extra arithmetic is hidden behind memory stalls
+- `apps/scripts/generate_performance_plots.py` refreshed for the
+  exclusive-node re-run: the SRT temperature-dependent overhead is now
+  7.97 % MLUPS / 8.66 % wall-clock (was 9.4 / 10.38), with the overhead
+  decomposition, op-count note and fallback trial data updated to match
+
+### Fixed
+- The temperature-dependent CouetteFlow build no longer fails to compile
+  when `WRITE_VISCOSITY=OFF` (the default `local-release-cpu` preset).
+  `CouetteFlowScaling.cpp` hard-coded the 5-argument `StreamCollide`
+  constructor for `USE_MATERFORGE=ON`, but the generated kernel takes the
+  viscosity field only when it actually writes it. `WRITE_VISCOSITY` is now
+  forwarded to C++ as a compile definition and the constructor call is
+  selected to match the generated kernel's arity.
+- `apps/CouetteFlowMaterial.yaml` - corrected the stale trailing comment
+  block (it described a 0.02 Pa·s / 300-600 K / ~15 % model; the actual
+  `dynamic_viscosity` is the dimensionless lattice value
+  `0.16667*exp(-0.0005*(T-300))` over 300-3000 K)
+- `apps/scripts/run_validation_array.sh` - quote per-task arguments and
+  fail with a clear message if the selected benchmark binary is missing
+- `apps/scripts/generate_validation_plots.py` - use `nu_0 = 0.16667` to
+  match `CouetteFlowMaterial.yaml` (it sets only the viscosity-subplot
+  magnitude; `nu_0` cancels in the normalised profile, so the error metrics
+  are unchanged)
 
 ## [0.6.6] - 2026-03-16
 
