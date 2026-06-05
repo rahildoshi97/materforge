@@ -52,24 +52,33 @@ echo ""
 # in apps/output/vtk/.
 cd "${APPS_DIR}"
 
-# Select binary and runtime nu override
+# Select binary and runtime nu override. waLBerla CLI overrides require "="
+# format: -Block.Key=value (not -Block.Key value). EXTRA_ARGS is an array so each
+# token is passed as a single argument regardless of any future spaces.
 if [[ "${NU}" == "tempdep" ]]; then
     BIN="${BUILD_DIR}/CouetteFlowScaling_tempdep"
     # For tempdep, nu in prm is unused for physics; keep default (0.08)
-    EXTRA_ARGS="-Parameters.timesteps=${TS} -Output.vtkWriteFrequency=${VF}"
+    EXTRA_ARGS=( "-Parameters.timesteps=${TS}" "-Output.vtkWriteFrequency=${VF}" )
 else
     BIN="${BUILD_DIR}/CouetteFlowScaling_const_${NU}"
-    # Override prm nu to match compiled CONST_NU so VTK filename is correct.
-    # waLBerla CLI overrides require "=" format: -Block.Key=value (not -Block.Key value).
-    EXTRA_ARGS="-Parameters.nu=${NU} -Parameters.timesteps=${TS} -Output.vtkWriteFrequency=${VF}"
+    # Override prm nu to match compiled CONST_NU so the VTK filename is correct.
+    EXTRA_ARGS=( "-Parameters.nu=${NU}" "-Parameters.timesteps=${TS}" "-Output.vtkWriteFrequency=${VF}" )
 fi
 
 # Use a relaxed error threshold: not all cases converge to 1e-3 at these
 # timestep counts (short runs for high-nu cases may still be transient).
-EXTRA_ARGS="${EXTRA_ARGS} -Parameters.errorThreshold=0.01"
+EXTRA_ARGS+=( "-Parameters.errorThreshold=0.01" )
 
-echo "Running: ${BIN##*/} ${PRM##*/} ${EXTRA_ARGS}"
-$MPIRUN $MPI_OPTS "${BIN}" "${PRM}" ${EXTRA_ARGS}
+# Guard: the per-nu binaries are produced by build_validation_binaries.sh. Fail
+# with a clear message instead of an opaque mpirun error if one is missing.
+if [[ ! -x "${BIN}" ]]; then
+    echo "ERROR: benchmark binary not found: ${BIN}" >&2
+    echo "       Build it first with: bash apps/scripts/build_validation_binaries.sh" >&2
+    exit 1
+fi
+
+echo "Running: ${BIN##*/} ${PRM##*/} ${EXTRA_ARGS[*]}"
+$MPIRUN $MPI_OPTS "${BIN}" "${PRM}" "${EXTRA_ARGS[@]}"
 
 echo ""
 echo "=== Task ${SLURM_ARRAY_TASK_ID} completed: $(date) ==="

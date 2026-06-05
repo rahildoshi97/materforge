@@ -601,7 +601,9 @@ def main():
     # Wall temperatures and u_max come from CouetteFlowScaling.prm:
     #   T_bottom = 300 K,  T_top = 3000 K,  u_max = 0.025
     # The exponential viscosity model is from CouetteFlowMaterial.yaml:
-    #   ν(T) = 0.1667 * exp(-0.0005 * (T - 300))
+    #   ν(T) = 0.16667 * exp(-0.0005 * (T - 300))
+    # (nu_0 cancels in the normalised velocity profile u(z)=I(z)/I(1); it only sets
+    #  the absolute magnitude shown in the viscosity subplot.)
     # csv_base: stem without the _dat_NNN_TTT suffix — resolved automatically.
     cases_config = [
         dict(csv_base="cf_cpu_mfconst_0.04",   name="Constant ν=0.04",
@@ -625,7 +627,7 @@ def main():
         dict(csv_base="cf_cpu_mfconst_1.0",    name="Constant ν=1.0",
              T_bottom=300.0, T_top=3000.0, u_wall=0.025, nu_0=1.0,    beta=0.0),
         dict(csv_base="cf_cpu_mftempdep",      name="Temperature-Dependent",
-             T_bottom=300.0, T_top=3000.0, u_wall=0.025, nu_0=0.1667, beta=-0.0005),
+             T_bottom=300.0, T_top=3000.0, u_wall=0.025, nu_0=0.16667, beta=-0.0005),
     ]
 
     # Resolve each base name to the actual CSV path
