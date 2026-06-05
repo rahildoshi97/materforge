@@ -28,8 +28,14 @@ LOGS_DIR=$APPS_DIR/logs/profiling
 RESULTS_DIR=$APPS_DIR/output/profiling/perf
 PRM=$APPS_DIR/CouetteFlowScaling.prm
 
-BIN_CONST=$BUILD_DIR/CouetteFlowScaling_const_0.08
-BIN_TEMPDEP=$BUILD_DIR/CouetteFlowScaling_tempdep
+# Collision operator selector. COLLISION_LABEL="" profiles the SRT binaries
+# (default); COLLISION_LABEL="_TRT" profiles the TRT binaries. Override at submit:
+#   sbatch --export=ALL,COLLISION_LABEL=_TRT --output=.../perf_cache_trt.log run_perf_cache.sh
+COLLISION_LABEL="${COLLISION_LABEL:-}"
+# Profile the performance binary (WRITE_VISCOSITY=OFF, 344 B/cell) so the cache/IPC
+# figures match the canonical const-vs-tempdep MLUPS benchmark (run_perf_tempdep.sh).
+BIN_CONST=$BUILD_DIR/CouetteFlowScaling_const_0.08${COLLISION_LABEL}
+BIN_TEMPDEP=$BUILD_DIR/CouetteFlowScaling_tempdep_perf${COLLISION_LABEL}
 
 MPIRUN=/apps/SPACK/0.18.1/opt/linux-almalinux8-skylake/gcc-12.1.0/openmpi-4.1.3-i76wyn4x5aobewottoyj2od33hhtyb2h/bin/mpirun
 
@@ -179,8 +185,8 @@ WRAPPER_EOF
 # =============================================================================
 #  Run both cases
 # =============================================================================
-run_perf_all_ranks "const_0.08" "$BIN_CONST"
-run_perf_all_ranks "tempdep"    "$BIN_TEMPDEP"
+run_perf_all_ranks "const_0.08${COLLISION_LABEL}" "$BIN_CONST"
+run_perf_all_ranks "tempdep${COLLISION_LABEL}"    "$BIN_TEMPDEP"
 
 # =============================================================================
 #  Side-by-side comparison (rank 0 numbers)
@@ -190,8 +196,8 @@ echo "=============================================================="
 echo "  COMPARISON — rank 0 (representative for symmetric domain)"
 echo "=============================================================="
 
-FILE_A=$RESULTS_DIR/const_0.08/rank_0.txt
-FILE_B=$RESULTS_DIR/tempdep/rank_0.txt
+FILE_A=$RESULTS_DIR/const_0.08${COLLISION_LABEL}/rank_0.txt
+FILE_B=$RESULTS_DIR/tempdep${COLLISION_LABEL}/rank_0.txt
 
 if [[ ! -f "$FILE_A" || ! -f "$FILE_B" ]]; then
     echo "  Result files missing — perf stat may have failed."
