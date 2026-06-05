@@ -11,7 +11,8 @@
 #
 # Output binaries (in apps/build/woody-release-cpu/):
 #   CouetteFlowScaling_const_0.04  ...  CouetteFlowScaling_const_1.0
-#   CouetteFlowScaling_tempdep
+#   CouetteFlowScaling_tempdep        (WRITE_VISCOSITY=ON  -> validation/VTK)
+#   CouetteFlowScaling_tempdep_perf   (WRITE_VISCOSITY=OFF -> performance benchmark)
 
 set -euo pipefail
 
@@ -47,10 +48,10 @@ for nu in "${NUS[@]}"; do
     echo "  -> CouetteFlowScaling_const_${nu}  ($(date '+%H:%M:%S'))"
 done
 
-# ── Temperature-dependent case ───────────────────────────────────────────────
+# ── Temperature-dependent case: validation (viscosity write ON, for VTK) ─────
 echo ""
 echo "══════════════════════════════════════════════"
-echo " Building: tempdep (MaterForge)"
+echo " Building: tempdep (MaterForge), WRITE_VISCOSITY=ON  [validation/VTK]"
 echo "══════════════════════════════════════════════"
 
 cmake --preset woody-release-cpu \
@@ -66,6 +67,30 @@ cp "${BUILD_DIR}/CouetteFlowScaling" \
    "${BUILD_DIR}/CouetteFlowScaling_tempdep"
 
 echo "  -> CouetteFlowScaling_tempdep  ($(date '+%H:%M:%S'))"
+
+# ── Temperature-dependent case: performance (viscosity write OFF) ────────────
+# The viscosity field write is visualisation-only.  Omitting it gives the
+# canonical performance configuration (344 B/cell vs 352 with the write), so the
+# const-vs-tempdep MLUPS comparison isolates the temperature-field read overhead.
+# This build is rebuilt last so USE_MATERFORGE=ON remains the active cmake config.
+echo ""
+echo "══════════════════════════════════════════════"
+echo " Building: tempdep (MaterForge), WRITE_VISCOSITY=OFF  [performance]"
+echo "══════════════════════════════════════════════"
+
+cmake --preset woody-release-cpu \
+      -DUSE_MATERFORGE=ON \
+      -DCOLLISION_OP=SRT -DWRITE_VISCOSITY=OFF \
+      -S "${APPS_DIR}" -B "${BUILD_DIR}" \
+      > "${LOG_DIR}/configure_tempdep_perf.log" 2>&1
+
+make -C "${BUILD_DIR}" -j8 CouetteFlowScaling \
+      > "${LOG_DIR}/build_tempdep_perf.log" 2>&1
+
+cp "${BUILD_DIR}/CouetteFlowScaling" \
+   "${BUILD_DIR}/CouetteFlowScaling_tempdep_perf"
+
+echo "  -> CouetteFlowScaling_tempdep_perf  ($(date '+%H:%M:%S'))"
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""
