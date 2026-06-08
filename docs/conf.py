@@ -14,8 +14,8 @@ try:
     version = __version__
     release = __version__
 except ImportError:
-    version = "0.6.6"
-    release = "0.6.6"
+    version = "0.6.7"
+    release = "0.6.7"
 
 extensions = [
     "sphinx.ext.autodoc",

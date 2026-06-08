@@ -5,6 +5,25 @@ All notable changes to MaterForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.7] - 2026-06-08
+
+### Added
+- `get_material_property_names` and `evaluate_material_properties` exposed in the
+  top-level `materforge` API
+- `*` and `/` operators in step-function dependency arithmetic expressions
+  (e.g. `solidus_temp * 2`, `liquidus_temp / 50`); division by zero now raises a
+  clear `ValueError`
+- Multi-column plot layout support in `PropertyVisualizer`
+- Panel labels on `PropertyVisualizer` plots
+- JOSS paper DOI badge to the README
+
+### Changed
+- Documentation, examples, tests, and CI now import `create_material` from the
+  top-level `materforge` API instead of `materforge.parsing.api`
+
+### Fixed
+- Constant-property plot padding
+
 ## [0.6.6] - 2026-03-16
 
 ### Changed
