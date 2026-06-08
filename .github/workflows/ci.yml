@@ -69,6 +69,11 @@ jobs:
     needs: build
     if: github.event_name == 'release' && github.event.action == 'published'
 
+    # Trusted publishing (OIDC) - no API token secret needed. Requires a
+    # Trusted Publisher configured on PyPI for this repo + workflow file.
+    permissions:
+      id-token: write
+
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4  # Updated to v4
@@ -78,5 +83,3 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
