@@ -95,16 +95,16 @@ all but vanishes in the measured wall-clock overhead.**
 ## 3. Runtime performance
 
 Each case ran 60 000 timesteps on an exclusive node with CPU pinning, 5 independent trials,
-const and temp-dep submitted on the **same node** for each operator (SRT on w2510, TRT on
+const and temp-dep submitted on the **same node** for each operator (SRT on w2411, TRT on
 w2502). Statistics use the two-sided t-distribution with df = 4.
 
 ### 3.1 Headline numbers (5-trial statistics)
 
 | Metric                       | **SRT** const | **SRT** temp-dep | **TRT** const | **TRT** temp-dep |
 |------------------------------|--------------:|-----------------:|--------------:|-----------------:|
-| Total MLUPS (mean ± std)     | 73.27 ± 0.04  | 67.43 ± 0.16     | 67.38 ± 0.13  | 62.27 ± 0.13     |
-| 95 % CI                      | [73.22, 73.33]| [67.23, 67.64]   | [67.22, 67.55]| [62.11, 62.43]   |
-| Wall time (mean)             | 429.3 s       | 466.5 s          | 466.8 s       | 505.2 s          |
+| Total MLUPS (mean ± std)     | 73.43 ± 0.04  | 67.58 ± 0.15     | 67.38 ± 0.13  | 62.27 ± 0.13     |
+| 95 % CI                      | [73.38, 73.48]| [67.40, 67.77]   | [67.22, 67.55]| [62.11, 62.43]   |
+| Wall time (mean)             | 428.4 s       | 465.5 s          | 466.8 s       | 505.2 s          |
 | **MLUPS overhead (T vs C)**  | —             | **7.97 %**       | —             | **7.59 %**       |
 | **Wall-clock overhead**      | —             | **8.66 %**       | —             | **8.21 %**       |
 | L∞ error (vs analytical)     | 1.51 × 10⁻⁷   | 1.76 × 10⁻⁶      | 1.51 × 10⁻⁷   | 1.76 × 10⁻⁶      |
@@ -127,10 +127,10 @@ so the overhead is statistically significant (the per-operator std is < 0.25 % o
 
 | Timer              | const ν=0.08 | temp-dep   | Δ time    | const %  | temp-dep % |
 |--------------------|-------------:|-----------:|----------:|---------:|-----------:|
-| **StreamCollide**  | **1491.8 s** | **1640.9 s** | **+149.1 s** | **88.4 %** | **89.4 %** |
-| LBM Communication  |    181.8 s   |    182.1 s   |   +0.3 s  |  10.8 %  |   9.9 %   |
-| UBB boundary       |     31.9 s   |     31.9 s   |   ±0.0 s  |   1.9 %  |   1.7 %   |
-| NoSlip boundary    |     10.4 s   |     10.3 s   |   ±0.0 s  |   0.6 %  |   0.6 %   |
+| **StreamCollide**  | **1489.9 s** | **1638.4 s** | **+148.5 s** | **87.0 %** | **88.0 %** |
+| LBM Communication  |    180.4 s   |    180.8 s   |   +0.4 s  |  10.5 %  |   9.7 %   |
+| UBB boundary       |     31.9 s   |     31.8 s   |   ±0.0 s  |   1.9 %  |   1.7 %   |
+| NoSlip boundary    |     10.3 s   |     10.1 s   |   ±0.0 s  |   0.6 %  |   0.5 %   |
 
 The entire temp-dep overhead lands in **StreamCollide** (+10.0 % per-rank); communication and
 boundary times are statistically identical between cases. TRT shows the same structure
@@ -140,12 +140,12 @@ REDUCE_AVG ≈ 1.0` for StreamCollide in all cases, confirming negligible rank i
 
 ### 3.3 Bandwidth-vs-compute regime
 
-At the observed SRT const-ν throughput of 73.27 MLUPS:
+At the observed SRT const-ν throughput of 73.43 MLUPS:
 
-  73.27 × 10⁶ cells/s × 336 B/cell = **24.6 GB/s of DRAM bandwidth**
+  73.43 × 10⁶ cells/s × 336 B/cell = **24.7 GB/s of DRAM bandwidth**
 
 against ≈ 204.8 GB/s peak per socket. The 4 pinned processes on socket 0 consume roughly
-**12 % of one socket's peak bandwidth**. The temp-dep case (67.43 MLUPS × 344 B = 23.2 GB/s)
+**12 % of one socket's peak bandwidth**. The temp-dep case (67.58 MLUPS × 344 B = 23.2 GB/s)
 and both TRT cases (22.6 / 21.4 GB/s) sit in the same ≈ 11–12 % band. The kernel is far from
 bandwidth-saturated, which is exactly why extra arithmetic is cheap (§4).
 
@@ -274,17 +274,24 @@ cp build/woody-release-cpu/CouetteFlowScaling build/woody-release-cpu/CouetteFlo
 ### 7.4 Run the benchmarks (SLURM)
 
 ```bash
-# SRT — const job runs fully before temp-dep (no node overlap)
-CONST_JID=$(sbatch --parsable scripts/run_perf_const.sh)
-sbatch --dependency=afterok:${CONST_JID} scripts/run_perf_tempdep.sh
+# SRT — const + temp-dep in one --exclusive allocation, same node
+sbatch scripts/run_perf_srt.sh
 # TRT — const + temp-dep in one job, same node
 sbatch scripts/run_perf_trt.sh
 ```
 
+> **Same-node requirement.** The const→tempdep overhead is < 10 %, smaller than the
+> node-to-node hardware variation across woody's Ice Lake pool. Both cases must run on the
+> *same* physical node or the comparison is confounded. `run_perf_srt.sh`/`run_perf_trt.sh`
+> enforce this by running both binaries inside a single allocation. Submitting the standalone
+> `run_perf_const.sh` and `run_perf_tempdep.sh` as two independent jobs does **not** pin them
+> to one node (SLURM may place them on different `icx` nodes) and must not be used for the
+> headline comparison.
+
 SLURM job IDs for this dataset (NHR@FAU woody, Ice Lake, exclusive):
-* 11826182 / 11826183 — SRT const / temp-dep MLUPS (node w2510)
+* 11901976 — SRT const + temp-dep MLUPS, single same-node allocation, node w2411 (2026-06-13, `run_perf_srt.sh`)
 * 11826268 — TRT const + temp-dep MLUPS (node w2502)
-* 11826184 — validation array, 10 cases (per-case PASS, L∞ above)
+* 11844061 — validation array, 10 cases (per-case PASS, L∞ above)
 
 Raw logs: `apps/logs/performance/run_perf_{const,tempdep,trt}.log`,
 `apps/logs/build/*.log`, `apps/logs/validation/run_validation_*.log`.

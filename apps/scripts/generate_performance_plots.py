@@ -112,25 +112,26 @@ OVERHEAD_MEASURED_PCT = 8.66   # measured total wall-clock overhead (%) with SRT
 
 # ── Fallback data (used when log files are missing or unparseable) ─────────────
 # SRT, D3Q19, 128x64x64, 4 MPI ranks, 60 000 timesteps, Xeon Gold 6326 (icx, woody NHR@FAU).
+# Source: same-node run, job 11901976, node w2411, 2026-06-13 (run_perf_srt.sh).
 FALLBACK_DATA = {
     LABEL_CONST: {
-        "mlups_total":   [73.2848, 73.2810, 73.2805, 73.3178, 73.2044],
-        "wall_time_s":   [429.247, 429.269, 429.272, 429.054, 429.718],
+        "mlups_total":   [73.4680, 73.3966, 73.4243, 73.4705, 73.3947],
+        "wall_time_s":   [428.176, 428.593, 428.431, 428.162, 428.604],
         "timer_total_s": {            # sum across 4 ranks (REDUCE_TOTAL)
-            "StreamCollide":    [1489.740, 1491.800, 1493.170, 1492.470],
-            "LBM Communication":[184.110,  182.010,  180.680,  180.490],
-            "UBB":              [31.810,   31.940,   31.850,   31.940],
-            "NoSlip":           [10.340,   10.360,   10.390,   10.330],
+            "StreamCollide":    [1487.900, 1491.490, 1490.650, 1489.620],
+            "LBM Communication":[181.710,  179.730,  180.030,  180.040],
+            "UBB":              [31.800,   31.850,   31.880,   31.910],
+            "NoSlip":           [10.330,   10.340,   10.230,   10.130],
         },
     },
     LABEL_TEMPDEP: {
-        "mlups_total":   [67.6305, 67.2501, 67.5343, 67.2823, 67.4662],
-        "wall_time_s":   [465.134, 467.765, 465.797, 467.542, 466.267],
+        "mlups_total":   [67.7869, 67.5528, 67.3730, 67.5744, 67.6179],
+        "wall_time_s":   [464.061, 465.670, 466.912, 465.521, 465.221],
         "timer_total_s": {
-            "StreamCollide":    [1636.280, 1643.170, 1640.460, 1643.880],
-            "LBM Communication":[181.370,  184.410,  179.740,  182.970],
-            "UBB":              [31.780,   31.970,   31.840,   31.940],
-            "NoSlip":           [10.140,   10.460,   10.170,   10.370],
+            "StreamCollide":    [1634.760, 1638.550, 1640.310, 1640.010],
+            "LBM Communication":[178.650,  181.360,  184.310,  179.010],
+            "UBB":              [31.780,   31.780,   31.890,   31.850],
+            "NoSlip":           [10.090,   10.050,   10.170,   10.250],
         },
     },
 }
