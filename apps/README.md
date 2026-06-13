@@ -165,7 +165,7 @@ bash apps/scripts/build_validation_binaries.sh
 Produces, under `apps/build/woody-release-cpu/`:
 - `CouetteFlowScaling_const_0.04` ... `CouetteFlowScaling_const_1.0` (all `WRITE_VISCOSITY=OFF`)
 - `CouetteFlowScaling_tempdep` — `WRITE_VISCOSITY=ON`, for validation/VTK runs
-- `CouetteFlowScaling_tempdep_perf` — `WRITE_VISCOSITY=OFF`, the performance-benchmark binary used by `run_perf_tempdep.sh`
+- `CouetteFlowScaling_tempdep_perf` — `WRITE_VISCOSITY=OFF`, the performance-benchmark binary used by `run_perf_srt.sh` (and `run_perf_tempdep.sh`)
 
 cmake/make logs land in `apps/logs/build/{configure,build}_<case>.log`.
 
@@ -240,16 +240,25 @@ from a lookup table inside the script. Logs land in
 
 ### Performance comparison (SLURM)
 
-Two 5-trial jobs that share the same domain and timestep count:
+The const-vs-tempdep MLUPS overhead is < 10 %, which is smaller than the
+node-to-node hardware variation across woody's Ice Lake pool. **Both cases must
+therefore run on the same physical node**, otherwise the comparison is confounded
+by node binning. Use the combined single-allocation job:
 
 ```bash
-sbatch apps/scripts/run_perf_const.sh      # const_0.08 baseline
-sbatch apps/scripts/run_perf_tempdep.sh    # MaterForge tempdep
+sbatch apps/scripts/run_perf_srt.sh        # const_0.08 + tempdep, same node, 5 trials each
 ```
 
-Both pin to a single Xeon Gold 6326 (`--constraint=icx`) with
-`--exclusive` to avoid shared-cache interference. Logs land in
-`apps/logs/performance/`.
+It runs both binaries back-to-back inside one `--exclusive --constraint=icx`
+allocation and redirects each case's output to `run_perf_const.log` /
+`run_perf_tempdep.log` (the files `generate_performance_plots.py` parses), so the
+post-processing is unchanged. The TRT counterpart is `run_perf_trt.sh`.
+
+> The standalone `run_perf_const.sh` and `run_perf_tempdep.sh` are kept for
+> single-case reruns, but submitting them as two independent jobs does **not**
+> guarantee the same node — prefer `run_perf_srt.sh` for the headline comparison.
+
+Logs land in `apps/logs/performance/`.
 
 ### Strong-scaling sweep (SLURM)
 
@@ -395,9 +404,8 @@ sbatch apps/scripts/run_validation_array.sh
 python3 apps/scripts/extract_vtk_profiles.py
 python3 apps/scripts/generate_validation_plots.py
 
-# 3. Performance comparison (5 trials each, ~45 min walltime each)
-sbatch apps/scripts/run_perf_const.sh
-sbatch apps/scripts/run_perf_tempdep.sh
+# 3. Performance comparison (const + tempdep, same node, 5 trials each, ~1.5 h walltime)
+sbatch apps/scripts/run_perf_srt.sh
 # ... wait for completion ...
 python3 apps/scripts/generate_performance_plots.py
 
