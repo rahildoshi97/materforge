@@ -11,10 +11,12 @@ on:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
-    # Linux mirrors the GitLab matrix and is the source of truth. macOS is a
-    # second unix canary; Windows runs non-blocking so a Windows-only quirk is
-    # visible without holding up a release.
-    continue-on-error: ${{ matrix.os == 'windows-latest' }}
+    # Linux 3.10-3.12 mirrors the GitLab matrix and is the source of truth.
+    # Python 3.13 runs non-blocking as a forward-looking canary (GitLab does not
+    # test it yet), so a 3.13-only break is visible without holding up a release.
+    # macOS is a second unix canary; Windows also runs non-blocking so a
+    # Windows-only quirk is visible without blocking a release.
+    continue-on-error: ${{ matrix.os == 'windows-latest' || matrix.python-version == '3.13' }}
     strategy:
       fail-fast: false
       matrix:
