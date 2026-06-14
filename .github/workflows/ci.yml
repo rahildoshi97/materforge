@@ -97,3 +97,7 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # Don't fail the job if a file was already uploaded (e.g. a manual
+          # twine upload, or a re-run) - skip it instead of erroring.
+          skip-existing: true
