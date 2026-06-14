@@ -5,6 +5,18 @@ All notable changes to MaterForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-06-14
+
+### Added
+- `load_material`, `list_materials`, and `get_material_path` in the top-level
+  `materforge` API for loading the example materials shipped with the package by
+  name, without having to locate the installed file. Plotting defaults to off in
+  `load_material`. See the new "Load Bundled Example Materials" how-to guide.
+
+### Fixed
+- README quick-start example: `evaluate()` returns a `Material`, so the result is
+  now read by attribute (`results.heat_capacity`) instead of by key
+
 ## [0.6.7] - 2026-06-08
 
 ### Added
