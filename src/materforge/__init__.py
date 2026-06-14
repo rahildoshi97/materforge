@@ -33,7 +33,7 @@ except ImportError:
     try:
         __version__ = version("materforge")
     except PackageNotFoundError:
-        __version__ = "0.6.7+unknown"
+        __version__ = "0.7.0+unknown"
 
 # Core material definitions
 from .core.materials import Material
@@ -47,6 +47,9 @@ from .parsing.api import (
     get_material_property_names,
     evaluate_material_properties,
 )
+
+# Bundled example materials
+from .catalog import list_materials, load_material, get_material_path
 
 # Property processing
 from .parsing.processors.property_processor import PropertyProcessor
@@ -72,6 +75,10 @@ __all__ = [
     "get_material_info",
     "get_material_property_names",
     "evaluate_material_properties",
+    # Bundled example materials
+    "list_materials",
+    "load_material",
+    "get_material_path",
     # Processing
     "PropertyProcessor",
     "PropertyType",

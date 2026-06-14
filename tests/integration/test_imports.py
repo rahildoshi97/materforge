@@ -16,6 +16,8 @@ def test_all_imports():
         import materforge.visualization
         # Test core imports
         from materforge.core.materials import Material
+        # Test catalog imports
+        from materforge import list_materials, load_material, get_material_path
         # Test parsing imports
         from materforge.parsing.validation.property_validator import validate_monotonic_property
         # Test algorithm imports

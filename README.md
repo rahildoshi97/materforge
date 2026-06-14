@@ -91,10 +91,28 @@ mat = create_material('examples/myAlloy.yaml', dependency=T, enable_plotting=Tru
 print(mat.heat_capacity)   # SymPy Piecewise expression in T
 print(mat.density)         # 7000.0 (constant float)
 
-# Evaluate all properties at a specific value
+# Evaluate all properties at a specific value (returns a new Material)
 results = mat.evaluate(T, 500.0)
-print(results['heat_capacity'])   # float
+print(results.heat_capacity)   # float
 ```
+
+### Bundled Example Materials
+
+MaterForge is designed for you to write your own YAML configs. For convenience, a
+few reference materials ship with the package and can be loaded by name - handy for
+demos and quick experiments:
+
+```python
+import sympy as sp
+from materforge import list_materials, load_material
+
+print(list_materials())                       # ['1.4301', 'Al', 'Al2O3']
+steel = load_material('1.4301', sp.Symbol('T'))
+```
+
+These are examples, not a curated database. See the
+[bundled materials guide](https://materforge.readthedocs.io/en/latest/how-to/load_bundled_materials.html)
+for details.
 
 ### Property Inversion
 

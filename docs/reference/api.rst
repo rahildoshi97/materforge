@@ -25,6 +25,21 @@ Material Class
    :show-inheritance:
    :no-index:
 
+Bundled Materials
+~~~~~~~~~~~~~~~~~
+
+Helpers for the reference materials shipped with the package. See
+:doc:`../how-to/load_bundled_materials` for usage.
+
+.. autofunction:: materforge.list_materials
+   :no-index:
+
+.. autofunction:: materforge.load_material
+   :no-index:
+
+.. autofunction:: materforge.get_material_path
+   :no-index:
+
 Algorithms Module
 -----------------
 
