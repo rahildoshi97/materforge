@@ -13,6 +13,7 @@ symbolic and numerical property evaluation for various material properties.
    tutorials/first_simulation
    how-to/define_materials
    how-to/load_bundled_materials
+   how-to/use_the_cli
    how-to/property_inversion
    explanation/design_philosophy
    explanation/material_properties

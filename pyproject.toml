@@ -84,7 +84,9 @@ Changelog = "https://github.com/rahildoshi97/materforge/blob/main/CHANGELOG.md"
 "GitLab Mirror" = "https://i10git.cs.fau.de/rahil.doshi/materforge"
 
 [project.scripts]
-materforge-validate = "materforge.parsing.api:validate_yaml_file"
+materforge = "materforge.cli:main"
+# Legacy alias kept working; forwards to `materforge validate`.
+materforge-validate = "materforge.cli:validate_entry"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -106,4 +108,4 @@ materforge = [
 version_file = "src/materforge/_version.py"
 version_scheme = "python-simplified-semver"
 local_scheme = "node-and-date"
-fallback_version = "0.7.0"
+fallback_version = "0.8.0"

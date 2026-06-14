@@ -33,7 +33,7 @@ except ImportError:
     try:
         __version__ = version("materforge")
     except PackageNotFoundError:
-        __version__ = "0.7.0+unknown"
+        __version__ = "0.8.0+unknown"
 
 # Core material definitions
 from .core.materials import Material

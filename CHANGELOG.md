@@ -5,6 +5,26 @@ All notable changes to MaterForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-06-14
+
+### Added
+- A real `materforge` command-line interface with five subcommands: `list`
+  (bundled example materials), `validate`, `info`, `plot`, and `evaluate`. Each
+  wraps the existing public API, so anything the CLI does is also reachable from
+  Python. Use `-s/--symbol` to set the dependency symbol for `plot`/`evaluate`
+  and `-v/-vv` to surface library logs. See the new "Use the Command-Line
+  Interface" how-to guide.
+
+### Fixed
+- The `materforge-validate` console entry point, which was wired to a function
+  that takes a path argument and so failed immediately when invoked with none.
+  It now forwards to `materforge validate <file>` and works as a standalone
+  alias.
+
+### Notes
+- A `convert` subcommand is intentionally deferred to the planned export/interop
+  release rather than shipped as a throwaway format here.
+
 ## [0.7.0] - 2026-06-14
 
 ### Added

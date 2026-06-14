@@ -114,6 +114,23 @@ These are examples, not a curated database. See the
 [bundled materials guide](https://materforge.readthedocs.io/en/latest/how-to/load_bundled_materials.html)
 for details.
 
+### Command-Line Interface
+
+Installing the package also provides a `materforge` command for working with YAML
+files straight from a shell - no Python required:
+
+```bash
+materforge list                       # bundled example materials
+materforge validate my_material.yaml  # check a file is structurally valid
+materforge info my_material.yaml       # name, properties, and property types
+materforge plot my_material.yaml       # write a property figure
+materforge evaluate my_material.yaml 500   # evaluate every property at T=500
+```
+
+Each subcommand wraps the same public API shown above. See the
+[CLI guide](https://materforge.readthedocs.io/en/latest/how-to/use_the_cli.html)
+for the full reference.
+
 ### Property Inversion
 
 ```python

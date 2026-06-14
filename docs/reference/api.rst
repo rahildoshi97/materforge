@@ -40,6 +40,18 @@ Helpers for the reference materials shipped with the package. See
 .. autofunction:: materforge.get_material_path
    :no-index:
 
+Command-Line Interface
+----------------------
+
+The ``materforge`` command wraps the public API for use from a shell. See the
+:doc:`../how-to/use_the_cli` guide for the subcommands and examples.
+
+.. autofunction:: materforge.cli.main
+   :no-index:
+
+.. autofunction:: materforge.cli.validate_entry
+   :no-index:
+
 Algorithms Module
 -----------------
 
